@@ -1,0 +1,90 @@
+{
+  "dataset_total_samples": 3602,
+  "flight_phase_classifier": {
+    "algorithm": "RandomForestClassifier",
+    "test_accuracy": 0.9855715871254163,
+    "classification_report": {
+      "APOGEE_BURST": {
+        "precision": 0.6,
+        "recall": 0.5,
+        "f1-score": 0.5454545454545454,
+        "support": 12.0
+      },
+      "BALLOON_ASCENT": {
+        "precision": 0.9917127071823204,
+        "recall": 0.9972222222222222,
+        "f1-score": 0.9944598337950139,
+        "support": 360.0
+      },
+      "PAD_IDLE": {
+        "precision": 0.9900990099009901,
+        "recall": 1.0,
+        "f1-score": 0.9950248756218906,
+        "support": 100.0
+      },
+      "PARACHUTE_DESCENT": {
+        "precision": 0.9905956112852664,
+        "recall": 0.9813664596273292,
+        "f1-score": 0.9859594383775351,
+        "support": 322.0
+      },
+      "TOUCHDOWN_RECOVERY": {
+        "precision": 0.981651376146789,
+        "recall": 1.0,
+        "f1-score": 0.9907407407407407,
+        "support": 107.0
+      },
+      "accuracy": 0.9855715871254163,
+      "macro avg": {
+        "precision": 0.9108117409030732,
+        "recall": 0.8957177363699103,
+        "f1-score": 0.9023278867979452,
+        "support": 901.0
+      },
+      "weighted avg": {
+        "precision": 0.9847224857461672,
+        "recall": 0.9855715871254163,
+        "f1-score": 0.9850629086466971,
+        "support": 901.0
+      }
+    },
+    "classes": [
+      "APOGEE_BURST",
+      "BALLOON_ASCENT",
+      "PAD_IDLE",
+      "PARACHUTE_DESCENT",
+      "TOUCHDOWN_RECOVERY"
+    ],
+    "feature_importances": {
+      "altitude": 0.1206488099663156,
+      "vSpd": 0.1839799027512269,
+      "pressure": 0.09783973875031156,
+      "temp": 0.04873647803375593,
+      "humidity": 0.026995212403414955,
+      "ax": 0.008219107024720094,
+      "ay": 0.006964971443114643,
+      "az": 0.033762860344598036,
+      "accelMag": 0.018254324963656376,
+      "gx": 0.007509606811311139,
+      "gy": 0.009124893121922635,
+      "gz": 0.00623137242367369,
+      "gyroMag": 0.03799172239279354,
+      "batteryVoltage": 0.11703869005304261,
+      "dAlt_pad": 0.16210775995238083,
+      "dTemp_pad": 0.04054520599003308,
+      "dPress_pad": 0.07404934357372843
+    }
+  },
+  "anomaly_detector": {
+    "algorithm": "PyOD.IForest",
+    "nominal_samples_trained": 1927,
+    "contamination_threshold": 0.06,
+    "raw_score_min": -0.1657824546602102,
+    "raw_score_max": 0.2680505910396772
+  },
+  "apogee_regressor": {
+    "algorithm": "GradientBoostingRegressor",
+    "r2_score": 0.9951052761940025,
+    "rmse_meters": 24.167643268856494
+  }
+}

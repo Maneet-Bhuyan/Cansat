@@ -236,6 +236,10 @@
         <span id="conn-dot" class="led-dot bg-rose-500 text-rose-500"></span>
         <span id="conn-text" class="font-mono">DISCONNECTED</span>
       </div>
+      <div id="ml-server-badge" class="pill-tag text-purple-300 border-purple-800/40 bg-purple-950/20" title="Python ML Server Backend (FastAPI + scikit-learn + PyOD)">
+        <span id="ml-server-dot" class="led-dot bg-purple-400 text-purple-400"></span>
+        <span id="ml-server-text" class="font-mono">PYTHON ML (STANDBY)</span>
+      </div>
       <div id="anomaly-badge" class="pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/20">
         <span class="led-dot bg-emerald-400 text-emerald-400 led-pulse"></span>
         <span id="anomaly-badge-text" class="font-mono">NOMINAL FLIGHT</span>
@@ -766,6 +770,110 @@
   // Anomaly Detection
   let currentAnomalyCode = 'NOMINAL';
   let currentAnomalyScore = 0;
+
+  // --- PYTHON MACHINE LEARNING BACKEND BRIDGE ---
+  const ML_SERVER_URL = 'http://127.0.0.1:8000';
+  let mlServerOnline = false;
+  let mlLastPrediction = null;
+  let mlInferenceInFlight = false;
+
+  async function checkMlServerHealth() {
+    const badge = document.getElementById('ml-server-badge');
+    const dot = document.getElementById('ml-server-dot');
+    const text = document.getElementById('ml-server-text');
+    if (!badge || !dot || !text) return;
+
+    try {
+      const resp = await fetch(ML_SERVER_URL + '/api/health', { method: 'GET', signal: AbortSignal.timeout(1500) });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.models_loaded) {
+          mlServerOnline = true;
+          dot.className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
+          text.innerText = 'PYTHON ML (ONLINE)';
+          badge.className = 'pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/30';
+          return;
+        }
+      }
+    } catch (e) {
+      // Server offline / standby
+    }
+    mlServerOnline = false;
+    dot.className = 'led-dot bg-purple-400 text-purple-400';
+    text.innerText = 'PYTHON ML (STANDBY)';
+    badge.className = 'pill-tag text-purple-300 border-purple-800/40 bg-purple-950/20';
+  }
+
+  setInterval(checkMlServerHealth, 3500);
+  setTimeout(checkMlServerHealth, 200);
+
+  async function requestPythonMlInference(parsed, vSpd) {
+    if (!mlServerOnline || mlInferenceInFlight) return;
+    mlInferenceInFlight = true;
+    try {
+      const payload = {
+        temp: parsed.temp,
+        pressure: parsed.pressure,
+        altitude: parsed.altitude,
+        gx: parsed.gx,
+        gy: parsed.gy,
+        gz: parsed.gz,
+        ax: parsed.ax,
+        ay: parsed.ay,
+        az: parsed.az,
+        lat: parsed.lat,
+        lon: parsed.lon,
+        humidity: parsed.humidity,
+        batteryVoltage: parsed.batteryVoltage,
+        vSpd: vSpd,
+        padAlt: padBaselineAlt,
+        padTemp: padBaselineTemp,
+        padPress: 1013.25
+      };
+
+      const resp = await fetch(ML_SERVER_URL + '/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(1200)
+      });
+
+      if (resp.ok) {
+        const res = await resp.json();
+        mlLastPrediction = res;
+        applyMlInferenceToUi(res);
+      }
+    } catch (err) {
+      // Fallback silently
+    } finally {
+      mlInferenceInFlight = false;
+    }
+  }
+
+  function applyMlInferenceToUi(res) {
+    if (!res || res.status !== 'success') return;
+    // Update Anomaly Badge with PyOD IForest Score
+    const badge = document.getElementById('anomaly-badge');
+    const badgeText = document.getElementById('anomaly-badge-text');
+    if (badge && badgeText) {
+      if (!res.is_anomaly) {
+        badge.className = 'pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/20';
+        badge.querySelector('.led-dot').className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
+        badgeText.innerText = 'NOMINAL [PyOD: ' + res.anomaly_score.toFixed(2) + ']';
+      } else {
+        badge.className = 'pill-tag text-rose-300 border-rose-800/50 bg-rose-950/40 alert-glow';
+        badge.querySelector('.led-dot').className = 'led-dot bg-rose-500 text-rose-500';
+        badgeText.innerText = 'ANOMALY [' + res.anomaly_type + ' / ' + res.anomaly_score.toFixed(2) + ']';
+        triggerSafetyAlarm('ML OUTLIER: ' + res.anomaly_type, 'PyOD Isolation Forest anomaly score: ' + res.anomaly_score.toFixed(3));
+      }
+    }
+
+    // Update Flight Phase if confident and different
+    if (res.phase_confidence > 0.65 && res.predicted_phase !== currentFlightPhase) {
+      currentFlightPhase = res.predicted_phase;
+      updateStageTrackerUI(currentFlightPhase);
+    }
+  }
 
   // Three.js
   let scene, camera, renderer, cansatGroup, animId;
@@ -1474,6 +1582,7 @@
 
     updateFlightPhase(parsed.altitude, vSpd, accelMag);
     evaluateAnomalies(parsed, vSpd, accelMag);
+    requestPythonMlInference(parsed, vSpd);
 
     const row = Object.assign({
       timestamp: parsed.customTimestamp || new Date(now).toISOString()
@@ -1963,6 +2072,25 @@
     if (apogee > 500) notes.push('✅ Sounding apogee confirmed: ' + apogee.toFixed(1) + ' m');
     if (currentAnomalyScore > 0) notes.push('⚠️ Outlier detected: ' + currentAnomalyCode);
 
+    let mlBlock = '';
+    if (mlLastPrediction) {
+      const pred = mlLastPrediction;
+      const probEntries = pred.phase_probabilities ? Object.entries(pred.phase_probabilities).map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`).join(' | ') : '';
+      mlBlock =
+        '<div class="mt-2 pt-2 border-t border-purple-900/50 text-[10px] space-y-1">' +
+        '<b class="text-emerald-400">⚡ Python Machine Learning Server (FastAPI / scikit-learn / PyOD):</b><br>' +
+        '• <span class="text-purple-300">RandomForestClassifier:</span> <span class="text-white font-bold">' + pred.predicted_phase + '</span> (' + (pred.phase_confidence * 100).toFixed(1) + '% confidence)<br>' +
+        '• <span class="text-purple-300">PyOD Isolation Forest Anomaly Score:</span> ' + pred.anomaly_score.toFixed(3) + ' [' + pred.anomaly_type + ']<br>' +
+        (pred.predicted_apogee_m ? '• <span class="text-purple-300">GradientBoosting Predicted Apogee:</span> ' + pred.predicted_apogee_m.toFixed(1) + ' m<br>' : '') +
+        (probEntries ? '<div class="text-[9px] text-slate-400 font-mono mt-1">Class Probabilities: ' + probEntries + '</div>' : '') +
+        '</div>';
+    } else {
+      mlBlock =
+        '<div class="mt-2 pt-2 border-t border-purple-900/50 text-[10px] text-slate-400">' +
+        '• Python ML Server Status: <span class="text-purple-300">' + (mlServerOnline ? 'Connected (Awaiting Packet)' : 'Standby / Local Fallback Active') + '</span>' +
+        '</div>';
+    }
+
     box.innerHTML =
       '<b class="text-purple-300">Cognitive CanSat AI Diagnostic Report</b><br>' +
       '• Active Mission Phase: <span class="text-emerald-400 font-bold">' + currentFlightPhase + '</span><br>' +
@@ -1974,7 +2102,8 @@
       '• Lapse Rate (ELR): ' + last.lapseRate.toFixed(2) + ' °C/100m<br>' +
       '• Battery Potential: ' + last.batteryVoltage.toFixed(2) + ' V (' + batteryPct(last.batteryVoltage).toFixed(0) + '%)<br>' +
       '• Sensor Anomaly Engine: ' + currentAnomalyCode +
-      (notes.length ? '<br><br>' + notes.join('<br>') : '<br><br>All onboard systems operating within nominal flight envelope.');
+      (notes.length ? '<br><br>' + notes.join('<br>') : '<br><br>All onboard systems operating within nominal flight envelope.') +
+      mlBlock;
   }
 
   window.addEventListener('resize', function () {

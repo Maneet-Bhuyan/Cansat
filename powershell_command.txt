@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File e:\Cansat\backend\start_server.ps1
