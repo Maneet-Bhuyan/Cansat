@@ -108,7 +108,28 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. Start the backend
+### 3. Start the complete mission control system
+
+The included Windows launcher starts the frontend dashboard and FastAPI backend together:
+
+```powershell
+cd E:\Cansat
+START_MISSION_CONTROL.bat
+```
+
+You can also double-click `START_MISSION_CONTROL.bat` from File Explorer. The dashboard is available at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+Keep the launcher window open while using the dashboard. Press `Ctrl+C` in that window to stop the backend.
+
+### 4. Manual startup
+
+Use the manual commands below when you need to run the backend and frontend separately.
+
+#### Start the backend
 
 ```powershell
 cd E:\Cansat
@@ -121,7 +142,7 @@ Or use the included script:
 powershell -ExecutionPolicy Bypass -File E:\Cansat\backend\start_server.ps1
 ```
 
-### 4. Launch the dashboard
+#### Launch the dashboard
 
 Open the dashboard directly:
 
