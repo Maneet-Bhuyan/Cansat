@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cognitive CanSat — Flight Telemetry &amp; Recovery Platform</title>
+  <title>Cognitive CanSat Ground Station - UNIVERSE TELEMETRY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,17 +14,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
-      --bg-space: #0A0910;
-      --card-glass: rgba(19, 16, 30, 0.85);
-      --card-border: rgba(139, 92, 246, 0.16);
-      --card-border-hover: rgba(167, 139, 250, 0.35);
-      --purple-primary: #7C3AED;
-      --purple-hover: #6D28D9;
-      --purple-light: #A78BFA;
-      --purple-glow: rgba(124, 58, 237, 0.35);
-      --panel-glass: rgba(26, 22, 41, 0.7);
-      --panel-hover: rgba(36, 31, 56, 0.9);
-      --panel-border: rgba(139, 92, 246, 0.2);
+      --bg-space: #0d0c11;
+      --bg-space-dark: #0A0910;
+      --panel-bg: #121118;
+      --panel-bg-subtle: #161522;
+      --panel-border: rgba(93, 53, 232, 0.22);
+      --panel-border-hover: rgba(147, 51, 234, 0.48);
+      --accent-purple: #5d35e8;
+      --accent-purple-hover: #7045f5;
+      --accent-purple-light: #9d7bfc;
+      --accent-purple-glow: rgba(93, 53, 232, 0.35);
+
+      --color-axis-x: #EF4444;
+      --color-axis-y: #EAB308;
+      --color-axis-z: #06B6D4;
 
       --text-hero: #F8FAFC;
       --text-body: #E2E8F0;
@@ -34,90 +37,216 @@
       --emerald: #10B981;
       --amber: #F59E0B;
       --crimson: #EF4444;
-      --cyan: #38BDF8;
+      --cyan: #06B6D4;
     }
 
     * { box-sizing: border-box; }
     html, body {
       background-color: var(--bg-space);
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.16), transparent 50%),
-        radial-gradient(circle at 10% 40%, rgba(99, 102, 241, 0.08), transparent 40%),
-        radial-gradient(circle at 90% 70%, rgba(139, 92, 246, 0.06), transparent 45%);
-      background-attachment: fixed;
       color: var(--text-body);
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    body { min-height: 100vh; }
+
+    /* Subtle Mission Control Aerospace Grid Background */
+    body {
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(93, 53, 232, 0.12), transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 36px 36px, 36px 36px;
+      background-attachment: fixed;
+    }
 
     .font-mono {
       font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-
-    /* Portfolio-grade Glass Cards */
-    .glass-card {
-      background: linear-gradient(180deg, rgba(22, 18, 36, 0.82) 0%, rgba(15, 12, 26, 0.92) 100%);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 1rem;
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
-    }
-    .glass-card:hover {
-      border-color: var(--card-border-hover);
-      box-shadow: 0 8px 30px -4px rgba(124, 58, 237, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    .font-tech {
+      font-family: 'Rajdhani', 'Plus Jakarta Sans', sans-serif;
     }
 
-    .btn-gradient-purple {
-      background: linear-gradient(135deg, #7C3AED 0%, #6366F1 50%, #4F46E5 100%);
+    /* Mission Control Card Panels (with glass-card alias for compatibility) */
+    .glass-card,
+    .dashboard-panel {
+      background: #121118;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.625rem;
+      box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card:hover,
+    .dashboard-panel:hover {
+      border-color: var(--panel-border-hover);
+      box-shadow: 0 6px 24px -2px rgba(93, 53, 232, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      background: rgba(18, 17, 24, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      min-height: 34px;
+    }
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: #E2E8F0;
+      text-transform: capitalize;
+    }
+    .panel-expand-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94A3B8;
+      border-radius: 4px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .panel-expand-btn:hover {
+      background: rgba(93, 53, 232, 0.25);
+      border-color: var(--accent-purple);
       color: #FFFFFF;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    /* Sidebar Action Buttons */
+    .btn-gradient-purple,
+    .btn-action-primary {
+      background: var(--accent-purple);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.5rem;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.65rem 0.85rem;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(93, 53, 232, 0.35);
+      cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .btn-gradient-purple:hover {
-      background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 50%, #4338CA 100%);
-      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    .btn-gradient-purple:hover,
+    .btn-action-primary:hover {
+      background: var(--accent-purple-hover);
+      box-shadow: 0 6px 20px rgba(93, 53, 232, 0.55);
       transform: translateY(-1px);
     }
-    .btn-gradient-purple:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
 
-    .btn-glass {
-      background: var(--panel-glass);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--panel-border);
-      color: var(--text-hero);
+    .btn-action-outline {
+      background: rgba(22, 21, 34, 0.8);
+      color: #EDE9FE;
+      border: 1px solid rgba(93, 53, 232, 0.45);
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.6rem 0.85rem;
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
       transition: all 0.2s ease;
     }
-    .btn-glass:hover {
-      background: var(--panel-hover);
-      border-color: rgba(167, 139, 250, 0.4);
+    .btn-action-outline:hover {
+      background: rgba(93, 53, 232, 0.2);
+      border-color: rgba(147, 51, 234, 0.7);
       color: #FFFFFF;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .pill-tag {
-      display: inline-flex;
+    .btn-action-light {
+      background: #FFFFFF;
+      color: #0D0C11;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: 0.5rem;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.6rem 0.85rem;
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+      transition: all 0.2s ease;
+    }
+    .btn-action-light:hover {
+      background: #F1F5F9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.35);
+    }
+
+    /* Battery Card */
+    .battery-box {
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      background: rgba(18, 17, 24, 0.9);
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+    }
+    .battery-housing {
+      width: 54px;
+      height: 26px;
+      border: 2px solid #5d35e8;
+      border-radius: 5px;
+      position: relative;
+      margin: 0 auto 0.4rem auto;
+      padding: 2px;
+      background: #0D0C11;
+    }
+    .battery-housing::after {
+      content: '';
+      position: absolute;
+      right: -5px;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: #5d35e8;
+      border-radius: 0 2px 2px 0;
+    }
+    .battery-level {
+      height: 100%;
+      width: 0%;
+      background: #5d35e8;
+      border-radius: 2px;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    /* Legend */
+    .legend-item {
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      background: rgba(22, 18, 38, 0.85);
-      border: 1px solid var(--card-border);
-      font-size: 11px;
+      gap: 0.5rem;
+      font-size: 0.7rem;
       font-weight: 500;
-      backdrop-filter: blur(8px);
+      color: #94A3B8;
+    }
+    .legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
     }
 
+    /* Status indicators */
     .led-dot {
       width: 7px;
       height: 7px;
@@ -140,17 +269,7 @@
       to { background: rgba(239, 68, 68, 0.24); border-color: rgba(239, 68, 68, 0.9); }
     }
 
-    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-    .custom-scroll::-webkit-scrollbar-track { background: rgba(10, 9, 16, 0.8); }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #2E2749; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #4C3F75; }
-
-    #map { background: #0A0910; min-height: 320px; border-radius: 0.75rem; }
-    #canvas-3d { min-height: 340px; position: relative; border-radius: 0.75rem; }
-    #canvas-3d canvas { display: block; width: 100% !important; height: 100% !important; border-radius: 0.75rem; }
-    .chart-wrap { position: relative; width: 100%; height: 100%; min-height: 290px; }
-
-    /* Mission Stage Progression Bar */
+    /* Mission Progression Timeline Bar */
     .stage-item {
       position: relative;
       display: flex;
@@ -161,397 +280,607 @@
       z-index: 2;
     }
     .stage-circle {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       border-radius: 9999px;
-      background: #19152B;
+      background: #161424;
       border: 2px solid #332B52;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .stage-item.active .stage-circle {
-      background: #7C3AED;
+      background: #5d35e8;
       border-color: #C4B5FD;
       box-shadow: 0 0 12px #8B5CF6, inset 0 1px 2px rgba(255, 255, 255, 0.4);
-      transform: scale(1.3);
+      transform: scale(1.25);
     }
     .stage-item.completed .stage-circle {
       background: var(--emerald);
       border-color: #6EE7B7;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
     }
     .stage-name {
-      font-size: 10px;
-      margin-top: 6px;
-      color: var(--text-muted);
+      font-size: 9px;
+      margin-top: 4px;
+      color: #64748B;
       text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.6px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
-    .stage-item.active .stage-name { color: #EDE9FE; font-weight: 700; }
+    .stage-item.active .stage-name { color: #EDE9FE; }
     .stage-item.completed .stage-name { color: #34D399; }
 
-    /* Custom Slider */
+    /* Custom range slider */
     input[type=range] {
       -webkit-appearance: none;
       background: #1E1A33;
-      border: 1px solid rgba(139, 92, 246, 0.25);
+      border: 1px solid rgba(93, 53, 232, 0.35);
       border-radius: 9999px;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%);
+      background: linear-gradient(135deg, #A78BFA 0%, #5d35e8 100%);
       border: 2px solid #EDE9FE;
-      height: 16px;
-      width: 16px;
+      height: 14px;
+      width: 14px;
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(124, 58, 237, 0.7);
+      box-shadow: 0 0 8px rgba(93, 53, 232, 0.7);
       transition: transform 0.15s ease;
     }
-    input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* Scrollbars */
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(13, 12, 17, 0.8); }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #2E2749; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #5d35e8; }
+
+    /* Canvas Containers */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 175px;
+      padding: 0.35rem 0.5rem;
+    }
+    #canvas-3d {
+      width: 100%;
+      height: 100%;
+      min-height: 175px;
+      background: #090812;
+      position: relative;
+    }
+    #canvas-3d canvas { display: block; width: 100% !important; height: 100% !important; }
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 175px;
+      background: #090812;
+    }
+
+    /* GPS Acquiring Radar Overlay */
+    #gps-acquiring-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 8, 18, 0.82);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.3s ease;
+    }
+    .radar-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid rgba(234, 179, 8, 0.2);
+      border-top: 2px solid #EAB308;
+      border-radius: 50%;
+      animation: spin 1.2s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Tile Maximize State */
+    .tile-maximized {
+      position: fixed !important;
+      inset: 1.25rem !important;
+      z-index: 9999 !important;
+      width: auto !important;
+      height: auto !important;
+      max-width: none !important;
+      max-height: none !important;
+      background: #121118 !important;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 0 1000px rgba(0, 0, 0, 0.8) !important;
+    }
+    .tile-maximized .chart-container,
+    .tile-maximized #canvas-3d,
+    .tile-maximized #map {
+      min-height: calc(100vh - 120px) !important;
+      height: calc(100vh - 120px) !important;
     }
   </style>
 </head>
-<body class="p-3 sm:p-4 max-w-xl mx-auto pb-20">
+<body class="bg-[#0d0c11] text-slate-200">
 
-  <!-- HEADER / BRANDING STRIP -->
-  <header class="pt-2 pb-4 mb-3 border-b border-purple-900/20 text-center">
-    <div class="flex items-center justify-between px-1 mb-2">
-      <div class="text-[10px] text-purple-300 font-bold tracking-widest uppercase flex items-center gap-1.5 font-mono">
-        <span class="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_#8B5CF6]"></span> CANSAT FLIGHT OPERATIONS
-      </div>
-      <button type="button" id="audio-toggle-btn" onclick="toggleAudioSpeech()" class="px-2.5 py-1 rounded-full text-[10px] bg-purple-950/40 border border-purple-800/40 text-purple-200 hover:text-white hover:border-purple-500 flex items-center gap-1.5 transition-all" title="Toggle Web Speech Voice Synthesizer">
-        <span id="audio-icon">🔊</span> <span id="audio-status-text" class="font-mono font-semibold">VOICE ON</span>
-      </button>
-    </div>
+  <div class="flex flex-col xl:flex-row min-h-screen">
 
-    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-purple-300">
-      Cognitive CanSat Ground Station
-    </h1>
+    <!-- ============================================================== -->
+    <!-- LEFT SIDEBAR: MISSION BRANDING, ACTION CONTROLS & BATTERY      -->
+    <!-- ============================================================== -->
+    <aside class="w-full xl:w-[220px] flex-shrink-0 bg-[#0d0c11] border-b xl:border-b-0 xl:border-r border-[#1e1c2b] p-3.5 flex flex-col justify-between space-y-4">
+      
+      <div class="space-y-3.5">
+        <!-- Brand Insignia & Title -->
+        <div class="flex items-center gap-2.5">
+          <!-- Aerospace Satellite Insignia SVG -->
+          <div class="w-8 h-8 rounded-lg bg-[#181628] border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-[0_0_12px_rgba(93,53,232,0.4)]">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" class="text-purple-400" fill="rgba(93,53,232,0.2)"/>
+              <circle cx="12" cy="12" r="9" stroke="rgba(167,139,250,0.5)" stroke-dasharray="2 3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-sm tracking-tight text-white font-tech uppercase">COGNITIVE</span>
+              <span class="text-[9px] font-mono px-1 py-0.2 bg-purple-950/70 border border-purple-700/50 rounded text-purple-300 font-bold">TM</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] text-purple-300/80 font-mono">
+              <span>CanSat Ops</span>
+              <span class="text-[8px] bg-white/10 px-1 py-0.2 rounded text-slate-300 uppercase font-semibold">BETA</span>
+            </div>
+          </div>
+        </div>
 
-    <!-- Top Status Badges -->
-    <div class="mt-3 flex flex-wrap justify-center items-center gap-2.5">
-      <div class="pill-tag text-slate-300">
-        <span id="conn-dot" class="led-dot bg-rose-500 text-rose-500"></span>
-        <span id="conn-text" class="font-mono">DISCONNECTED</span>
-      </div>
-      <div id="ml-server-badge" class="pill-tag text-purple-300 border-purple-800/40 bg-purple-950/20" title="Python ML Server Backend (FastAPI + scikit-learn + PyOD)">
-        <span id="ml-server-dot" class="led-dot bg-purple-400 text-purple-400"></span>
-        <span id="ml-server-text" class="font-mono">PYTHON ML (STANDBY)</span>
-      </div>
-      <div id="anomaly-badge" class="pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/20">
-        <span class="led-dot bg-emerald-400 text-emerald-400 led-pulse"></span>
-        <span id="anomaly-badge-text" class="font-mono">NOMINAL FLIGHT</span>
-      </div>
-    </div>
-  </header>
+        <!-- Connection Status Indicator -->
+        <div class="flex items-center space-x-2 px-2 py-1 rounded-md bg-[#13121e] border border-purple-900/30">
+          <span id="conn-dot" class="led-dot bg-rose-500 text-rose-500"></span>
+          <span id="conn-text" class="text-[10px] font-mono font-bold tracking-wider text-slate-300 uppercase">DISCONNECTED</span>
+        </div>
 
-  <!-- FLIGHT PHASE STATE MACHINE TRACKER -->
-  <section class="glass-card p-3.5 mb-3.5">
-    <div class="text-[10px] text-purple-300/80 uppercase tracking-widest mb-2.5 flex justify-between items-center font-bold">
-      <span>Mission Phase Progression</span>
-      <span id="phase-elapsed-time" class="text-purple-300 font-mono text-[11px] bg-purple-950/40 px-2 py-0.5 rounded border border-purple-800/30">T+ 00:00.0</span>
-    </div>
-    <div class="relative flex items-center justify-between px-2 py-1.5">
-      <div class="absolute left-6 right-6 top-3 h-0.5 bg-[#251F3D] z-0"></div>
-      <div id="phase-pad" class="stage-item active">
-        <div class="stage-circle"></div>
-        <div class="stage-name">Pad</div>
-      </div>
-      <div id="phase-ascent" class="stage-item">
-        <div class="stage-circle"></div>
-        <div class="stage-name">Ascent</div>
-      </div>
-      <div id="phase-apogee" class="stage-item">
-        <div class="stage-circle"></div>
-        <div class="stage-name">Apogee</div>
-      </div>
-      <div id="phase-descent" class="stage-item">
-        <div class="stage-circle"></div>
-        <div class="stage-name">Descent</div>
-      </div>
-      <div id="phase-touchdown" class="stage-item">
-        <div class="stage-circle"></div>
-        <div class="stage-name">Touchdown</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SAFETY ALARM BANNER (DYNAMICALLY TRIGGERED) -->
-  <div id="safety-alarm-banner" class="hidden rounded-xl p-3 mb-3.5 border alert-glow text-xs text-rose-100 flex items-center justify-between shadow-lg shadow-red-950/40">
-    <div class="flex items-center gap-2.5">
-      <span class="text-base">⚠️</span>
-      <div>
-        <div class="font-bold uppercase tracking-wider text-[11px]" id="safety-alarm-title">SAFETY ALARM TRIGGERED</div>
-        <div class="text-[10px] text-rose-300" id="safety-alarm-desc">Telemetry metrics exceed safe flight envelope.</div>
-      </div>
-    </div>
-    <button type="button" onclick="dismissSafetyAlarm()" class="text-rose-300 hover:text-white text-[10px] font-mono px-2.5 py-1 rounded-md bg-rose-950/80 border border-rose-700/60">DISMISS</button>
-  </div>
-
-  <!-- FLIGHT DATA LOG REPLAY & TEST SUITE -->
-  <section class="glass-card p-3.5 mb-3.5 text-xs">
-    <div class="flex items-center justify-between mb-2.5">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-        <span class="text-slate-200 font-bold text-[11px] tracking-wide uppercase">
-          Flight Log Replay &amp; Test Suite
-        </span>
-      </div>
-      <span id="replay-status-pill" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-800/40 text-purple-300 font-mono">IDLE</span>
-    </div>
-    
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
-      <div>
-        <label class="block text-[10px] text-purple-200/70 mb-1 font-medium">Select Flight Test Profile:</label>
-        <select id="test-case-select" onchange="loadSelectedTestCase()" class="w-full bg-[#161228] border border-purple-900/40 text-purple-100 text-[11px] rounded-lg p-2 focus:border-purple-400 focus:outline-none font-mono transition-colors">
-          <option value="">-- Choose Flight Profile --</option>
-          <option value="test_cases/01_nominal_sounding_flight.csv">01 Nominal Sounding Flight (800m)</option>
-          <option value="test_cases/02_high_altitude_burst_1200m.csv">02 High Altitude Burst (1200m)</option>
-          <option value="test_cases/03_severe_wind_shear_drift.csv">03 Severe Wind Shear Drift</option>
-          <option value="test_cases/04_apogee_ejection_shock_tumble.csv">04 Apogee Ejection Shock &amp; Tumble</option>
-          <option value="test_cases/05_parachute_pendulum_resonance.csv">05 Parachute Pendulum Resonance</option>
-          <option value="test_cases/06_delayed_chute_deployment.csv">06 Delayed Chute Deployment (Freefall)</option>
-          <option value="test_cases/07_thermal_inversion_sounding.csv">07 Thermal Inversion Sounding</option>
-          <option value="test_cases/08_sensor_glitch_gps_recovery.csv">08 Sensor Glitch &amp; GPS Recovery</option>
-          <option value="test_cases/09_low_battery_voltage_sag.csv">09 Low Battery Voltage Sag</option>
-          <option value="test_cases/10_ground_pad_static_test.csv">10 Ground Pad Static Integration Test</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-[10px] text-purple-200/70 mb-1 font-medium">Or Upload Custom Flight CSV:</label>
-        <input type="file" id="csv-file-input" accept=".csv" onchange="handleFileUpload(event)" class="w-full bg-[#161228] border border-purple-900/40 text-purple-200 text-[10px] rounded-lg p-1.5 file:mr-2 file:py-0.5 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:bg-purple-900/70 file:text-purple-100 hover:file:bg-purple-800 cursor-pointer font-mono" />
-      </div>
-    </div>
-
-    <!-- Scrubber and Playback Controls -->
-    <div id="replay-controls" class="space-y-2.5 pt-2.5 border-t border-purple-900/20">
-      <div class="flex items-center gap-2.5">
-        <span class="text-[10px] text-purple-300 font-mono w-10 text-right font-medium" id="scrub-current-idx">0</span>
-        <input type="range" id="replay-scrubber" min="0" max="100" value="0" step="1" oninput="onScrubSeek(this.value)" class="flex-1 h-1.5 cursor-pointer" />
-        <span class="text-[10px] text-purple-400 font-mono w-12" id="scrub-total-count">/ 0</span>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-        <div class="flex items-center gap-1.5">
-          <button type="button" id="replay-play-btn" onclick="toggleReplayPlay()" class="px-3.5 py-1.5 rounded-lg text-[11px] font-bold btn-gradient-purple flex items-center gap-1.5">
-            <span id="replay-play-icon">▶</span> <span id="replay-play-label">PLAY</span>
+        <!-- Action Control Buttons -->
+        <div class="space-y-2 pt-1">
+          <button type="button" onclick="downloadCSV()" class="btn-action-primary flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>DOWNLOAD DATA</span>
           </button>
-          <button type="button" onclick="replayStepForward()" class="px-3 py-1.5 rounded-lg text-[11px] btn-glass font-mono" title="Step Forward (+1 Sample)">⏭</button>
-          <button type="button" onclick="resetReplay()" class="px-3 py-1.5 rounded-lg text-[11px] btn-glass font-mono" title="Reset Timeline">↺ RESET</button>
+
+          <button type="button" onclick="openModal('rawFeedModal')" class="btn-action-outline flex items-center justify-center gap-1">
+            <span>RAW FEED</span>
+            <span id="feed-counter" class="font-mono text-purple-300 font-bold">(0)</span>
+          </button>
+
+          <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline">
+            CONNECT
+          </button>
+
+          <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light">
+            DEMO DATA
+          </button>
+
+          <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center gap-1.5" title="Toggle Flight Test & Replay Suite">
+            <span>REPLAY SUITE</span>
+          </button>
+
+          <button type="button" onclick="openModal('helpModal')" class="btn-action-outline">
+            HELP
+          </button>
+
+          <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center gap-1.5 text-purple-200 border-purple-700/60 bg-purple-950/30 hover:bg-purple-900/40">
+            <span class="text-purple-400">✦</span>
+            <span>COGNITIVE AI</span>
+          </button>
         </div>
 
-        <div class="flex items-center gap-1 text-[10px]">
-          <span class="text-purple-300/80 font-medium mr-1">SPEED:</span>
-          <button type="button" onclick="setReplaySpeed(0.5)" class="speed-btn px-2 py-0.5 rounded-md bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="0.5">0.5x</button>
-          <button type="button" onclick="setReplaySpeed(1)" class="speed-btn px-2 py-0.5 rounded-md bg-purple-600 border border-purple-400/30 text-white font-bold font-mono" data-speed="1">1x</button>
-          <button type="button" onclick="setReplaySpeed(2)" class="speed-btn px-2 py-0.5 rounded-md bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="2">2x</button>
-          <button type="button" onclick="setReplaySpeed(5)" class="speed-btn px-2 py-0.5 rounded-md bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="5">5x</button>
-          <button type="button" onclick="setReplaySpeed(10)" class="speed-btn px-2 py-0.5 rounded-md bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="10">10x</button>
+        <!-- Battery Monitor Widget -->
+        <div class="battery-box mt-3">
+          <div class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1.5">BATTERY</div>
+          <div class="battery-housing">
+            <div id="bat-fill" class="battery-level" style="width: 0%;"></div>
+            <div id="bat-nipple" class="hidden"></div>
+          </div>
+          <div id="bat-percent" class="text-xs font-bold font-mono text-purple-300">0%</div>
+          <div id="bat-volts" class="text-[10px] font-mono text-slate-400 mt-0.5">-- V</div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- PRIMARY ACTIONS -->
-  <div class="space-y-2 mb-3.5">
-    <button type="button" onclick="downloadCSV()" class="w-full btn-gradient-purple text-xs font-bold py-3 rounded-xl uppercase tracking-wider flex items-center justify-center gap-2">
-      <span>DOWNLOAD FLIGHT DATA (RFC 4180 CSV)</span>
-    </button>
-    <div class="grid grid-cols-2 gap-2">
-      <button type="button" onclick="openModal('rawFeedModal')" class="btn-glass text-xs font-semibold py-2.5 rounded-xl uppercase tracking-wide flex justify-center items-center">
-        RAW FEED <span id="feed-counter" class="ml-1 font-mono text-purple-300">(0)</span>
-      </button>
-      <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-glass text-xs font-semibold py-2.5 rounded-xl uppercase tracking-wide">
-        CONNECT (USB SERIAL)
-      </button>
+      <!-- Bottom Axis Legend -->
+      <div class="pt-3 border-t border-[#1e1c2b] space-y-1.5">
+        <div class="legend-item">
+          <div class="legend-swatch bg-[#EF4444]"></div>
+          <span class="font-mono">X-Axis Data</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch bg-[#EAB308]"></div>
+          <span class="font-mono">Y-Axis Data</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch bg-[#06B6D4]"></div>
+          <span class="font-mono">Z-Axis Data</span>
+        </div>
+        <div class="pt-2 text-[9px] text-slate-500 font-mono text-center">
+          <span id="sample-count-top" class="text-purple-400 font-bold">0</span> PACKETS
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- MAIN WORKSPACE: MISSION HUD BAR, TILES GRID                    -->
+    <!-- ============================================================== -->
+    <div class="flex-1 flex flex-col p-2.5 sm:p-3 space-y-2.5 overflow-y-auto">
+
+      <!-- TOP MISSION COMMAND STRIP -->
+      <header class="bg-[#121118] border border-[#1e1c2b] rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-3 shadow-md">
+        
+        <!-- Left: Mission Elapsed Time & Brand Subtitle -->
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center gap-1.5 font-mono text-xs">
+            <span class="text-slate-400 text-[10px] uppercase font-sans font-semibold">MISSION TIME:</span>
+            <span id="phase-elapsed-time" class="text-purple-300 font-bold bg-[#171426] px-2 py-0.5 rounded border border-purple-800/40">T+ 00:00.0</span>
+          </div>
+          <button type="button" id="audio-toggle-btn" onclick="toggleAudioSpeech()" class="px-2 py-0.5 rounded text-[10px] bg-purple-950/40 border border-purple-800/40 text-purple-200 hover:text-white hover:border-purple-500 flex items-center gap-1 transition-all" title="Toggle Web Speech Voice Synthesizer">
+            <span id="audio-icon">🔊</span> <span id="audio-status-text" class="font-mono font-bold">VOICE ON</span>
+          </button>
+        </div>
+
+        <!-- Center: Mission Phase Progression Pipeline -->
+        <div class="flex-1 max-w-md min-w-[260px] relative flex items-center justify-between px-3 py-1">
+          <div class="absolute left-6 right-6 top-2.5 h-0.5 bg-[#251F3D] z-0"></div>
+          <div id="phase-pad" class="stage-item active">
+            <div class="stage-circle"></div>
+            <div class="stage-name">PAD</div>
+          </div>
+          <div id="phase-ascent" class="stage-item">
+            <div class="stage-circle"></div>
+            <div class="stage-name">ASCENT</div>
+          </div>
+          <div id="phase-apogee" class="stage-item">
+            <div class="stage-circle"></div>
+            <div class="stage-name">APOGEE</div>
+          </div>
+          <div id="phase-descent" class="stage-item">
+            <div class="stage-circle"></div>
+            <div class="stage-name">DESCENT</div>
+          </div>
+          <div id="phase-touchdown" class="stage-item">
+            <div class="stage-circle"></div>
+            <div class="stage-name">TOUCHDOWN</div>
+          </div>
+        </div>
+
+        <!-- Right: Status Badges & Quick Tools -->
+        <div class="flex items-center space-x-2">
+          <div id="ml-server-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-purple-800/40 bg-purple-950/30 text-purple-300" title="Python ML Server Backend (FastAPI + scikit-learn + PyOD)">
+            <span id="ml-server-dot" class="led-dot bg-purple-400 text-purple-400"></span>
+            <span id="ml-server-text">PYTHON ML (STANDBY)</span>
+          </div>
+
+          <div id="anomaly-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 text-emerald-300">
+            <span class="led-dot bg-emerald-400 text-emerald-400 led-pulse"></span>
+            <span id="anomaly-badge-text">NOMINAL FLIGHT</span>
+          </div>
+
+          <!-- Google Maps Quick Recovery Action -->
+          <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-[10px] font-bold bg-[#18152e] hover:bg-purple-900/50 border border-purple-700/50 text-purple-200 flex items-center gap-1 transition-all" title="Open Last Known GPS Fix in Google Maps">
+            <span>📍</span> <span>MAPS</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- DYNAMIC SAFETY ALARM BANNER (EXISTS IN DOM, HIDDEN BY DEFAULT) -->
+      <div id="safety-alarm-banner" class="hidden rounded-lg p-2.5 border alert-glow text-xs text-rose-100 flex items-center justify-between shadow-lg shadow-red-950/40">
+        <div class="flex items-center gap-2">
+          <span class="text-sm">⚠️</span>
+          <div>
+            <span class="font-bold uppercase tracking-wider text-[11px]" id="safety-alarm-title">SAFETY ALARM TRIGGERED</span>
+            <span class="text-[10px] text-rose-300 ml-2" id="safety-alarm-desc">Telemetry metrics exceed safe flight envelope.</span>
+          </div>
+        </div>
+        <button type="button" onclick="dismissSafetyAlarm()" class="text-rose-300 hover:text-white text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/80 border border-rose-700/60">DISMISS</button>
+      </div>
+
+      <!-- COLLAPSIBLE FLIGHT LOG REPLAY & TEST SUITE BAR -->
+      <section id="replay-drawer" class="hidden bg-[#121118] border border-purple-900/40 rounded-lg p-3 text-xs shadow-lg transition-all">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-1.5 border-b border-purple-900/20">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            <span class="text-slate-200 font-bold text-[11px] uppercase tracking-wide">Flight Log Replay &amp; Test Suite</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span id="replay-status-pill" class="text-[10px] px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/40 text-purple-300 font-mono">IDLE</span>
+            <button type="button" onclick="toggleReplayDrawer()" class="text-slate-400 hover:text-white text-xs px-1.5">✕</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2.5">
+          <div>
+            <label class="block text-[10px] text-purple-300/80 mb-1 font-medium">Select Flight Test Profile:</label>
+            <select id="test-case-select" onchange="loadSelectedTestCase()" class="w-full bg-[#161228] border border-purple-900/50 text-purple-100 text-[11px] rounded p-1.5 focus:border-purple-400 focus:outline-none font-mono">
+              <option value="">-- Choose Flight Profile --</option>
+              <option value="test_cases/01_nominal_sounding_flight.csv">01 Nominal Sounding Flight (800m)</option>
+              <option value="test_cases/02_high_altitude_burst_1200m.csv">02 High Altitude Burst (1200m)</option>
+              <option value="test_cases/03_severe_wind_shear_drift.csv">03 Severe Wind Shear Drift</option>
+              <option value="test_cases/04_apogee_ejection_shock_tumble.csv">04 Apogee Ejection Shock &amp; Tumble</option>
+              <option value="test_cases/05_parachute_pendulum_resonance.csv">05 Parachute Pendulum Resonance</option>
+              <option value="test_cases/06_delayed_chute_deployment.csv">06 Delayed Chute Deployment (Freefall)</option>
+              <option value="test_cases/07_thermal_inversion_sounding.csv">07 Thermal Inversion Sounding</option>
+              <option value="test_cases/08_sensor_glitch_gps_recovery.csv">08 Sensor Glitch &amp; GPS Recovery</option>
+              <option value="test_cases/09_low_battery_voltage_sag.csv">09 Low Battery Voltage Sag</option>
+              <option value="test_cases/10_ground_pad_static_test.csv">10 Ground Pad Static Integration Test</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-purple-300/80 mb-1 font-medium">Or Upload Custom Flight CSV:</label>
+            <input type="file" id="csv-file-input" accept=".csv" onchange="handleFileUpload(event)" class="w-full bg-[#161228] border border-purple-900/50 text-purple-200 text-[10px] rounded p-1 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-[10px] file:bg-purple-900/70 file:text-purple-100 hover:file:bg-purple-800 cursor-pointer font-mono" />
+          </div>
+        </div>
+
+        <!-- Scrubber and Controls -->
+        <div id="replay-controls" class="space-y-2 pt-2 border-t border-purple-900/20">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-purple-300 font-mono w-10 text-right font-medium" id="scrub-current-idx">0</span>
+            <input type="range" id="replay-scrubber" min="0" max="100" value="0" step="1" oninput="onScrubSeek(this.value)" class="flex-1 h-1.5 cursor-pointer" />
+            <span class="text-[10px] text-purple-400 font-mono w-12" id="scrub-total-count">/ 0</span>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="replay-play-btn" onclick="toggleReplayPlay()" class="px-3 py-1 rounded text-[10px] font-bold bg-[#5d35e8] hover:bg-purple-600 text-white flex items-center gap-1">
+                <span id="replay-play-icon">▶</span> <span id="replay-play-label">PLAY</span>
+              </button>
+              <button type="button" onclick="replayStepForward()" class="px-2 py-1 rounded text-[10px] bg-[#161228] border border-purple-900/50 hover:border-purple-600 font-mono" title="Step Forward (+1)">⏭</button>
+              <button type="button" onclick="resetReplay()" class="px-2 py-1 rounded text-[10px] bg-[#161228] border border-purple-900/50 hover:border-purple-600 font-mono" title="Reset Timeline">↺ RESET</button>
+            </div>
+            <div class="flex items-center gap-1 text-[10px]">
+              <span class="text-purple-300/80 font-medium mr-1">SPEED:</span>
+              <button type="button" onclick="setReplaySpeed(0.5)" class="speed-btn px-1.5 py-0.5 rounded bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="0.5">0.5x</button>
+              <button type="button" onclick="setReplaySpeed(1)" class="speed-btn px-1.5 py-0.5 rounded bg-purple-600 border border-purple-400/30 text-white font-bold font-mono" data-speed="1">1x</button>
+              <button type="button" onclick="setReplaySpeed(2)" class="speed-btn px-1.5 py-0.5 rounded bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="2">2x</button>
+              <button type="button" onclick="setReplaySpeed(5)" class="speed-btn px-1.5 py-0.5 rounded bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="5">5x</button>
+              <button type="button" onclick="setReplaySpeed(10)" class="speed-btn px-1.5 py-0.5 rounded bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40" data-speed="10">10x</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ATMOSPHERIC SOUNDING & FIELD RECOVERY COMPACT HUD -->
+      <section class="bg-[#121118] border border-[#1e1c2b] rounded-lg px-3 py-2 text-xs flex flex-wrap items-center justify-between gap-3">
+        <!-- Soundings -->
+        <div class="flex items-center space-x-4 font-mono text-[11px]">
+          <div class="text-[9px] uppercase tracking-wider text-slate-400 font-sans font-bold">Sounding Envelopes:</div>
+          <div><span class="text-slate-400 font-sans text-[10px]">Dew Point: </span><b id="met-dewpoint" class="text-sky-400">-- °C</b></div>
+          <div><span class="text-slate-400 font-sans text-[10px]">Lapse Rate: </span><b id="met-lapserate" class="text-purple-300">-- °C/100m</b></div>
+          <div><span class="text-slate-400 font-sans text-[10px]">Air Density: </span><b id="met-airdensity" class="text-emerald-400">-- kg/m³</b></div>
+        </div>
+        <!-- Field Recovery Summary -->
+        <div id="recovery-lock-card" class="flex items-center space-x-3 font-mono text-[11px]">
+          <span class="text-[9px] uppercase tracking-wider text-slate-400 font-sans font-bold">Field Recovery:</span>
+          <span id="recovery-lock-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-purple-950/80 border border-purple-700/60 text-purple-300">STANDBY</span>
+          <div>Target: <b id="rec-lat" class="text-white">--</b>, <b id="rec-lon" class="text-white">--</b></div>
+          <div>Dist: <b id="rec-dist" class="text-emerald-400">0 m</b></div>
+          <div>Drift: <b id="rec-drift" class="text-purple-300">--°</b></div>
+          <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-[#18152e] hover:bg-purple-900/50 border border-purple-700/50 text-purple-200 flex items-center gap-1 transition-all" title="Open Coordinates in Google Maps">
+            <span>📍</span> <span>OPEN COORDINATES IN GOOGLE MAPS</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- 4-COLUMN HIGH-DENSITY MISSION CONTROL GRID                      -->
+      <!-- ============================================================== -->
+      <main class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5 flex-1">
+
+        <!-- ROW 1 / TILE 1: XYZ ACCELERATION CHART -->
+        <div id="tile-accel" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">XYZ Acceleration Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-accel')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-accel"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 1 / TILE 2: ORIENTATION CHART -->
+        <div id="tile-orient" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Orientation Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-orient')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-orient"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 1 / TILE 3: VERTICAL SPEED CHART -->
+        <div id="tile-vspd" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Vertical Speed Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-vspd')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-vspd"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 1 / TILE 4: ALTITUDE CHART -->
+        <div id="tile-alt" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Altitude Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-alt')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-alt"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 2 / TILE 5: XYZ GYROSCOPE CHART -->
+        <div id="tile-gyro" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">XYZ Gyroscope Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-gyro')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-gyro"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 2 / TILE 6: CANSAT 3D MODEL (DIRECT THREE.JS CANVAS) -->
+        <div id="tile-model" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">CanSat 3D Model</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-[9px] font-mono text-purple-300 hidden sm:inline">
+                P: <b id="model-pitch" class="text-rose-400">0.0°</b> R: <b id="model-roll" class="text-cyan-400">0.0°</b> Y: <b id="model-yaw" class="text-emerald-400">0.0°</b>
+              </span>
+              <button type="button" onclick="toggleTileMaximize('tile-model')" class="panel-expand-btn" title="Expand View">⤢</button>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[175px]">
+            <div id="canvas-3d"></div>
+            <div class="absolute bottom-1 right-2 text-[8px] text-slate-500 font-mono pointer-events-none">
+              Drag to Orbit • Scroll to Zoom
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2 / TILE 7: GPS GROUND TRACK (DIRECT LEAFLET MAP) -->
+        <div id="tile-gps" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">GPS Ground Track</span>
+            <button type="button" onclick="toggleTileMaximize('tile-gps')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="relative flex-1 min-h-[175px] overflow-hidden">
+            <div id="map"></div>
+            <!-- GPS Acquiring Indicator Overlay (from Image 1) -->
+            <div id="gps-acquiring-overlay">
+              <div class="radar-spinner"></div>
+              <span class="text-[10px] font-mono tracking-widest text-amber-300 font-bold uppercase">ACQUIRING GPS FIX...</span>
+            </div>
+            <!-- Live Satellite Fix Floating HUD (Visible when locked) -->
+            <div id="map-live-hud" class="hidden absolute top-2 left-2 bg-[#0E0C1C]/90 border border-purple-900/50 p-1.5 rounded text-[9px] text-slate-300 z-[1000] space-y-0.5 pointer-events-none backdrop-blur-sm font-mono">
+              <div>Lat: <span id="map-lat" class="text-white">--</span></div>
+              <div>Lon: <span id="map-lon" class="text-white">--</span></div>
+              <div>Alt: <span id="map-alt" class="text-white">--</span> m</div>
+              <div>VSpd: <span id="map-vspd" class="text-white">--</span> m/s</div>
+              <div>Drift: <span id="map-drift-speed" class="text-emerald-400">--</span> m/s</div>
+              <div>Heading: <span id="map-heading" class="text-sky-400">--</span></div>
+              <div>Phase: <span id="map-phase" class="text-purple-300 font-bold">PAD_IDLE</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2 / TILE 8: HUMIDITY CHART -->
+        <div id="tile-hum" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Humidity Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-hum')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-hum"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 3 / TILE 9: PRESSURE & TEMPERATURE DYNAMICS (DUAL AXIS) -->
+        <div id="tile-press-temp" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Pressure &amp; Temperature Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-press-temp')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-presstemp"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 3 / TILE 10: RAW TELEMETRY DATA GRID (13 INBOUND SERIAL FIELDS) -->
+        <div id="tile-raw-telem" class="dashboard-panel xl:col-span-2">
+          <div class="panel-header">
+            <span class="panel-title">Raw Telemetry</span>
+            <span class="text-[9px] font-mono text-purple-300/80 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/30">13 Inbound Fields</span>
+          </div>
+          <div class="p-2.5 flex-1 flex flex-col justify-center">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-[10.5px] font-mono">
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">temp</span><span><b id="t-temp" class="text-white">--</b> °C</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">pressure</span><span><b id="t-press" class="text-white">--</b> hPa</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">altitude</span><span><b id="t-alt" class="text-white">--</b> m</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">gx</span><span><b id="t-gx" class="text-white">--</b> °/s</span></div>
+
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">gy</span><span><b id="t-gy" class="text-white">--</b> °/s</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">gz</span><span><b id="t-gz" class="text-white">--</b> °/s</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">ax</span><span><b id="t-ax" class="text-white">--</b> g</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">ay</span><span><b id="t-ay" class="text-white">--</b> g</span></div>
+
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">az</span><span><b id="t-az" class="text-white">--</b> g</span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">lat</span><span><b id="t-lat" class="text-white">--</b></span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">lon</span><span><b id="t-lon" class="text-white">--</b></span></div>
+              <div class="flex justify-between border-b border-purple-900/20 pb-0.5"><span class="text-slate-400 font-sans">humidity</span><span><b id="t-hum" class="text-white">--</b> %</span></div>
+
+              <div class="flex justify-between col-span-2 sm:col-span-4 pt-1"><span class="text-slate-400 font-sans">batteryVoltage</span><span><b id="t-volt" class="text-purple-300 font-bold">--</b> V</span></div>
+            </div>
+
+            <!-- Live 3-Axis Readout Badges (from original interface, compact) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-purple-900/20 text-[9.5px]">
+              <div class="p-1 rounded bg-[#171424] border border-red-900/30 flex items-center justify-between font-mono">
+                <span class="text-rose-400 font-sans font-bold">X-Axis</span>
+                <span id="axis-badge-x" class="text-rose-300">ax: +0.00 g | gx: +0.00 °/s</span>
+              </div>
+              <div class="p-1 rounded bg-[#171424] border border-yellow-900/30 flex items-center justify-between font-mono">
+                <span class="text-amber-400 font-sans font-bold">Y-Axis</span>
+                <span id="axis-badge-y" class="text-amber-300">ay: +0.00 g | gy: +0.00 °/s</span>
+              </div>
+              <div class="p-1 rounded bg-[#171424] border border-cyan-900/30 flex items-center justify-between font-mono">
+                <span class="text-cyan-400 font-sans font-bold">Z-Axis</span>
+                <span id="axis-badge-z" class="text-cyan-300">az: +1.00 g | gz: +0.00 °/s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 3 / TILE 11: GENERAL INFORMATION TABLE -->
+        <div id="tile-info" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">General Information Table</span>
+            <button type="button" onclick="toggleTileMaximize('tile-info')" class="panel-expand-btn" title="Expand View">⤢</button>
+          </div>
+          <div class="p-2.5 flex-1 overflow-y-auto custom-scroll text-[10px] space-y-1 font-mono">
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Mission</span><span class="text-white font-bold">CANSAT-1</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Link Status</span><span id="info-status" class="text-rose-400 font-bold">Disconnected</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">GPS Fix</span><span id="info-gpsfix" class="text-slate-300">No Lock</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Latitude</span><span id="info-lat" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Longitude</span><span id="info-lon" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Altitude</span><span id="info-alt" class="text-white font-bold">-- m</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Vert. Speed</span><span id="info-vspd" class="text-emerald-400 font-bold">-- m/s</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Pitch</span><span id="info-pitch" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Roll</span><span id="info-roll" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans">Pressure</span><span id="info-presstemp" class="text-slate-200">-- hPa</span></div>
+
+            <!-- Extended Analytics -->
+            <div class="pt-1.5 mt-1.5 border-t border-purple-900/30 space-y-1 text-[9.5px]">
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Flight Phase</span><span id="info-phase" class="text-emerald-400 font-bold">PAD_IDLE</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Apogee Peak</span><span id="info-apogee" class="text-purple-300 font-bold">-- m</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400">NOMINAL</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Relative Humidity</span><span id="info-hum">-- %</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">DewPt / Air Dens</span><span id="info-dewdensity">-- °C · -- kg/m³</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Total Accel Mag</span><span id="info-accelmag">-- g</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">LiPo Battery</span><span id="info-bat">-- V (0%)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Packets Ingested</span><span id="info-samples">0</span></div>
+            </div>
+          </div>
+        </div>
+
+      </main>
     </div>
-    <div class="grid grid-cols-2 gap-2">
-      <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-glass text-xs font-semibold py-2.5 rounded-xl uppercase tracking-wide">
-        DEMO REALTIME
-      </button>
-      <button type="button" onclick="openModal('aiModal')" class="btn-glass text-xs font-semibold py-2.5 rounded-xl tracking-wide flex items-center justify-center space-x-1.5 text-purple-200">
-        <span class="text-purple-400">✦</span><span>MISSION ASSISTANT AI</span>
-      </button>
-    </div>
-    <div class="text-center text-[11px] text-purple-300/70 py-0.5 font-mono">
-      <span id="sample-count-top" class="text-purple-300 font-bold">0</span> PACKETS INGESTED
-    </div>
+
   </div>
 
-  <!-- ATMOSPHERIC & METEOROLOGICAL SOUNDINGS -->
-  <section class="glass-card p-3.5 mb-3.5 text-xs">
-    <div class="text-[10px] text-purple-300/90 uppercase tracking-widest mb-2.5 font-bold flex items-center justify-between">
-      <span>Atmospheric Sounding Metrics</span>
-      <span class="text-[9px] text-purple-400/60 font-mono">Thermodynamics</span>
-    </div>
-    <div class="grid grid-cols-3 gap-2 text-center font-mono">
-      <div class="bg-[#151126]/90 p-2.5 rounded-xl border border-purple-900/30">
-        <div class="text-[9px] text-slate-400 uppercase font-sans">Dew Point (Td)</div>
-        <div id="met-dewpoint" class="text-xs sm:text-sm font-bold text-sky-400 mt-1">-- °C</div>
-        <div class="text-[9px] text-slate-500 mt-0.5 font-sans">Magnus-Tetens</div>
-      </div>
-      <div class="bg-[#151126]/90 p-2.5 rounded-xl border border-purple-900/30">
-        <div class="text-[9px] text-slate-400 uppercase font-sans">Lapse Rate (ELR)</div>
-        <div id="met-lapserate" class="text-xs sm:text-sm font-bold text-purple-300 mt-1">-- °C/100m</div>
-        <div class="text-[9px] text-slate-500 mt-0.5 font-sans">-dT / dz</div>
-      </div>
-      <div class="bg-[#151126]/90 p-2.5 rounded-xl border border-purple-900/30">
-        <div class="text-[9px] text-slate-400 uppercase font-sans">Air Density (&rho;)</div>
-        <div id="met-airdensity" class="text-xs sm:text-sm font-bold text-emerald-400 mt-1">-- kg/m³</div>
-        <div class="text-[9px] text-slate-500 mt-0.5 font-sans">Ideal Gas Law</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FIELD RECOVERY & TRAJECTORY TOOL (PURPLE & BLACK OVERHAUL) -->
-  <section id="recovery-lock-card" class="glass-card p-3.5 mb-3.5 text-xs border-purple-800/30 bg-gradient-to-br from-[#161228]/95 to-[#0F0D1C]/95">
-    <div class="flex items-center justify-between mb-2">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_#A855F7]"></span>
-        <span class="text-purple-200 font-bold text-xs uppercase tracking-wide">
-          Field Recovery &amp; Navigation
-        </span>
-      </div>
-      <span id="recovery-lock-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 border border-purple-700/60 text-purple-300 font-mono font-medium">STANDBY</span>
-    </div>
-    
-    <div class="grid grid-cols-2 gap-2 text-[11px] mb-3 text-slate-300 font-mono bg-[#110D20]/80 p-2.5 rounded-xl border border-purple-900/30">
-      <div>Target Lat: <b id="rec-lat" class="text-white">--</b></div>
-      <div>Target Lon: <b id="rec-lon" class="text-white">--</b></div>
-      <div>Pad Distance: <b id="rec-dist" class="text-emerald-400">0 m</b></div>
-      <div>Ground Drift: <b id="rec-drift" class="text-purple-300">--°</b></div>
-    </div>
-
-    <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="w-full py-2.5 rounded-xl text-xs font-bold btn-gradient-purple uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg">
-      <span>OPEN COORDINATES IN GOOGLE MAPS</span>
-    </button>
-  </section>
-
-  <!-- LIPO BATTERY POWER GAUGE -->
-  <div class="text-center my-5">
-    <div class="text-[10px] uppercase text-purple-300/70 tracking-widest mb-1.5 font-bold">LIPO BATTERY POTENTIAL</div>
-    <div class="w-28 h-10 border-2 border-purple-500/80 mx-auto rounded-lg relative p-0.5 flex items-center bg-[#0F0C1B] shadow-[0_0_12px_rgba(124,58,237,0.2)]">
-      <div id="bat-fill" class="h-full bg-purple-500/80 rounded transition-all duration-300" style="width: 0%;"></div>
-      <div id="bat-nipple" class="absolute -right-2 top-2.5 bottom-2.5 w-1.5 bg-purple-500/80 rounded-r"></div>
-    </div>
-    <div id="bat-percent" class="text-purple-300 text-sm font-bold mt-1.5 font-mono">0%</div>
-    <div id="bat-volts" class="text-slate-400 text-xs font-mono">-- V</div>
-  </div>
-
-  <!-- LIVE SENSOR READOUTS ON AXIS BADGES -->
-  <div class="space-y-1.5 mb-4 px-0.5">
-    <div class="flex items-center justify-between p-2 rounded-xl bg-[#161226]/80 border border-purple-900/30 text-[11px]">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-rose-500 rounded-full shadow-[0_0_6px_#F43F5E]"></span>
-        <span class="text-slate-200 font-medium">X-Axis Acceleration &amp; Gyro</span>
-      </div>
-      <div class="font-mono text-rose-400 font-semibold" id="axis-badge-x">ax: +0.00 g | gx: +0.00 °/s</div>
-    </div>
-    <div class="flex items-center justify-between p-2 rounded-xl bg-[#161226]/80 border border-purple-900/30 text-[11px]">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-purple-400 rounded-full shadow-[0_0_6px_#C084FC]"></span>
-        <span class="text-slate-200 font-medium">Y-Axis Acceleration &amp; Gyro</span>
-      </div>
-      <div class="font-mono text-purple-300 font-semibold" id="axis-badge-y">ay: +0.00 g | gy: +0.00 °/s</div>
-    </div>
-    <div class="flex items-center justify-between p-2 rounded-xl bg-[#161226]/80 border border-purple-900/30 text-[11px]">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_#34D399]"></span>
-        <span class="text-slate-200 font-medium">Z-Axis Acceleration &amp; Gyro</span>
-      </div>
-      <div class="font-mono text-emerald-400 font-semibold" id="axis-badge-z">az: +1.00 g | gz: +0.00 °/s</div>
-    </div>
-  </div>
-
-  <!-- 9-MODAL LAUNCHER GRID -->
-  <div class="grid grid-cols-2 gap-2 mb-4">
-    <button type="button" onclick="openModal('accelModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">XYZ Acceleration</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('orientModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">Attitude / Fusion</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('vSpeedModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">Vertical Speed</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('altModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">Altitude Chart</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('gyroModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">XYZ Gyroscope</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('modelModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="text-purple-200 font-semibold">CanSat 3D Model</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('gpsModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="text-sky-200 font-semibold">GPS Ground Track</span><span class="text-sky-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('humModal')" class="btn-glass p-3 rounded-xl text-xs flex justify-between items-center">
-      <span class="font-medium">Humidity Chart</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-    <button type="button" onclick="openModal('pressTempModal')" class="btn-glass col-span-2 p-3 rounded-xl text-xs flex justify-center items-center space-x-2">
-      <span class="font-medium">Pressure &amp; Temperature Dynamics</span><span class="text-purple-400 font-mono">↗</span>
-    </button>
-  </div>
-
-  <!-- RAW TELEMETRY (13 INBOUND FIELDS READOUT) -->
-  <section class="glass-card p-3.5 mb-4 text-xs">
-    <div class="text-slate-400 text-[11px] pb-2.5 border-b border-purple-900/20 flex justify-between items-center">
-      <span class="text-purple-300 font-bold font-mono">Inbound Serial Bus Stream</span>
-      <span class="font-mono text-[10px] bg-purple-950/60 px-2 py-0.5 rounded text-purple-300 border border-purple-800/30">13 Fields</span>
-    </div>
-    <div class="grid grid-cols-2 gap-y-2 pt-2.5 text-[11px] font-mono">
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">temp</span><span><b id="t-temp" class="text-slate-100">--</b> °C</span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">pressure</span><span><b id="t-press" class="text-slate-100">--</b> hPa</span></div>
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">altitude</span><span><b id="t-alt" class="text-slate-100">--</b> m</span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">gx</span><span><b id="t-gx" class="text-slate-100">--</b> °/s</span></div>
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">gy</span><span><b id="t-gy" class="text-slate-100">--</b> °/s</span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">gz</span><span><b id="t-gz" class="text-slate-100">--</b> °/s</span></div>
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">ax</span><span><b id="t-ax" class="text-slate-100">--</b> g</span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">ay</span><span><b id="t-ay" class="text-slate-100">--</b> g</span></div>
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">az</span><span><b id="t-az" class="text-slate-100">--</b> g</span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">lat</span><span><b id="t-lat" class="text-slate-100">--</b></span></div>
-      <div class="flex justify-between pr-2"><span class="text-slate-400 font-sans">lon</span><span><b id="t-lon" class="text-slate-100">--</b></span></div>
-      <div class="flex justify-between pl-2"><span class="text-slate-400 font-sans">humidity</span><span><b id="t-hum" class="text-slate-100">--</b> %</span></div>
-      <div class="flex justify-between pr-2 col-span-2"><span class="text-slate-400 font-sans">batteryVoltage</span><span><b id="t-volt" class="text-slate-100">--</b> V</span></div>
-    </div>
-  </section>
-
-  <!-- GENERAL MISSION INFORMATION TABLE -->
-  <section class="glass-card p-3.5 text-xs mb-8">
-    <div class="text-slate-400 text-[11px] pb-2.5 border-b border-purple-900/20 flex justify-between items-center">
-      <span class="font-bold text-purple-200">Mission Dynamics &amp; Health</span>
-      <span class="text-[10px] text-purple-300 font-mono">Edge Analytics</span>
-    </div>
-    <div class="space-y-2 pt-2.5 text-[11px]">
-      <div class="flex justify-between"><span class="text-slate-400">Vehicle Bus</span><span class="text-purple-300 font-semibold font-mono">COGNITIVE-CANSAT-1</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Link Status</span><span id="info-status" class="text-rose-400 font-mono font-semibold">Disconnected</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Active Flight Phase</span><span id="info-phase" class="text-emerald-400 font-mono font-bold">PAD_IDLE</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400 font-mono">NOMINAL</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">GPS Fix</span><span id="info-gpsfix" class="font-mono">No lock</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Smoothed Position</span><span id="info-pos" class="font-mono">-- , --</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Baro Altitude</span><span id="info-alt" class="font-mono text-slate-100">-- m</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Apogee Peak</span><span id="info-apogee" class="text-purple-300 font-mono font-bold">-- m</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Vertical Velocity (vz)</span><span id="info-vspd" class="font-mono">-- m/s</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Attitude (Pitch/Roll)</span><span id="info-attitude" class="font-mono">--° / --°</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Pressure / Temperature</span><span id="info-presstemp" class="font-mono">-- hPa · -- °C</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Relative Humidity</span><span id="info-hum" class="font-mono">-- %</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Dew Point / Air Density</span><span id="info-dewdensity" class="font-mono">-- °C · -- kg/m³</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Total Accel Magnitude</span><span id="info-accelmag" class="font-mono">-- g</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">LiPo Battery Power</span><span id="info-bat" class="font-mono">-- V (0%)</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Ingested Telemetry Packets</span><span id="info-samples" class="font-mono text-slate-100">0</span></div>
-    </div>
-  </section>
-
-  <!-- ALL MODALS -->
+  <!-- ============================================================== -->
+  <!-- MODALS CONTAINER                                               -->
+  <!-- ============================================================== -->
   <div id="modalContainer">
 
-    <!-- RAW FEED MODAL -->
+    <!-- RAW SERIAL FEED STREAM MODAL -->
     <div id="rawFeedModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[550px] p-4 flex flex-col relative border border-purple-800/40 shadow-2xl">
+      <div class="dashboard-panel w-full max-w-xl h-[520px] p-4 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118]">
         <button type="button" onclick="closeModal('rawFeedModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-sm">✕</button>
         <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
           <span>📡</span> Raw Serial Feed &amp; Packet Ingestion Stream
@@ -565,136 +894,54 @@
       </div>
     </div>
 
-    <!-- ACCELERATION MODAL -->
-    <div id="accelModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('accelModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">XYZ Acceleration Forces (g)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-accel"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ORIENTATION MODAL -->
-    <div id="orientModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('orientModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">Madgwick Stabilized Orientation (° Pitch &amp; Roll)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-orient"></canvas></div>
-      </div>
-    </div>
-
-    <!-- VERTICAL SPEED MODAL -->
-    <div id="vSpeedModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('vSpeedModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">Vertical Ascent / Descent Velocity (m/s)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-vspd"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ALTITUDE MODAL -->
-    <div id="altModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('altModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">Barometric Flight Altitude (m)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-alt"></canvas></div>
-      </div>
-    </div>
-
-    <!-- GYROSCOPE MODAL -->
-    <div id="gyroModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('gyroModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">XYZ Angular Rates (°/s)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-gyro"></canvas></div>
-      </div>
-    </div>
-
-    <!-- HUMIDITY MODAL -->
-    <div id="humModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('humModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">Relative Humidity (%)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-hum"></canvas></div>
-      </div>
-    </div>
-
-    <!-- PRESSURE & TEMP MODAL -->
-    <div id="pressTempModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative">
-        <button type="button" onclick="closeModal('pressTempModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
-        <h3 class="text-sm font-bold text-slate-200 mb-2">Barometric Pressure (hPa) &amp; Temperature (°C)</h3>
-        <div class="flex-1 chart-wrap"><canvas id="chart-presstemp"></canvas></div>
-      </div>
-    </div>
-
-    <!-- 3D CANSAT MODEL MODAL -->
-    <div id="modelModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[520px] p-4 flex flex-col relative border border-purple-800/40 shadow-2xl">
-        <button type="button" onclick="closeModal('modelModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white z-20 text-sm">✕</button>
-        <div class="flex justify-between items-center mb-1.5 pr-8">
-          <h3 class="text-sm font-bold text-purple-200 flex items-center gap-1.5">
-            <span>🛰️</span> CanSat 3D Model &amp; Dynamic Attitude
-          </h3>
-        </div>
-        <div class="text-[10px] text-purple-200/70 mb-2 flex items-center gap-3 font-mono">
-          <span>Pitch: <b id="model-pitch" class="text-rose-400">0.0°</b></span>
-          <span>Roll: <b id="model-roll" class="text-cyan-400">0.0°</b></span>
-          <span>Yaw: <b id="model-yaw" class="text-emerald-400">0.0°</b></span>
-          <span class="text-slate-400 ml-auto font-sans">Drag to rotate • Scroll to zoom</span>
-        </div>
-        <div id="canvas-3d" class="flex-1 w-full rounded-xl bg-[#090812] overflow-hidden border border-purple-900/30"></div>
-      </div>
-    </div>
-
-    <!-- GPS MAP MODAL -->
-    <div id="gpsModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[580px] p-4 flex flex-col relative border border-purple-800/40 shadow-2xl">
-        <button type="button" onclick="closeModal('gpsModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white z-20 text-sm">✕</button>
-        <div class="flex justify-between items-center mb-2 pr-8">
-          <h3 class="text-sm font-bold text-sky-200 flex items-center gap-1.5">
-            <span>🛰️</span> GPS Flight Track &amp; Trajectory Map
-          </h3>
-        </div>
-        <div class="relative flex-1 rounded-xl overflow-hidden border border-purple-900/30">
-          <div id="map" class="w-full h-full"></div>
-          <!-- Live Telemetry Floating HUD on Map -->
-          <div class="absolute top-2 left-2 bg-[#0E0C1C]/90 border border-purple-900/40 p-2.5 rounded-xl text-[10px] text-slate-300 z-[1000] space-y-0.5 pointer-events-none backdrop-blur-md font-mono">
-            <div class="text-purple-300 font-bold mb-1 flex items-center gap-1.5 font-sans">
-              <span class="w-2 h-2 rounded-full bg-purple-400 led-pulse"></span> LIVE SATELLITE FIX
-            </div>
-            <div>Lat: <span id="map-lat" class="text-white">--</span></div>
-            <div>Lon: <span id="map-lon" class="text-white">--</span></div>
-            <div>Altitude: <span id="map-alt" class="text-white">--</span> m</div>
-            <div>Vert. Spd: <span id="map-vspd" class="text-white">--</span> m/s</div>
-            <div>Drift Speed: <span id="map-drift-speed" class="text-emerald-400">--</span> m/s</div>
-            <div>Heading: <span id="map-heading" class="text-sky-400">--</span></div>
-            <div>Phase: <span id="map-phase" class="text-purple-300 font-bold font-sans">PAD_IDLE</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- MISSION ASSISTANT AI MODAL -->
     <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card w-full max-w-lg h-[480px] p-4 flex flex-col relative border border-purple-800/40 shadow-2xl">
+      <div class="dashboard-panel w-full max-w-lg h-[480px] p-4 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118]">
         <button type="button" onclick="closeModal('aiModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
         <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-1.5">
-          <span class="text-purple-400">✦</span> Mission Assistant AI Evaluation
+          <span class="text-purple-400">✦</span> Cognitive CanSat AI Diagnostics
         </h3>
         <div class="flex-1 overflow-y-auto space-y-3 text-xs text-slate-300 custom-scroll pr-1">
-          <div class="bg-[#17132B] p-3 rounded-xl border border-purple-900/40">
-            <div class="text-[11px] text-purple-300 font-semibold mb-1">Autonomous Flight Diagnostics</div>
+          <div class="bg-[#17132B] p-3 rounded-lg border border-purple-900/40">
+            <div class="text-[11px] text-purple-300 font-semibold mb-1">Autonomous Flight Diagnostics Engine</div>
             <p class="text-slate-400 text-[11px]">Real-time telemetry inspector evaluating sensor calibration margins, atmospheric sounding envelopes, aerodynamic stability, and parachute deployment timing.</p>
           </div>
-          <button type="button" onclick="analyzeData()" class="w-full text-left bg-[#130F24] hover:bg-[#1C1733] border border-purple-900/40 p-3 rounded-xl text-purple-100 flex items-center justify-between transition-all">
+          <button type="button" onclick="analyzeData()" class="w-full text-left bg-[#130F24] hover:bg-[#1C1733] border border-purple-900/40 p-3 rounded-lg text-purple-100 flex items-center justify-between transition-all">
             <span class="font-medium">Run full flight telemetry evaluation</span>
-            <span class="text-purple-300 font-semibold font-mono text-[11px] bg-purple-950/80 px-2.5 py-1 rounded-lg border border-purple-700/50">EVALUATE →</span>
+            <span class="text-purple-300 font-semibold font-mono text-[11px] bg-purple-950/80 px-2.5 py-1 rounded border border-purple-700/50">EVALUATE →</span>
           </button>
-          <div id="ai-response" class="text-[11px] text-purple-200 bg-purple-950/30 p-3.5 rounded-xl border border-purple-900/40 hidden space-y-1 font-mono"></div>
+          <div id="ai-response" class="text-[11px] text-purple-200 bg-purple-950/30 p-3.5 rounded-lg border border-purple-900/40 hidden space-y-1 font-mono"></div>
         </div>
       </div>
     </div>
+
+    <!-- HELP & DOCUMENTATION MODAL -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="dashboard-panel w-full max-w-lg p-5 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118] text-xs">
+        <button type="button" onclick="closeModal('helpModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <span>ℹ️</span> Ground Station Operational Guide
+        </h3>
+        <div class="space-y-2.5 text-slate-300 leading-relaxed font-sans">
+          <p><b class="text-purple-300">1. USB Serial Connection:</b> Click <code>CONNECT</code> to stream live telemetry from USB UART (ESP32/STM32/LoRa) at 115200 baud via Web Serial API.</p>
+          <p><b class="text-purple-300">2. Flight Replay &amp; Tests:</b> Click <code>REPLAY SUITE</code> in the sidebar to open the 10 flight profile test suite or upload your own CSV file.</p>
+          <p><b class="text-purple-300">3. Interactive 3D Model:</b> Click and drag the CanSat in its tile to orbit and inspect orientation. Mouse wheel zooms.</p>
+          <p><b class="text-purple-300">4. Tile Maximization:</b> Click the <code>⤢</code> icon in the header of any card to zoom that visualization to full screen.</p>
+          <p><b class="text-purple-300">5. CSV Data Export:</b> Click <code>DOWNLOAD DATA</code> anytime to download an RFC 4180 compliant CSV recording.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legacy Compatibility Stubs for Modals (so openModal('accelModal') works seamlessly) -->
+    <div id="accelModal" class="hidden"></div>
+    <div id="orientModal" class="hidden"></div>
+    <div id="vSpeedModal" class="hidden"></div>
+    <div id="altModal" class="hidden"></div>
+    <div id="gyroModal" class="hidden"></div>
+    <div id="humModal" class="hidden"></div>
+    <div id="pressTempModal" class="hidden"></div>
+    <div id="modelModal" class="hidden"></div>
+    <div id="gpsModal" class="hidden"></div>
 
   </div>
 
@@ -791,7 +1038,7 @@
           mlServerOnline = true;
           dot.className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
           text.innerText = 'PYTHON ML (ONLINE)';
-          badge.className = 'pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/30';
+          badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 text-emerald-300';
           return;
         }
       }
@@ -801,11 +1048,11 @@
     mlServerOnline = false;
     dot.className = 'led-dot bg-purple-400 text-purple-400';
     text.innerText = 'PYTHON ML (STANDBY)';
-    badge.className = 'pill-tag text-purple-300 border-purple-800/40 bg-purple-950/20';
+    badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-purple-800/40 bg-purple-950/30 text-purple-300';
   }
 
   setInterval(checkMlServerHealth, 3500);
-  setTimeout(checkMlServerHealth, 200);
+  setTimeout(checkMlServerHealth, 300);
 
   async function requestPythonMlInference(parsed, vSpd) {
     if (!mlServerOnline || mlInferenceInFlight) return;
@@ -852,36 +1099,34 @@
 
   function applyMlInferenceToUi(res) {
     if (!res || res.status !== 'success') return;
-    // Update Anomaly Badge with PyOD IForest Score
     const badge = document.getElementById('anomaly-badge');
     const badgeText = document.getElementById('anomaly-badge-text');
     if (badge && badgeText) {
       if (!res.is_anomaly) {
-        badge.className = 'pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/20';
+        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 text-emerald-300';
         badge.querySelector('.led-dot').className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
         badgeText.innerText = 'NOMINAL [PyOD: ' + res.anomaly_score.toFixed(2) + ']';
       } else {
-        badge.className = 'pill-tag text-rose-300 border-rose-800/50 bg-rose-950/40 alert-glow';
+        badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-rose-800/50 bg-rose-950/40 alert-glow text-rose-300';
         badge.querySelector('.led-dot').className = 'led-dot bg-rose-500 text-rose-500';
         badgeText.innerText = 'ANOMALY [' + res.anomaly_type + ' / ' + res.anomaly_score.toFixed(2) + ']';
         triggerSafetyAlarm('ML OUTLIER: ' + res.anomaly_type, 'PyOD Isolation Forest anomaly score: ' + res.anomaly_score.toFixed(3));
       }
     }
 
-    // Update Flight Phase if confident and different
     if (res.phase_confidence > 0.65 && res.predicted_phase !== currentFlightPhase) {
       currentFlightPhase = res.predicted_phase;
       updateStageTrackerUI(currentFlightPhase);
     }
   }
 
-  // Three.js
+  // Three.js Scene Variables
   let scene, camera, renderer, cansatGroup, animId;
   let threeReady = false;
   let isDragging3D = false;
   let previousMousePosition = { x: 0, y: 0 };
 
-  // Leaflet Map
+  // Leaflet Map Variables
   let map = null;
   let ascentTrail = null;
   let descentTrail = null;
@@ -902,7 +1147,6 @@
     const parts = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
     if (parts.length < 2) return null;
 
-    // Skip header rows
     if (parts[0].toLowerCase().includes('time') || parts[0].toLowerCase().includes('temp')) {
       return null;
     }
@@ -1045,16 +1289,18 @@
 
     const badge = document.getElementById('anomaly-badge');
     const badgeText = document.getElementById('anomaly-badge-text');
+    if (!badge || !badgeText) return;
+
     if (severity === 0) {
-      badge.className = 'pill-tag text-emerald-300 border-emerald-800/40 bg-emerald-950/20';
+      badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 text-emerald-300';
       badge.querySelector('.led-dot').className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
       badgeText.innerText = 'NOMINAL FLIGHT';
     } else if (severity === 1) {
-      badge.className = 'pill-tag text-purple-300 border-purple-700/50 bg-purple-950/40';
+      badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-purple-700/50 bg-purple-950/40 text-purple-300';
       badge.querySelector('.led-dot').className = 'led-dot bg-purple-400 text-purple-400';
       badgeText.innerText = 'WARNING [' + code + ']';
     } else {
-      badge.className = 'pill-tag text-rose-300 border-rose-800/50 bg-rose-950/40 alert-glow';
+      badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono flex items-center gap-1.5 border border-rose-800/50 bg-rose-950/40 alert-glow text-rose-300';
       badge.querySelector('.led-dot').className = 'led-dot bg-rose-500 text-rose-500';
       badgeText.innerText = 'ANOMALY [' + code + ']';
       triggerSafetyAlarm('CRITICAL FLIGHT ANOMALY: ' + code, 'Out-of-envelope sensor telemetry detected.');
@@ -1146,7 +1392,13 @@
   // --- GPS SMOOTHING & FIELD RECOVERY ---
   function updateGpsAndRecovery(lat, lon, alt, vSpd) {
     const locked = gpsLocked(lat, lon);
+    const overlay = document.getElementById('gps-acquiring-overlay');
+    const hud = document.getElementById('map-live-hud');
+
     if (locked) {
+      if (overlay) overlay.classList.add('hidden');
+      if (hud) hud.classList.remove('hidden');
+
       if (!gpsLockEstablished) {
         smoothLat = lat;
         smoothLon = lon;
@@ -1163,10 +1415,13 @@
       let bearing = (Math.atan2(dLon, dLat) * 180.0 / Math.PI);
       if (bearing < 0) bearing += 360;
 
-      document.getElementById('rec-lat').innerText = smoothLat.toFixed(6) + '°';
-      document.getElementById('rec-lon').innerText = smoothLon.toFixed(6) + '°';
+      document.getElementById('rec-lat').innerText = smoothLat.toFixed(5) + '°';
+      document.getElementById('rec-lon').innerText = smoothLon.toFixed(5) + '°';
       document.getElementById('rec-dist').innerText = groundDist.toFixed(1) + ' m';
-      document.getElementById('rec-drift').innerText = bearing.toFixed(1) + '° (' + getCardinal(bearing) + ')';
+      document.getElementById('rec-drift').innerText = bearing.toFixed(0) + '° (' + getCardinal(bearing) + ')';
+
+      document.getElementById('info-lat').innerText = smoothLat.toFixed(6) + '°';
+      document.getElementById('info-lon').innerText = smoothLon.toFixed(6) + '°';
 
       if (mapReady) {
         const pos = [smoothLat, smoothLon];
@@ -1183,6 +1438,9 @@
       document.getElementById('map-lon').innerText = smoothLon.toFixed(6);
       document.getElementById('map-drift-speed').innerText = Math.abs(vSpd * 0.4).toFixed(1);
       document.getElementById('map-heading').innerText = bearing.toFixed(0) + '° ' + getCardinal(bearing);
+    } else {
+      if (overlay) overlay.classList.remove('hidden');
+      if (hud) hud.classList.add('hidden');
     }
   }
 
@@ -1194,7 +1452,7 @@
   function lockTouchdownCoordinates() {
     const badge = document.getElementById('recovery-lock-badge');
     if (badge) {
-      badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500 text-emerald-300 font-bold font-mono';
+      badge.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/90 border border-emerald-500 text-emerald-300 font-bold font-mono';
       badge.innerText = 'LOCKED';
     }
   }
@@ -1270,31 +1528,34 @@
     return header + '\r\n' + body + '\r\n';
   }
 
-  // --- CHART.JS CONFIGURATION ---
+  // --- CHART.JS CONFIGURATION (HIGH-DENSITY SPACE TECH PALETTE) ---
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
     scales: {
       x: {
-        grid: { color: 'rgba(139, 92, 246, 0.08)' },
-        ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 8 }
+        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+        ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 6 }
       },
       y: {
-        grid: { color: 'rgba(139, 92, 246, 0.08)' },
+        grid: { color: 'rgba(255, 255, 255, 0.04)' },
         ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 } }
       }
     },
     plugins: {
       legend: {
         display: true,
-        labels: { color: '#94A3B8', boxWidth: 10, font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' } }
+        position: 'top',
+        align: 'end',
+        labels: { color: '#94A3B8', boxWidth: 8, font: { family: 'Plus Jakarta Sans', size: 9, weight: '500' } }
       }
     }
   };
 
   function initLineChart(id, datasets, extra) {
     const el = document.getElementById(id);
+    if (!el) return null;
     const ctx = el.getContext('2d');
     return new Chart(ctx, {
       type: 'line',
@@ -1304,34 +1565,40 @@
   }
 
   const ds = (label, color) => ({
-    label, borderColor: color, backgroundColor: color, borderWidth: 1.75,
-    data: [], pointRadius: 0, tension: 0.25
+    label, borderColor: color, backgroundColor: color, borderWidth: 1.5,
+    data: [], pointRadius: 0, tension: 0.2
   });
 
-  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#F43F5E'), ds('ay (g)', '#C084FC'), ds('az (g)', '#10B981')]);
-  const orientChart = initLineChart('chart-orient', [ds('Pitch θ (°)', '#F43F5E'), ds('Roll φ (°)', '#38BDF8')]);
+  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')]);
+  const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')]);
   const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')]);
   const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#A78BFA')]);
-  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#F43F5E'), ds('gy (°/s)', '#C084FC'), ds('gz (°/s)', '#10B981')]);
-  const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#38BDF8')]);
+  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')]);
+  const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#06B6D4')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: { min: 0, max: 100, grid: chartOptions.scales.y.grid, ticks: chartOptions.scales.y.ticks }
+    }
+  });
   const pressTempChart = initLineChart('chart-presstemp', [
-    Object.assign(ds('Pressure (hPa)', '#F43F5E'), { yAxisID: 'yP' }),
-    Object.assign(ds('Temp (°C)', '#38BDF8'), { yAxisID: 'yT' })
+    Object.assign(ds('Pressure (hPa)', '#EF4444'), { yAxisID: 'yP' }),
+    Object.assign(ds('Temp (°C)', '#06B6D4'), { yAxisID: 'yT' })
   ], {
     scales: {
       x: chartOptions.scales.x,
-      yP: { type: 'linear', position: 'left', grid: { color: 'rgba(139, 92, 246, 0.08)' }, ticks: { color: '#F43F5E', font: { family: 'JetBrains Mono', size: 9 } }, title: { display: true, text: 'hPa', color: '#F43F5E', font: { size: 10 } } },
-      yT: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#38BDF8', font: { family: 'JetBrains Mono', size: 9 } }, title: { display: true, text: '°C', color: '#38BDF8', font: { size: 10 } } }
+      yP: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)' }, ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 9 } } },
+      yT: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 9 } } }
     }
   });
 
-  const allCharts = [accelChart, orientChart, vSpeedChart, altChart, gyroChart, humChart, pressTempChart];
+  const allCharts = [accelChart, orientChart, vSpeedChart, altChart, gyroChart, humChart, pressTempChart].filter(Boolean);
 
   function pushChart(chart, values) {
+    if (!chart) return;
     const count = telemetryHistory.length;
     const secLabel = (count * (DEMO_DT_MS / 1000)).toFixed(0) + 's';
     chart.data.labels.push(secLabel);
-    values.forEach((v, i) => chart.data.datasets[i].data.push(v));
+    values.forEach((v, i) => { if (chart.data.datasets[i]) chart.data.datasets[i].data.push(v); });
     if (chart.data.labels.length > MAX_CHART_POINTS) {
       chart.data.labels.shift();
       chart.data.datasets.forEach((d) => d.data.shift());
@@ -1343,9 +1610,12 @@
     allCharts.forEach((c) => { try { c.resize(); } catch (e) { /* ignore */ } });
   }
 
-  // --- LEAFLET MULTI-LAYER MAP ---
+  // --- LEAFLET MULTI-LAYER MAP (DIRECT DASHBOARD INITIALIZATION) ---
   function initMap() {
     if (mapReady) return;
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+
     map = L.map('map', { attributionControl: false, zoomControl: true }).setView(HOME, 16);
 
     const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -1371,140 +1641,144 @@
     descentTrail = L.polyline([], { color: '#A855F7', weight: 3, opacity: 0.9, dashArray: '4, 4' }).addTo(map);
 
     padMarker = L.circleMarker(HOME, {
-      radius: 7, color: '#A855F7', fillColor: '#7C3AED', fillOpacity: 0.9, weight: 2
+      radius: 6, color: '#A855F7', fillColor: '#5d35e8', fillOpacity: 0.9, weight: 2
     }).addTo(map).bindPopup('Launch Pad 01');
 
     marker = L.circleMarker(HOME, {
-      radius: 6, color: '#C084FC', fillColor: '#8B5CF6', fillOpacity: 1, weight: 2
+      radius: 6, color: '#EAB308', fillColor: '#F59E0B', fillOpacity: 1, weight: 2
     }).addTo(map);
 
     mapReady = true;
+    setTimeout(() => map.invalidateSize(), 200);
   }
 
   function resizeMap() {
-    if (!mapReady) return;
+    if (!mapReady || !map) return;
     map.invalidateSize();
   }
 
-  // --- THREE.JS 3D CANSAT MODEL ---
+  // --- THREE.JS 3D CANSAT MODEL (DIRECT DASHBOARD INITIALIZATION) ---
   function init3D() {
+    if (threeReady) return;
     const container = document.getElementById('canvas-3d');
-    const w = Math.max(container.clientWidth, 1);
-    const h = Math.max(container.clientHeight, 1);
-    if (!threeReady) {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
-      camera.position.set(3.8, 3.0, 5.2);
-      camera.lookAt(0, 0, 0);
+    if (!container) return;
 
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.setSize(w, h);
-      renderer.shadowMap.enabled = true;
-      container.appendChild(renderer.domElement);
+    const w = Math.max(container.clientWidth, 100);
+    const h = Math.max(container.clientHeight, 100);
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-      scene.add(ambientLight);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+    camera.position.set(3.8, 2.8, 5.0);
+    camera.lookAt(0, 0, 0);
 
-      const keyLight = new THREE.DirectionalLight(0xA855F7, 1.3);
-      keyLight.position.set(5, 8, 5);
-      scene.add(keyLight);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h);
+    container.appendChild(renderer.domElement);
 
-      const fillLight = new THREE.DirectionalLight(0x38BDF8, 0.6);
-      fillLight.position.set(-5, -2, -4);
-      scene.add(fillLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
 
-      const grid = new THREE.GridHelper(8, 8, 0x7C3AED, 0x1E1A33);
-      grid.position.y = -1.6;
-      scene.add(grid);
+    const keyLight = new THREE.DirectionalLight(0x9d7bfc, 1.4);
+    keyLight.position.set(5, 8, 5);
+    scene.add(keyLight);
 
-      cansatGroup = new THREE.Group();
+    const fillLight = new THREE.DirectionalLight(0x06B6D4, 0.6);
+    fillLight.position.set(-5, -2, -4);
+    scene.add(fillLight);
 
-      const bodyGeom = new THREE.CylinderGeometry(0.7, 0.7, 2.2, 32);
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color: 0x221C38,
-        metalness: 0.85,
-        roughness: 0.25
-      });
-      const body = new THREE.Mesh(bodyGeom, bodyMat);
-      cansatGroup.add(body);
+    const grid = new THREE.GridHelper(8, 8, 0x5d35e8, 0x1E1A33);
+    grid.position.y = -1.5;
+    scene.add(grid);
 
-      const solarGeom = new THREE.CylinderGeometry(0.705, 0.705, 1.5, 16, 1, true);
-      const solarMat = new THREE.MeshStandardMaterial({
-        color: 0x381E66,
-        emissive: 0x1A0D33,
-        metalness: 0.9,
-        roughness: 0.2
-      });
-      const solar = new THREE.Mesh(solarGeom, solarMat);
-      cansatGroup.add(solar);
+    cansatGroup = new THREE.Group();
 
-      const ringGeom = new THREE.TorusGeometry(0.71, 0.03, 16, 32);
-      const ringMat = new THREE.MeshStandardMaterial({ color: 0x7C3AED, metalness: 0.9, roughness: 0.1 });
-      const topRing = new THREE.Mesh(ringGeom, ringMat);
-      topRing.rotation.x = Math.PI / 2;
-      topRing.position.y = 1.1;
-      cansatGroup.add(topRing);
+    const bodyGeom = new THREE.CylinderGeometry(0.7, 0.7, 2.2, 32);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x1E1C2B,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+    const body = new THREE.Mesh(bodyGeom, bodyMat);
+    cansatGroup.add(body);
 
-      const botRing = topRing.clone();
-      botRing.position.y = -1.1;
-      cansatGroup.add(botRing);
+    const solarGeom = new THREE.CylinderGeometry(0.705, 0.705, 1.5, 16, 1, true);
+    const solarMat = new THREE.MeshStandardMaterial({
+      color: 0x311E5E,
+      emissive: 0x170D33,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const solar = new THREE.Mesh(solarGeom, solarMat);
+    cansatGroup.add(solar);
 
-      const eyeletGeom = new THREE.TorusGeometry(0.12, 0.025, 12, 24);
-      const eyeletMat = new THREE.MeshStandardMaterial({ color: 0xA78BFA, metalness: 0.8 });
-      const eyelet = new THREE.Mesh(eyeletGeom, eyeletMat);
-      eyelet.position.y = 1.22;
-      cansatGroup.add(eyelet);
+    const ringGeom = new THREE.TorusGeometry(0.71, 0.03, 16, 32);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x5d35e8, metalness: 0.9, roughness: 0.1 });
+    const topRing = new THREE.Mesh(ringGeom, ringMat);
+    topRing.rotation.x = Math.PI / 2;
+    topRing.position.y = 1.1;
+    cansatGroup.add(topRing);
 
-      const antGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.9, 8);
-      const antMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9 });
-      const antenna = new THREE.Mesh(antGeom, antMat);
-      antenna.position.set(0.3, -1.55, 0);
-      cansatGroup.add(antenna);
+    const botRing = topRing.clone();
+    botRing.position.y = -1.1;
+    cansatGroup.add(botRing);
 
-      const axes = new THREE.AxesHelper(1.8);
-      cansatGroup.add(axes);
+    const eyeletGeom = new THREE.TorusGeometry(0.12, 0.025, 12, 24);
+    const eyeletMat = new THREE.MeshStandardMaterial({ color: 0xA78BFA, metalness: 0.8 });
+    const eyelet = new THREE.Mesh(eyeletGeom, eyeletMat);
+    eyelet.position.y = 1.22;
+    cansatGroup.add(eyelet);
 
-      scene.add(cansatGroup);
+    const antGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.9, 8);
+    const antMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9 });
+    const antenna = new THREE.Mesh(antGeom, antMat);
+    antenna.position.set(0.3, -1.55, 0);
+    cansatGroup.add(antenna);
 
-      container.addEventListener('mousedown', function (e) {
-        isDragging3D = true;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-      });
-      window.addEventListener('mouseup', function () { isDragging3D = false; });
-      container.addEventListener('mousemove', function (e) {
-        if (!isDragging3D) return;
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-        scene.rotation.y += deltaX * 0.008;
-        scene.rotation.x += deltaY * 0.008;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-      });
+    const axes = new THREE.AxesHelper(1.8);
+    cansatGroup.add(axes);
 
-      threeReady = true;
+    scene.add(cansatGroup);
 
-      (function animate() {
-        animId = requestAnimationFrame(animate);
-        if (cansatGroup) {
-          const targetEuler = new THREE.Euler(
-            fusedPitch * Math.PI / 180,
-            fusedYaw * Math.PI / 180,
-            fusedRoll * Math.PI / 180,
-            'XYZ'
-          );
-          cansatGroup.rotation.x += (targetEuler.x - cansatGroup.rotation.x) * 0.25;
-          cansatGroup.rotation.y += (targetEuler.y - cansatGroup.rotation.y) * 0.25;
-          cansatGroup.rotation.z += (targetEuler.z - cansatGroup.rotation.z) * 0.25;
-        }
-        if (renderer && scene && camera) renderer.render(scene, camera);
-      })();
-    }
+    container.addEventListener('mousedown', function (e) {
+      isDragging3D = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('mouseup', function () { isDragging3D = false; });
+    container.addEventListener('mousemove', function (e) {
+      if (!isDragging3D) return;
+      const deltaX = e.clientX - previousMousePosition.x;
+      const deltaY = e.clientY - previousMousePosition.y;
+      scene.rotation.y += deltaX * 0.008;
+      scene.rotation.x += deltaY * 0.008;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    threeReady = true;
+
+    (function animate() {
+      animId = requestAnimationFrame(animate);
+      if (cansatGroup) {
+        const targetEuler = new THREE.Euler(
+          fusedPitch * Math.PI / 180,
+          fusedYaw * Math.PI / 180,
+          fusedRoll * Math.PI / 180,
+          'XYZ'
+        );
+        cansatGroup.rotation.x += (targetEuler.x - cansatGroup.rotation.x) * 0.25;
+        cansatGroup.rotation.y += (targetEuler.y - cansatGroup.rotation.y) * 0.25;
+        cansatGroup.rotation.z += (targetEuler.z - cansatGroup.rotation.z) * 0.25;
+      }
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    })();
+
     resize3D();
   }
 
   function resize3D() {
     if (!threeReady) return;
     const container = document.getElementById('canvas-3d');
+    if (!container) return;
     const w = Math.max(container.clientWidth, 1);
     const h = Math.max(container.clientHeight, 1);
     camera.aspect = w / h;
@@ -1530,30 +1804,39 @@
 
   function setBatteryUi(volts, pct) {
     const fill = document.getElementById('bat-fill');
-    const nipple = document.getElementById('bat-nipple');
-    const color = pct < 20 ? '#EF4444' : pct < 45 ? '#A855F7' : '#10B981';
-    fill.style.width = pct.toFixed(0) + '%';
-    fill.style.background = color;
-    nipple.style.background = color;
-    document.getElementById('bat-percent').style.color = color;
-    document.getElementById('bat-percent').innerText = pct.toFixed(0) + '%';
-    document.getElementById('bat-volts').innerText = volts.toFixed(2) + ' V';
-    document.querySelector('.w-28.h-10').style.borderColor = color;
+    const color = pct < 20 ? '#EF4444' : pct < 45 ? '#F59E0B' : '#5d35e8';
+    if (fill) {
+      fill.style.width = pct.toFixed(0) + '%';
+      fill.style.background = color;
+    }
+    const batPercent = document.getElementById('bat-percent');
+    if (batPercent) {
+      batPercent.style.color = color;
+      batPercent.innerText = pct.toFixed(0) + '%';
+    }
+    const batVolts = document.getElementById('bat-volts');
+    if (batVolts) batVolts.innerText = volts.toFixed(2) + ' V';
+    const housing = document.querySelector('.battery-housing');
+    if (housing) housing.style.borderColor = color;
   }
 
   // --- MAIN TELEMETRY INGESTION PIPELINE ---
   function ingestRawLine(line) {
     linesReceived += 1;
-    document.getElementById('rf-received').innerText = String(linesReceived);
+    const rfRec = document.getElementById('rf-received');
+    if (rfRec) rfRec.innerText = String(linesReceived);
+
     const parsed = parsePacketLine(line);
     if (!parsed) {
       linesRejected += 1;
-      document.getElementById('rf-rejected').innerText = String(linesRejected);
+      const rfRej = document.getElementById('rf-rejected');
+      if (rfRej) rfRej.innerText = String(linesRejected);
       appendFeed(false, line);
       return;
     }
     linesParsed += 1;
-    document.getElementById('rf-parsed').innerText = String(linesParsed);
+    const rfPars = document.getElementById('rf-parsed');
+    if (rfPars) rfPars.innerText = String(linesParsed);
     appendFeed(true, line);
 
     const now = Date.now();
@@ -1600,9 +1883,12 @@
     if (row.altitude > apogee) apogee = row.altitude;
 
     // Header Counters & Badges
-    document.getElementById('sample-count-top').innerText = String(count);
-    document.getElementById('feed-counter').innerText = '(' + count + ')';
-    document.getElementById('info-samples').innerText = String(count);
+    const topCount = document.getElementById('sample-count-top');
+    if (topCount) topCount.innerText = String(count);
+    const feedCounter = document.getElementById('feed-counter');
+    if (feedCounter) feedCounter.innerText = '(' + count + ')';
+    const infoSamples = document.getElementById('info-samples');
+    if (infoSamples) infoSamples.innerText = String(count);
 
     // Live Mission Elapsed Time (MET) Counter
     let elapsedSec = 0;
@@ -1639,7 +1925,7 @@
     document.getElementById('met-lapserate').innerText = row.lapseRate.toFixed(2) + ' °C/100m';
     document.getElementById('met-airdensity').innerText = row.airDensity.toFixed(3) + ' kg/m³';
 
-    // Inbound Serial 13 Fields
+    // Inbound Serial 13 Fields Readout
     document.getElementById('t-temp').innerText = row.temp.toFixed(2);
     document.getElementById('t-press').innerText = row.pressure.toFixed(2);
     document.getElementById('t-alt').innerText = row.altitude.toFixed(2);
@@ -1657,19 +1943,19 @@
     // General Mission Information
     const locked = gpsLocked(row.lat, row.lon);
     document.getElementById('info-gpsfix').innerText = locked ? 'Locked (WGS84 3D)' : 'No lock / Searching';
-    document.getElementById('info-pos').innerText = locked ? row.lat.toFixed(6) + '°, ' + row.lon.toFixed(6) + '°' : '--';
     document.getElementById('info-alt').innerText = row.altitude.toFixed(2) + ' m';
     document.getElementById('info-apogee').innerText = apogee.toFixed(2) + ' m';
     document.getElementById('info-vspd').innerText = row.vSpd.toFixed(2) + ' m/s';
-    document.getElementById('info-attitude').innerText = row.pitch.toFixed(1) + '° / ' + row.roll.toFixed(1) + '°';
-    document.getElementById('info-presstemp').innerText = row.pressure.toFixed(2) + ' hPa · ' + row.temp.toFixed(1) + ' °C';
+    document.getElementById('info-pitch').innerText = row.pitch.toFixed(1) + '°';
+    document.getElementById('info-roll').innerText = row.roll.toFixed(1) + '°';
+    document.getElementById('info-presstemp').innerText = row.pressure.toFixed(2) + ' hPa';
     document.getElementById('info-hum').innerText = row.humidity.toFixed(1) + ' %';
     document.getElementById('info-dewdensity').innerText = row.dewPoint.toFixed(1) + ' °C · ' + row.airDensity.toFixed(3) + ' kg/m³';
     document.getElementById('info-accelmag').innerText = row.accelMag.toFixed(2) + ' g';
     document.getElementById('info-bat').innerText = row.batteryVoltage.toFixed(2) + ' V (' + pct.toFixed(0) + '%)';
-    document.getElementById('info-anomaly').innerText = currentAnomalyCode + ' (Severity: ' + currentAnomalyScore + ')';
+    document.getElementById('info-anomaly').innerText = currentAnomalyCode;
 
-    // 3D Model Modal Readings
+    // 3D Model Readings
     document.getElementById('model-pitch').innerText = row.pitch.toFixed(1) + '°';
     document.getElementById('model-roll').innerText = row.roll.toFixed(1) + '°';
     document.getElementById('model-yaw').innerText = row.yaw.toFixed(1) + '°';
@@ -1681,7 +1967,7 @@
     // Update GPS Path & Recovery Tool
     updateGpsAndRecovery(row.lat, row.lon, row.altitude, row.vSpd);
 
-    // Push Chart Data
+    // Push Live Chart Data
     pushChart(accelChart, [row.ax, row.ay, row.az]);
     pushChart(orientChart, [row.pitch, row.roll]);
     pushChart(vSpeedChart, [row.vSpd]);
@@ -1693,10 +1979,14 @@
 
   function setConnectionState(online, text) {
     const dot = document.getElementById('conn-dot');
-    dot.className = 'led-dot ' + (online ? 'bg-emerald-400 text-emerald-400 led-pulse' : 'bg-rose-500 text-rose-500');
-    document.getElementById('conn-text').innerText = text;
-    document.getElementById('info-status').innerText = online ? 'Online' : 'Disconnected';
-    document.getElementById('info-status').className = online ? 'text-emerald-400 font-mono font-semibold' : 'text-rose-400 font-mono font-semibold';
+    if (dot) dot.className = 'led-dot ' + (online ? 'bg-emerald-400 text-emerald-400 led-pulse' : 'bg-rose-500 text-rose-500');
+    const connText = document.getElementById('conn-text');
+    if (connText) connText.innerText = text;
+    const infoStatus = document.getElementById('info-status');
+    if (infoStatus) {
+      infoStatus.innerText = online ? 'Online' : 'Disconnected';
+      infoStatus.className = online ? 'text-emerald-400 font-mono font-semibold' : 'text-rose-400 font-mono font-semibold';
+    }
   }
 
   // --- SERIAL USB (WEB SERIAL API) ---
@@ -1718,7 +2008,7 @@
       serialPort = port;
       serialKeepReading = true;
       setConnectionState(true, 'ONLINE (115200 BAUD)');
-      document.getElementById('connect-btn').innerText = 'DISCONNECT SERIAL';
+      document.getElementById('connect-btn').innerText = 'DISCONNECT';
       const decoder = new TextDecoderStream();
       const closed = port.readable.pipeTo(decoder.writable).catch(function () { /* stream closed */ });
       serialReader = decoder.readable.getReader();
@@ -1751,7 +2041,7 @@
     serialReader = null;
     try { if (serialPort) await serialPort.close(); } catch (e) { /* ignore */ }
     serialPort = null;
-    document.getElementById('connect-btn').innerText = 'CONNECT (USB SERIAL)';
+    document.getElementById('connect-btn').innerText = 'CONNECT';
     if (!isDemo && !replayPlaying) setConnectionState(false, 'DISCONNECTED');
   }
 
@@ -1805,13 +2095,15 @@
       clearInterval(demoInterval);
       demoInterval = null;
       isDemo = false;
-      btn.innerText = 'DEMO REALTIME';
+      btn.innerText = 'DEMO DATA';
+      btn.className = 'btn-action-light';
       if (!serialPort) setConnectionState(false, 'DISCONNECTED');
       return;
     }
     if (replayPlaying) toggleReplayPlay();
     isDemo = true;
     btn.innerText = 'STOP DEMO';
+    btn.className = 'btn-action-primary';
     missionStartEpochMs = null;
     setConnectionState(true, 'SIMULATION (800MS)');
     const state = { t: 0, alt: 0.5, vz: 18.5, phase: 'ascent' };
@@ -1822,6 +2114,12 @@
   }
 
   // --- REPLAY ENGINE ---
+  function toggleReplayDrawer() {
+    const drawer = document.getElementById('replay-drawer');
+    if (!drawer) return;
+    drawer.classList.toggle('hidden');
+  }
+
   async function loadSelectedTestCase() {
     const select = document.getElementById('test-case-select');
     const path = select.value;
@@ -1872,7 +2170,7 @@
     document.getElementById('scrub-total-count').innerText = '/ ' + replayRows.length;
     document.getElementById('scrub-current-idx').innerText = '0';
     document.getElementById('replay-status-pill').innerText = sourceName + ' (' + replayRows.length + ')';
-    document.getElementById('replay-status-pill').className = 'text-[10px] px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-600/60 text-purple-300 font-mono';
+    document.getElementById('replay-status-pill').className = 'text-[10px] px-2 py-0.5 rounded bg-purple-950/80 border border-purple-600/60 text-purple-300 font-mono';
 
     resetReplay();
   }
@@ -1988,9 +2286,9 @@
     replaySpeed = spd;
     document.querySelectorAll('.speed-btn').forEach(btn => {
       if (parseFloat(btn.getAttribute('data-speed')) === spd) {
-        btn.className = 'speed-btn px-2 py-0.5 rounded-md bg-purple-600 border border-purple-400/30 text-white font-bold font-mono';
+        btn.className = 'speed-btn px-1.5 py-0.5 rounded bg-purple-600 border border-purple-400/30 text-white font-bold font-mono';
       } else {
-        btn.className = 'speed-btn px-2 py-0.5 rounded-md bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40';
+        btn.className = 'speed-btn px-1.5 py-0.5 rounded bg-[#161228] border border-purple-900/40 text-purple-200 font-mono hover:bg-purple-900/40';
       }
     });
     if (replayPlaying) {
@@ -2033,25 +2331,47 @@
     URL.revokeObjectURL(url);
   }
 
-  function openModal(id) {
-    document.getElementById(id).classList.remove('hidden');
+  // --- TILE MAXIMIZE / FULLSCREEN VIEW ---
+  function toggleTileMaximize(tileId) {
+    const tile = document.getElementById(tileId);
+    if (!tile) return;
+    tile.classList.toggle('tile-maximized');
+    const isMax = tile.classList.contains('tile-maximized');
+    const btn = tile.querySelector('.panel-expand-btn');
+    if (btn) btn.innerText = isMax ? '✕' : '⤢';
     requestAnimationFrame(function () {
-      if (id === 'gpsModal') {
-        initMap();
-        setTimeout(resizeMap, 80);
-        setTimeout(resizeMap, 250);
-      }
-      if (id === 'modelModal') {
-        init3D();
-        setTimeout(resize3D, 80);
-        setTimeout(resize3D, 250);
-      }
       resizeVisibleCharts();
+      resizeMap();
+      resize3D();
     });
   }
 
+  // --- MODAL UTILITIES ---
+  function openModal(id) {
+    // If opening legacy modal stubs, trigger corresponding tile maximize
+    const mapToTile = {
+      'accelModal': 'tile-accel',
+      'orientModal': 'tile-orient',
+      'vSpeedModal': 'tile-vspd',
+      'altModal': 'tile-alt',
+      'gyroModal': 'tile-gyro',
+      'humModal': 'tile-hum',
+      'pressTempModal': 'tile-press-temp',
+      'modelModal': 'tile-model',
+      'gpsModal': 'tile-gps'
+    };
+    if (mapToTile[id]) {
+      toggleTileMaximize(mapToTile[id]);
+      return;
+    }
+
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('hidden');
+  }
+
   function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('hidden');
   }
 
   function analyzeData() {
@@ -2063,7 +2383,6 @@
     }
     const last = telemetryHistory[telemetryHistory.length - 1];
     const first = telemetryHistory[0];
-    const dAlt = last.altitude - first.altitude;
     const notes = [];
 
     if (last.batteryVoltage < 3.55) notes.push('⚠️ Battery voltage sag: ' + last.batteryVoltage.toFixed(2) + 'V');
@@ -2106,6 +2425,13 @@
       mlBlock;
   }
 
+  // --- INITIALIZE ON PAGE LOAD ---
+  window.addEventListener('DOMContentLoaded', function () {
+    init3D();
+    initMap();
+    resizeVisibleCharts();
+  });
+
   window.addEventListener('resize', function () {
     resizeVisibleCharts();
     resizeMap();
@@ -2114,15 +2440,23 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      ['rawFeedModal','accelModal','orientModal','vSpeedModal','altModal','gyroModal','humModal','pressTempModal','modelModal','gpsModal','aiModal']
-        .forEach(function (id) { document.getElementById(id).classList.add('hidden'); });
+      ['rawFeedModal', 'aiModal', 'helpModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      document.querySelectorAll('.tile-maximized').forEach(t => t.classList.remove('tile-maximized'));
+      resizeVisibleCharts();
+      resizeMap();
+      resize3D();
     }
   });
 
-  // Global window functions
+  // Global window function exports
   window.downloadCSV = downloadCSV;
   window.openModal = openModal;
   window.closeModal = closeModal;
+  window.toggleTileMaximize = toggleTileMaximize;
+  window.toggleReplayDrawer = toggleReplayDrawer;
   window.toggleConnect = toggleConnect;
   window.toggleDemo = toggleDemo;
   window.analyzeData = analyzeData;
