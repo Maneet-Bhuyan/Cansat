@@ -1,4 +1,4 @@
-﻿"""
+"""
 Cognitive CanSat FastAPI Real-Time Machine Learning Backend Server
 Serves real-time inference using trained scikit-learn and PyOD models.
 """
@@ -8,12 +8,15 @@ import json
 import time
 import warnings
 from typing import Dict, Any, Optional, List
+from collections import deque
 import numpy as np
 import pandas as pd
 import joblib
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 # Suppress minor version warnings for clean telemetry logs
@@ -111,6 +114,8 @@ def compute_physics_soundings(temp_c: float, press_hpa: float, hum_pct: float, a
 
     return dew_point, air_density, lapse_rate
 
+live_telemetry_history = deque(maxlen=20)
+
 def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
     if not models_loaded:
         raise HTTPException(status_code=503, detail="Machine Learning models not loaded")
@@ -119,18 +124,42 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
     v_spd = payload.vSpd if payload.vSpd is not None else 0.0
     accel_mag = math.sqrt(payload.ax**2 + payload.ay**2 + payload.az**2)
     gyro_mag = math.sqrt(payload.gx**2 + payload.gy**2 + payload.gz**2)
-    pad_alt = payload.padAlt if payload.padAlt is not None else 0.0
-    pad_temp = payload.padTemp if payload.padTemp is not None else 25.0
+
+    live_telemetry_history.append({
+        "time": time.time(),
+        "temp": payload.temp,
+        "pressure": payload.pressure,
+        "altitude": payload.altitude,
+        "ax": payload.ax,
+        "ay": payload.ay,
+        "az": payload.az,
+        "gx": payload.gx,
+        "gy": payload.gy,
+        "gz": payload.gz,
+        "lat": payload.lat,
+        "lon": payload.lon,
+        "humidity": payload.humidity,
+        "batteryVoltage": payload.batteryVoltage,
+        "vSpd": v_spd
+    })
+    print(f"[LIVE AUDIT]: Temp={payload.temp}C, Press={payload.pressure}hPa, Alt={payload.altitude}m, Accel=({payload.ax},{payload.ay},{payload.az})g, Gyro=({payload.gx},{payload.gy},{payload.gz})deg/s, GPS=({payload.lat},{payload.lon}), Hum={payload.humidity}%, Bat={payload.batteryVoltage}V, vSpd={v_spd}m/s", flush=True)
+    pad_alt = payload.padAlt if (payload.padAlt is not None and payload.padAlt > 0) else payload.altitude
+    pad_temp = payload.padTemp if payload.padTemp is not None else payload.temp
     pad_press = payload.padPress if payload.padPress is not None else 1013.25
 
     d_alt = payload.altitude - pad_alt
     d_temp = payload.temp - pad_temp
     d_press = payload.pressure - pad_press
 
+    # Normalize altitude & battery for model features (trained on 1S LiPo and relative sounding heights)
+    ml_alt = max(0.0, d_alt) if abs(d_alt) < 2500.0 else payload.altitude
+    ml_battery = min(4.20, max(3.30, payload.batteryVoltage)) if payload.batteryVoltage <= 4.30 else 3.85
+    ml_press = 1013.25 * math.pow(max(0.1, 1.0 - (0.0065 * ml_alt) / 288.15), 5.255)
+
     feature_dict = {
-        'altitude': [payload.altitude],
+        'altitude': [ml_alt],
         'vSpd': [v_spd],
-        'pressure': [payload.pressure],
+        'pressure': [ml_press],
         'temp': [payload.temp],
         'humidity': [payload.humidity],
         'ax': [payload.ax],
@@ -141,7 +170,7 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
         'gy': [payload.gy],
         'gz': [payload.gz],
         'gyroMag': [gyro_mag],
-        'batteryVoltage': [payload.batteryVoltage],
+        'batteryVoltage': [ml_battery],
         'dAlt_pad': [d_alt],
         'dTemp_pad': [d_temp],
         'dPress_pad': [d_press]
@@ -218,11 +247,22 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
 
 @app.get("/")
 def read_root():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/index.html")
+def serve_index_html():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+test_cases_dir = os.path.join(BASE_DIR, "test_cases")
+if os.path.exists(test_cases_dir):
+    app.mount("/test_cases", StaticFiles(directory=test_cases_dir), name="test_cases")
+
+@app.get("/api/latest_telemetry")
+def get_latest_telemetry():
     return {
-        "name": "Cognitive CanSat ML Telemetry Server",
-        "version": "2.0.0",
-        "models_loaded": models_loaded,
-        "docs_url": "/docs"
+        "status": "success",
+        "count": len(live_telemetry_history),
+        "packets": list(live_telemetry_history)
     }
 
 @app.get("/api/health")
@@ -276,3 +316,66 @@ async def websocket_telemetry_endpoint(websocket: WebSocket):
                 await websocket.send_json({"status": "error", "message": str(parse_err)})
     except WebSocketDisconnect:
         print("[WebSocket] Client disconnected.")
+
+# --- REAL-TIME HARDWARE SERIAL BRIDGE (COM3 / LoRa Ground Receiver) ---
+import serial
+import serial.tools.list_ports
+import threading
+import asyncio
+
+serial_subscribers: List[WebSocket] = []
+serial_thread_running = False
+serial_thread_lock = threading.Lock()
+
+async def broadcast_serial_line(line: str):
+    for ws in list(serial_subscribers):
+        try:
+            await ws.send_text(line)
+        except Exception:
+            pass
+
+def serial_worker_loop(loop, port_name: str = "COM3", baud_rate: int = 9600):
+    global serial_thread_running
+    try:
+        ser = serial.Serial(port_name, baud_rate, timeout=1)
+        ser.dtr = True
+        ser.rts = True
+        print(f"[Serial Bridge] Connected to {port_name} at {baud_rate} baud.")
+        while serial_thread_running:
+            if ser.in_waiting:
+                raw_bytes = ser.readline()
+                line = raw_bytes.decode('utf-8', errors='ignore').strip()
+                if line:
+                    asyncio.run_coroutine_threadsafe(broadcast_serial_line(line), loop)
+            else:
+                time.sleep(0.02)
+        ser.close()
+        print("[Serial Bridge] Port closed cleanly.")
+    except Exception as e:
+        print(f"[Serial Bridge] Serial worker error: {e}")
+        serial_thread_running = False
+
+@app.websocket("/ws/serial")
+async def websocket_serial_bridge(websocket: WebSocket):
+    global serial_thread_running
+    await websocket.accept()
+    serial_subscribers.append(websocket)
+    print(f"[WebSocket] Serial bridge client connected. (Total: {len(serial_subscribers)})")
+    
+    loop = asyncio.get_running_loop()
+    with serial_thread_lock:
+        if not serial_thread_running:
+            serial_thread_running = True
+            t = threading.Thread(target=serial_worker_loop, args=(loop, "COM3", 9600), daemon=True)
+            t.start()
+            
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        if websocket in serial_subscribers:
+            serial_subscribers.remove(websocket)
+        print(f"[WebSocket] Serial client disconnected. (Remaining: {len(serial_subscribers)})")
+        if len(serial_subscribers) == 0:
+            serial_thread_running = False
+

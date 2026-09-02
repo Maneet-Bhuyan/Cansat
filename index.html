@@ -6,7 +6,7 @@
   <title>Cognitive CanSat Ground Station - UNIVERSE TELEMETRY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -44,7 +44,7 @@
     html, body {
       background-color: var(--bg-space);
       color: var(--text-body);
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       margin: 0;
@@ -65,9 +65,13 @@
 
     .font-mono {
       font-family: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
     }
     .font-tech {
-      font-family: 'Rajdhani', 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Chakra Petch', 'Rajdhani', sans-serif;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
     }
 
     /* Mission Control Card Panels (with glass-card alias for compatibility) */
@@ -99,11 +103,12 @@
       min-height: 34px;
     }
     .panel-title {
-      font-size: 0.72rem;
+      font-family: 'Chakra Petch', 'Rajdhani', sans-serif;
+      font-size: 0.76rem;
       font-weight: 600;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
       color: #E2E8F0;
-      text-transform: capitalize;
+      text-transform: uppercase;
     }
     .panel-expand-btn {
       background: transparent;
@@ -335,7 +340,26 @@
     .custom-scroll::-webkit-scrollbar-thumb { background: #2E2749; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #5d35e8; }
 
-    /* Canvas Containers */
+    /* Canvas Containers & Panel Height Bounds */
+    main > .dashboard-panel:not(.tile-maximized) {
+      height: 235px !important;
+      max-height: 235px !important;
+      position: relative !important;
+      isolation: isolate !important;
+      z-index: 1 !important;
+    }
+    main > .dashboard-panel:not(.tile-maximized) .chart-container {
+      height: calc(235px - 36px) !important;
+      max-height: calc(235px - 36px) !important;
+      min-height: 0 !important;
+    }
+    main > .dashboard-panel:not(.tile-maximized) #canvas-3d,
+    main > .dashboard-panel:not(.tile-maximized) #map {
+      height: calc(235px - 36px) !important;
+      max-height: calc(235px - 36px) !important;
+      min-height: 0 !important;
+    }
+
     .chart-container {
       position: relative;
       width: 100%;
@@ -356,37 +380,22 @@
       height: 100%;
       min-height: 175px;
       background: #090812;
+      z-index: 2 !important;
     }
 
-    /* GPS Acquiring Radar Overlay */
-    #gps-acquiring-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(9, 8, 18, 0.82);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      z-index: 1000;
-      backdrop-filter: blur(2px);
-      transition: opacity 0.3s ease;
+    /* Tactical GNSS Mini-Map Styling */
+    #map-live-hud {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.2s ease;
     }
-    .radar-spinner {
-      width: 32px;
-      height: 32px;
-      border: 2px solid rgba(234, 179, 8, 0.2);
-      border-top: 2px solid #EAB308;
-      border-radius: 50%;
-      animation: spin 1.2s linear infinite;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     /* Tile Maximize State */
     .tile-maximized {
       position: fixed !important;
       inset: 1.25rem !important;
-      z-index: 9999 !important;
+      z-index: 9000 !important;
       width: auto !important;
       height: auto !important;
       max-width: none !important;
@@ -399,6 +408,13 @@
     .tile-maximized #map {
       min-height: calc(100vh - 120px) !important;
       height: calc(100vh - 120px) !important;
+    }
+
+    /* Top-Level Fullscreen Modals (Must overlay everything including maximized tiles and GPS) */
+    #rawFeedModal,
+    #aiModal,
+    #helpModal {
+      z-index: 99999 !important;
     }
   </style>
 </head>
@@ -451,9 +467,17 @@
             <span id="feed-counter" class="font-mono text-purple-300 font-bold">(0)</span>
           </button>
 
-          <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline">
-            CONNECT
-          </button>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline flex-1">
+              CONNECT
+            </button>
+            <select id="baud-select" class="bg-[#161228] border border-purple-900/50 text-purple-200 text-[10px] rounded px-1.5 py-2 font-mono focus:outline-none focus:border-purple-400 cursor-pointer" title="Serial Connection Mode (COM3 Bridge or Web Serial)">
+              <option value="bridge" selected>COM3 BRIDGE</option>
+              <option value="9600">USB 9600</option>
+              <option value="57600">USB 57600</option>
+              <option value="115200">USB 115200</option>
+            </select>
+          </div>
 
           <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light">
             DEMO DATA
@@ -728,7 +752,10 @@
         <!-- ROW 2 / TILE 6: CANSAT 3D MODEL (DIRECT THREE.JS CANVAS) -->
         <div id="tile-model" class="dashboard-panel">
           <div class="panel-header">
-            <span class="panel-title">CanSat 3D Model</span>
+            <div class="flex items-center space-x-2">
+              <span class="panel-title">CanSat 3D Model</span>
+              <button type="button" id="tare-btn" onclick="tareAttitude()" class="px-2 py-0.5 rounded bg-purple-950/80 hover:bg-purple-900 border border-purple-600/60 text-[9px] text-purple-200 hover:text-white font-mono font-bold transition-all shadow-sm" title="Zero orientation so current resting CanSat position is upright">TARE UPRIGHT</button>
+            </div>
             <div class="flex items-center space-x-2">
               <span class="text-[9px] font-mono text-purple-300 hidden sm:inline">
                 P: <b id="model-pitch" class="text-rose-400">0.0°</b> R: <b id="model-roll" class="text-cyan-400">0.0°</b> Y: <b id="model-yaw" class="text-emerald-400">0.0°</b>
@@ -744,28 +771,42 @@
           </div>
         </div>
 
-        <!-- ROW 2 / TILE 7: GPS GROUND TRACK (DIRECT LEAFLET MAP) -->
+        <!-- ROW 2 / TILE 7: GPS GROUND TRACK (TACTICAL MINI-MAP) -->
         <div id="tile-gps" class="dashboard-panel">
           <div class="panel-header">
-            <span class="panel-title">GPS Ground Track</span>
+            <div class="flex items-center gap-2">
+              <span class="panel-title">GPS Ground Track</span>
+              <span id="gps-status-pill" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/50 text-[8.5px] font-mono font-semibold text-amber-300">
+                <span id="gps-status-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span id="gps-status-text">ACQUIRING</span>
+              </span>
+            </div>
             <button type="button" onclick="toggleTileMaximize('tile-gps')" class="panel-expand-btn" title="Expand View">⤢</button>
           </div>
           <div class="relative flex-1 min-h-[175px] overflow-hidden">
             <div id="map"></div>
-            <!-- GPS Acquiring Indicator Overlay (from Image 1) -->
-            <div id="gps-acquiring-overlay">
-              <div class="radar-spinner"></div>
-              <span class="text-[10px] font-mono tracking-widest text-amber-300 font-bold uppercase">ACQUIRING GPS FIX...</span>
+            <!-- Tactical Satellite Telemetry HUD (Overlaid on mini-map) -->
+            <div id="map-live-hud" class="absolute top-2 left-2 bg-[#0E0C1C]/90 border border-purple-800/40 p-1.5 rounded text-[9px] text-slate-300 z-20 space-y-0.5 pointer-events-none backdrop-blur-md font-mono shadow-md tabular-nums">
+              <div class="text-[8px] text-purple-300 font-bold uppercase tracking-wider flex items-center justify-between gap-2 border-b border-purple-900/40 pb-0.5">
+                <span>GNSS TELEMETRY</span>
+                <span id="map-module-badge" class="text-purple-400 font-normal">NEO-6M</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 pt-0.5">
+                <div>Lat: <span id="map-lat" class="text-white font-medium">--</span></div>
+                <div>Lon: <span id="map-lon" class="text-white font-medium">--</span></div>
+                <div>Alt: <span id="map-alt" class="text-white font-medium">--</span> m</div>
+                <div>VSpd: <span id="map-vspd" class="text-white font-medium">--</span> m/s</div>
+                <div>Dist: <span id="map-dist" class="text-emerald-400 font-medium">0.0 m</span></div>
+                <div>Hdg: <span id="map-heading" class="text-sky-400 font-medium">--</span></div>
+              </div>
+              <div class="text-[8px] text-slate-400 pt-0.5 border-t border-purple-900/30 flex justify-between">
+                <span>Phase: <b id="map-phase" class="text-purple-300">PAD_IDLE</b></span>
+                <span>Drift: <b id="map-drift-speed" class="text-emerald-400">0.0</b> m/s</span>
+              </div>
             </div>
-            <!-- Live Satellite Fix Floating HUD (Visible when locked) -->
-            <div id="map-live-hud" class="hidden absolute top-2 left-2 bg-[#0E0C1C]/90 border border-purple-900/50 p-1.5 rounded text-[9px] text-slate-300 z-[1000] space-y-0.5 pointer-events-none backdrop-blur-sm font-mono">
-              <div>Lat: <span id="map-lat" class="text-white">--</span></div>
-              <div>Lon: <span id="map-lon" class="text-white">--</span></div>
-              <div>Alt: <span id="map-alt" class="text-white">--</span> m</div>
-              <div>VSpd: <span id="map-vspd" class="text-white">--</span> m/s</div>
-              <div>Drift: <span id="map-drift-speed" class="text-emerald-400">--</span> m/s</div>
-              <div>Heading: <span id="map-heading" class="text-sky-400">--</span></div>
-              <div>Phase: <span id="map-phase" class="text-purple-300 font-bold">PAD_IDLE</span></div>
+            <!-- Minimal Map Datum Tag -->
+            <div class="absolute bottom-1 right-2 px-1.5 py-0.5 bg-[#0d0c14]/75 border border-purple-900/40 rounded text-[7.5px] font-mono text-slate-400 pointer-events-none backdrop-blur-sm z-20">
+              WGS84 • LEAFLET GIS
             </div>
           </div>
         </div>
@@ -879,8 +920,8 @@
   <div id="modalContainer">
 
     <!-- RAW SERIAL FEED STREAM MODAL -->
-    <div id="rawFeedModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="dashboard-panel w-full max-w-xl h-[520px] p-4 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118]">
+    <div id="rawFeedModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+      <div class="w-full max-w-xl h-[520px] p-4 flex flex-col relative rounded-xl border border-purple-800/50 shadow-2xl bg-[#121118]">
         <button type="button" onclick="closeModal('rawFeedModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-sm">✕</button>
         <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
           <span>📡</span> Raw Serial Feed &amp; Packet Ingestion Stream
@@ -895,8 +936,8 @@
     </div>
 
     <!-- MISSION ASSISTANT AI MODAL -->
-    <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="dashboard-panel w-full max-w-lg h-[480px] p-4 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118]">
+    <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+      <div class="w-full max-w-lg h-[480px] p-4 flex flex-col relative rounded-xl border border-purple-800/50 shadow-2xl bg-[#121118]">
         <button type="button" onclick="closeModal('aiModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
         <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-1.5">
           <span class="text-purple-400">✦</span> Cognitive CanSat AI Diagnostics
@@ -916,8 +957,8 @@
     </div>
 
     <!-- HELP & DOCUMENTATION MODAL -->
-    <div id="helpModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="dashboard-panel w-full max-w-lg p-5 flex flex-col relative border border-purple-800/50 shadow-2xl bg-[#121118] text-xs">
+    <div id="helpModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+      <div class="w-full max-w-lg p-5 flex flex-col relative rounded-xl border border-purple-800/50 shadow-2xl bg-[#121118] text-xs">
         <button type="button" onclick="closeModal('helpModal')" class="absolute top-3 right-3 text-slate-400 hover:text-white">✕</button>
         <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
           <span>ℹ️</span> Ground Station Operational Guide
@@ -993,6 +1034,40 @@
   // Madgwick / Complementary Filter Attitude
   let q0 = 1.0, q1 = 0.0, q2 = 0.0, q3 = 0.0;
   let fusedPitch = 0, fusedRoll = 0, fusedYaw = 0;
+  let tarePitch = 0.0, tareRoll = 0.0, tareYaw = 0.0;
+  let autoTaredOnPad = false;
+
+  function tareAttitude() {
+    tarePitch = fusedPitch;
+    tareRoll = fusedRoll;
+    tareYaw = fusedYaw;
+
+    const btn = document.getElementById('tare-btn');
+    if (btn) {
+      btn.innerText = '✓ ZEROED';
+      btn.className = 'px-2 py-0.5 rounded bg-emerald-700 border border-emerald-400 text-[9px] text-emerald-100 font-mono font-bold transition-all shadow-sm';
+      setTimeout(function () {
+        btn.innerText = 'TARE UPRIGHT';
+        btn.className = 'px-2 py-0.5 rounded bg-purple-950/80 hover:bg-purple-900 border border-purple-600/60 text-[9px] text-purple-200 hover:text-white font-mono font-bold transition-all shadow-sm';
+      }, 1600);
+    }
+
+    if (cansatGroup) {
+      cansatGroup.rotation.set(0, 0, 0);
+    }
+
+    const mp = document.getElementById('model-pitch');
+    const mr = document.getElementById('model-roll');
+    const my = document.getElementById('model-yaw');
+    if (mp) mp.innerText = '0.0°';
+    if (mr) mr.innerText = '0.0°';
+    if (my) my.innerText = '0.0°';
+
+    const ip = document.getElementById('info-pitch');
+    const ir = document.getElementById('info-roll');
+    if (ip) ip.innerText = '0.0°';
+    if (ir) ir.innerText = '0.0°';
+  }
 
   // GPS Exponential Smoothing
   let smoothLat = HOME[0], smoothLon = HOME[1];
@@ -1163,6 +1238,22 @@
       const nums = parts.slice(0, 13).map(Number);
       if (nums.some(x => !Number.isFinite(x))) return null;
       [temp, pressure, altitude, gx, gy, gz, ax, ay, az, lat, lon, humidity, batteryVoltage] = nums;
+    } else if (parts.length >= 6) {
+      const nums = parts.map(Number);
+      if (nums.some(x => !Number.isFinite(x))) return null;
+      temp = nums[0] !== undefined ? nums[0] : 25.0;
+      pressure = nums[1] !== undefined ? nums[1] : 1013.25;
+      altitude = nums[2] !== undefined ? nums[2] : 0.0;
+      gx = nums[3] !== undefined ? nums[3] : 0.0;
+      gy = nums[4] !== undefined ? nums[4] : 0.0;
+      gz = nums[5] !== undefined ? nums[5] : 0.0;
+      ax = nums[6] !== undefined ? nums[6] : 0.0;
+      ay = nums[7] !== undefined ? nums[7] : 0.0;
+      az = nums[8] !== undefined ? nums[8] : 1.0;
+      lat = nums[9] !== undefined ? nums[9] : HOME[0];
+      lon = nums[10] !== undefined ? nums[10] : HOME[1];
+      humidity = nums[11] !== undefined ? nums[11] : 50.0;
+      batteryVoltage = nums[12] !== undefined ? nums[12] : 3.9;
     } else {
       return null;
     }
@@ -1179,12 +1270,26 @@
 
   // --- SENSOR FUSION ENGINE (MADGWICK / COMPLEMENTARY FILTER) ---
   function updateAttitudeFusion(ax, ay, az, gx, gy, gz, dt) {
-    const gxRad = (gx * Math.PI) / 180;
-    const gyRad = (gy * Math.PI) / 180;
-    const gzRad = (gz * Math.PI) / 180;
+    // Gyro noise deadband: prevents raw MEMS sensor bias from continuously rotating 3D model when stationary
+    const gyroNoiseThreshold = 0.55; // deg/s
+    const filteredGx = Math.abs(gx) < gyroNoiseThreshold ? 0 : gx;
+    const filteredGy = Math.abs(gy) < gyroNoiseThreshold ? 0 : gy;
+    const filteredGz = Math.abs(gz) < gyroNoiseThreshold ? 0 : gz;
+
+    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
+
+    // If stationary on table (no rotation), lock orientation directly to gravity vector
+    if (filteredGx === 0 && filteredGy === 0 && filteredGz === 0 && aNorm > 0.05) {
+      fusedPitch = Math.atan2(ay, az) * (180.0 / Math.PI);
+      fusedRoll = Math.atan2(-ax, Math.sqrt(ay * ay + az * az)) * (180.0 / Math.PI);
+      return { pitch: fusedPitch, roll: fusedRoll, yaw: 0.0 };
+    }
+
+    const gxRad = (filteredGx * Math.PI) / 180;
+    const gyRad = (filteredGy * Math.PI) / 180;
+    const gzRad = (filteredGz * Math.PI) / 180;
 
     let recipNorm;
-    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
     if (aNorm > 0.01) {
       recipNorm = 1.0 / aNorm;
       ax *= recipNorm;
@@ -1224,14 +1329,16 @@
     q0 *= recipNorm; q1 *= recipNorm; q2 *= recipNorm; q3 *= recipNorm;
 
     const sinp = 2.0 * (q0 * q2 - q3 * q1);
-    if (Math.abs(sinp) >= 1) {
-      fusedPitch = (sinp >= 0 ? 1 : -1) * 90.0;
+    if (Math.abs(sinp) >= 0.995) {
+      // Gimbal Lock Singularity at Pitch = ±90°: roll and yaw are collinear; lock roll to 0.0 to prevent 0/0 oscillation
+      fusedPitch = Math.sign(sinp) * 90.0;
+      fusedRoll = 0.0;
+      fusedYaw = 2.0 * Math.atan2(q1, q0) * (180.0 / Math.PI);
     } else {
       fusedPitch = Math.asin(sinp) * (180.0 / Math.PI);
+      fusedRoll = Math.atan2(2.0 * (q0 * q1 + q2 * q3), 1.0 - 2.0 * (q1 * q1 + q2 * q2)) * (180.0 / Math.PI);
+      fusedYaw = Math.atan2(2.0 * (q0 * q3 + q1 * q2), 1.0 - 2.0 * (q2 * q2 + q3 * q3)) * (180.0 / Math.PI);
     }
-
-    fusedRoll = Math.atan2(2.0 * (q0 * q1 + q2 * q3), 1.0 - 2.0 * (q1 * q1 + q2 * q2)) * (180.0 / Math.PI);
-    fusedYaw = Math.atan2(2.0 * (q0 * q3 + q1 * q2), 1.0 - 2.0 * (q2 * q2 + q3 * q3)) * (180.0 / Math.PI);
 
     return { pitch: fusedPitch, roll: fusedRoll, yaw: fusedYaw, q: [q0, q1, q2, q3] };
   }
@@ -1392,17 +1499,29 @@
   // --- GPS SMOOTHING & FIELD RECOVERY ---
   function updateGpsAndRecovery(lat, lon, alt, vSpd) {
     const locked = gpsLocked(lat, lon);
-    const overlay = document.getElementById('gps-acquiring-overlay');
-    const hud = document.getElementById('map-live-hud');
+    const pill = document.getElementById('gps-status-pill');
+    const dot = document.getElementById('gps-status-dot');
+    const text = document.getElementById('gps-status-text');
+    const mapAlt = document.getElementById('map-alt');
+    if (mapAlt) mapAlt.innerText = (typeof alt === 'number' && !isNaN(alt)) ? alt.toFixed(1) : '--';
+    const mapVspd = document.getElementById('map-vspd');
+    if (mapVspd) mapVspd.innerText = (typeof vSpd === 'number' && !isNaN(vSpd)) ? vSpd.toFixed(2) : '--';
 
     if (locked) {
-      if (overlay) overlay.classList.add('hidden');
-      if (hud) hud.classList.remove('hidden');
+      if (pill) pill.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 text-[8.5px] font-mono font-semibold text-emerald-300';
+      if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+      if (text) text.innerText = '3D FIX';
 
       if (!gpsLockEstablished) {
         smoothLat = lat;
         smoothLon = lon;
+        HOME[0] = lat;
+        HOME[1] = lon;
         gpsLockEstablished = true;
+        if (mapReady) {
+          map.setView([lat, lon], 17);
+          if (homeMarker) homeMarker.setLatLng([lat, lon]);
+        }
       } else {
         const alpha = 0.65;
         smoothLat = alpha * lat + (1.0 - alpha) * smoothLat;
@@ -1434,13 +1553,16 @@
         map.panTo(pos);
       }
 
-      document.getElementById('map-lat').innerText = smoothLat.toFixed(6);
-      document.getElementById('map-lon').innerText = smoothLon.toFixed(6);
+      document.getElementById('map-lat').innerText = smoothLat.toFixed(5);
+      document.getElementById('map-lon').innerText = smoothLon.toFixed(5);
+      const distEl = document.getElementById('map-dist');
+      if (distEl) distEl.innerText = groundDist.toFixed(1) + ' m';
       document.getElementById('map-drift-speed').innerText = Math.abs(vSpd * 0.4).toFixed(1);
       document.getElementById('map-heading').innerText = bearing.toFixed(0) + '° ' + getCardinal(bearing);
     } else {
-      if (overlay) overlay.classList.remove('hidden');
-      if (hud) hud.classList.add('hidden');
+      if (pill) pill.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/50 text-[8.5px] font-mono font-semibold text-amber-300';
+      if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
+      if (text) text.innerText = 'ACQUIRING';
     }
   }
 
@@ -1657,7 +1779,70 @@
     map.invalidateSize();
   }
 
-  // --- THREE.JS 3D CANSAT MODEL (DIRECT DASHBOARD INITIALIZATION) ---
+  // --- PROCEDURAL SOLAR ARRAY TEXTURE ---
+  function createSolarTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Deep sapphire aerospace photovoltaic silicon base
+    ctx.fillStyle = '#0a1128';
+    ctx.fillRect(0, 0, 512, 256);
+
+    const cols = 8;
+    const rows = 3;
+    const cellW = 512 / cols;
+    const cellH = 256 / rows;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = c * cellW + 3;
+        const y = r * cellH + 3;
+        const w = cellW - 6;
+        const h = cellH - 6;
+
+        // Photovoltaic cell gradient
+        const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+        grad.addColorStop(0, '#1c234a');
+        grad.addColorStop(0.4, '#151d3b');
+        grad.addColorStop(1, '#0c1229');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, w, h);
+
+        // Silver busbars
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.33, y);
+        ctx.lineTo(x + w * 0.33, y + h);
+        ctx.moveTo(x + w * 0.66, y);
+        ctx.lineTo(x + w * 0.66, y + h);
+        ctx.stroke();
+
+        // Micro-conductors
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+        ctx.lineWidth = 0.6;
+        for (let f = y + 5; f < y + h; f += 7) {
+          ctx.beginPath();
+          ctx.moveTo(x, f);
+          ctx.lineTo(x + w, f);
+          ctx.stroke();
+        }
+      }
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    return tex;
+  }
+
+  // --- THREE.JS 3D CANSAT MODEL (HIGH-FIDELITY AEROSPACE DIGITAL TWIN) ---
+  let targetRotX = 0;
+  let targetRotY = 0;
+  let beaconLed = null;
+
   function init3D() {
     if (threeReady) return;
     const container = document.getElementById('canvas-3d');
@@ -1676,16 +1861,17 @@
     renderer.setSize(w, h);
     container.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // Realistic Space Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xdde3ea, 0.9);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0x9d7bfc, 1.4);
-    keyLight.position.set(5, 8, 5);
-    scene.add(keyLight);
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.6);
+    sunLight.position.set(6, 9, 6);
+    scene.add(sunLight);
 
-    const fillLight = new THREE.DirectionalLight(0x06B6D4, 0.6);
-    fillLight.position.set(-5, -2, -4);
-    scene.add(fillLight);
+    const earthGlow = new THREE.DirectionalLight(0x38bdf8, 0.7);
+    earthGlow.position.set(-6, -3, -4);
+    scene.add(earthGlow);
 
     const grid = new THREE.GridHelper(8, 8, 0x5d35e8, 0x1E1A33);
     grid.position.y = -1.5;
@@ -1693,53 +1879,125 @@
 
     cansatGroup = new THREE.Group();
 
-    const bodyGeom = new THREE.CylinderGeometry(0.7, 0.7, 2.2, 32);
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x1E1C2B,
-      metalness: 0.85,
-      roughness: 0.25
+    // 1. Inner Satellite Core Body
+    const coreGeom = new THREE.CylinderGeometry(0.67, 0.67, 2.1, 32);
+    const coreMat = new THREE.MeshStandardMaterial({
+      color: 0x181724,
+      metalness: 0.8,
+      roughness: 0.35
     });
-    const body = new THREE.Mesh(bodyGeom, bodyMat);
-    cansatGroup.add(body);
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    cansatGroup.add(core);
 
-    const solarGeom = new THREE.CylinderGeometry(0.705, 0.705, 1.5, 16, 1, true);
+    // 2. High-Efficiency Solar Panel Array Mantle
+    const solarTex = createSolarTexture();
+    const solarGeom = new THREE.CylinderGeometry(0.702, 0.702, 1.42, 32, 1, true);
     const solarMat = new THREE.MeshStandardMaterial({
-      color: 0x311E5E,
-      emissive: 0x170D33,
-      metalness: 0.9,
-      roughness: 0.2
+      map: solarTex,
+      metalness: 0.88,
+      roughness: 0.22
     });
     const solar = new THREE.Mesh(solarGeom, solarMat);
     cansatGroup.add(solar);
 
-    const ringGeom = new THREE.TorusGeometry(0.71, 0.03, 16, 32);
+    // 3. Gold Kapton Thermal Insulation Foil Collars (Upper & Lower)
+    const kaptonMat = new THREE.MeshStandardMaterial({
+      color: 0xD4AF37,
+      emissive: 0x2A1D00,
+      metalness: 0.95,
+      roughness: 0.16
+    });
+    const kaptonGeom = new THREE.CylinderGeometry(0.708, 0.708, 0.24, 32);
+    const topKapton = new THREE.Mesh(kaptonGeom, kaptonMat);
+    topKapton.position.y = 0.83;
+    cansatGroup.add(topKapton);
+
+    const botKapton = topKapton.clone();
+    botKapton.position.y = -0.83;
+    cansatGroup.add(botKapton);
+
+    // 4. CNC Aerospace Aluminum Bulkheads (Top & Bottom End Plates)
+    const bulkheadMat = new THREE.MeshStandardMaterial({
+      color: 0xCBD5E1,
+      metalness: 0.96,
+      roughness: 0.18
+    });
+    const bulkheadGeom = new THREE.CylinderGeometry(0.74, 0.74, 0.08, 32);
+    const topBulkhead = new THREE.Mesh(bulkheadGeom, bulkheadMat);
+    topBulkhead.position.y = 1.04;
+    cansatGroup.add(topBulkhead);
+
+    const botBulkhead = topBulkhead.clone();
+    botBulkhead.position.y = -1.04;
+    cansatGroup.add(botBulkhead);
+
+    // Trim Bevel Rings
     const ringMat = new THREE.MeshStandardMaterial({ color: 0x5d35e8, metalness: 0.9, roughness: 0.1 });
+    const ringGeom = new THREE.TorusGeometry(0.73, 0.02, 16, 32);
     const topRing = new THREE.Mesh(ringGeom, ringMat);
     topRing.rotation.x = Math.PI / 2;
-    topRing.position.y = 1.1;
+    topRing.position.y = 1.08;
     cansatGroup.add(topRing);
 
     const botRing = topRing.clone();
-    botRing.position.y = -1.1;
+    botRing.position.y = -1.08;
     cansatGroup.add(botRing);
 
+    // 5. Four Hexagonal Brass/Titanium Structural Standoffs (3-Tier PCB Architecture)
+    const standoffMat = new THREE.MeshStandardMaterial({ color: 0xEAB308, metalness: 0.88, roughness: 0.25 });
+    const standoffGeom = new THREE.CylinderGeometry(0.024, 0.024, 2.16, 6);
+    for (let i = 0; i < 4; i++) {
+      const angle = (i * Math.PI / 2) + Math.PI / 4;
+      const standoff = new THREE.Mesh(standoffGeom, standoffMat);
+      standoff.position.set(0.65 * Math.cos(angle), 0, 0.65 * Math.sin(angle));
+      cansatGroup.add(standoff);
+    }
+
+    // 6. Ceramic GPS Patch Antenna on Top Bulkhead
+    const gpsPatchGeom = new THREE.BoxGeometry(0.24, 0.035, 0.24);
+    const gpsPatchMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, metalness: 0.2, roughness: 0.6 });
+    const gpsPatch = new THREE.Mesh(gpsPatchGeom, gpsPatchMat);
+    gpsPatch.position.set(0.22, 1.10, 0.12);
+    cansatGroup.add(gpsPatch);
+
+    const pinGeom = new THREE.CylinderGeometry(0.018, 0.018, 0.045, 12);
+    const pinMat = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.95 });
+    const pin = new THREE.Mesh(pinGeom, pinMat);
+    pin.position.set(0.22, 1.12, 0.12);
+    cansatGroup.add(pin);
+
+    // 7. Avionics Status Beacon LED
+    const ledGeom = new THREE.SphereGeometry(0.04, 16, 16);
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: 0x10B981,
+      emissive: 0x10B981,
+      emissiveIntensity: 1.8
+    });
+    beaconLed = new THREE.Mesh(ledGeom, ledMat);
+    beaconLed.position.set(-0.24, 1.10, 0.18);
+    cansatGroup.add(beaconLed);
+
+    // 8. Titanium Parachute Recovery Eyelet
     const eyeletGeom = new THREE.TorusGeometry(0.12, 0.025, 12, 24);
-    const eyeletMat = new THREE.MeshStandardMaterial({ color: 0xA78BFA, metalness: 0.8 });
+    const eyeletMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.9, roughness: 0.2 });
     const eyelet = new THREE.Mesh(eyeletGeom, eyeletMat);
-    eyelet.position.y = 1.22;
+    eyelet.position.y = 1.20;
     cansatGroup.add(eyelet);
 
-    const antGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.9, 8);
-    const antMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.9 });
+    // 9. 433 MHz LoRa Loaded Whip Antenna
+    const antGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.95, 8);
+    const antMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, metalness: 0.95, roughness: 0.2 });
     const antenna = new THREE.Mesh(antGeom, antMat);
     antenna.position.set(0.3, -1.55, 0);
     cansatGroup.add(antenna);
 
+    // 10. Coordinate Axes Orientation Indicator
     const axes = new THREE.AxesHelper(1.8);
     cansatGroup.add(axes);
 
     scene.add(cansatGroup);
 
+    // Damped Smooth Orbit Interaction
     container.addEventListener('mousedown', function (e) {
       isDragging3D = true;
       previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -1749,20 +2007,37 @@
       if (!isDragging3D) return;
       const deltaX = e.clientX - previousMousePosition.x;
       const deltaY = e.clientY - previousMousePosition.y;
-      scene.rotation.y += deltaX * 0.008;
-      scene.rotation.x += deltaY * 0.008;
+      targetRotY += deltaX * 0.008;
+      targetRotX += deltaY * 0.008;
       previousMousePosition = { x: e.clientX, y: e.clientY };
     });
+
+    // Mouse wheel zoom
+    container.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      camera.position.z = Math.max(3.0, Math.min(8.5, camera.position.z + e.deltaY * 0.004));
+    }, { passive: false });
 
     threeReady = true;
 
     (function animate() {
       animId = requestAnimationFrame(animate);
+
+      // Smooth camera orbit damping
+      scene.rotation.y += (targetRotY - scene.rotation.y) * 0.12;
+      scene.rotation.x += (targetRotX - scene.rotation.x) * 0.12;
+
+      // Subtle avionics beacon breathing
+      if (beaconLed) {
+        const pulse = 1.2 + 0.8 * Math.sin(Date.now() * 0.005);
+        beaconLed.material.emissiveIntensity = pulse;
+      }
+
       if (cansatGroup) {
         const targetEuler = new THREE.Euler(
-          fusedPitch * Math.PI / 180,
-          fusedYaw * Math.PI / 180,
-          fusedRoll * Math.PI / 180,
+          (fusedPitch - tarePitch) * Math.PI / 180,
+          (fusedYaw - tareYaw) * Math.PI / 180,
+          (fusedRoll - tareRoll) * Math.PI / 180,
           'XYZ'
         );
         cansatGroup.rotation.x += (targetEuler.x - cansatGroup.rotation.x) * 0.25;
@@ -1832,6 +2107,13 @@
       const rfRej = document.getElementById('rf-rejected');
       if (rfRej) rfRej.innerText = String(linesRejected);
       appendFeed(false, line);
+      const lower = line.toLowerCase();
+      if (lower.includes('lora') || lower.includes('receiver') || lower.includes('init') || lower.includes('ready') || lower.includes('boot')) {
+        const connText = document.getElementById('conn-text');
+        if (connText) connText.innerText = line.substring(0, 26).toUpperCase();
+        const connDot = document.getElementById('conn-dot');
+        if (connDot) connDot.className = 'led-dot bg-purple-400 text-purple-400 led-pulse';
+      }
       return;
     }
     linesParsed += 1;
@@ -1850,7 +2132,12 @@
     const accelMag = Math.sqrt(parsed.ax * parsed.ax + parsed.ay * parsed.ay + parsed.az * parsed.az);
     let vSpd = 0;
     if (previousAlt !== null && previousTs !== null) {
-      if (dt > 0) vSpd = (parsed.altitude - previousAlt) / dt;
+      if (dt > 0) {
+        const rawVSpd = (parsed.altitude - previousAlt) / dt;
+        // Barometric noise filter: ±0.1 hPa atmospheric pressure fluctuations on table equal ~±1m.
+        // If vertical velocity is below noise floor (< 0.40 m/s), treat as stationary.
+        vSpd = Math.abs(rawVSpd) < 0.40 ? 0.0 : rawVSpd;
+      }
     }
     previousAlt = parsed.altitude;
     previousTs = now;
@@ -1945,9 +2232,21 @@
     document.getElementById('info-gpsfix').innerText = locked ? 'Locked (WGS84 3D)' : 'No lock / Searching';
     document.getElementById('info-alt').innerText = row.altitude.toFixed(2) + ' m';
     document.getElementById('info-apogee').innerText = apogee.toFixed(2) + ' m';
+    // Auto-tare initial resting orientation on launchpad
+    if (!autoTaredOnPad && currentFlightPhase === 'PAD_IDLE' && linesParsed >= 3) {
+      tarePitch = row.pitch;
+      tareRoll = row.roll;
+      tareYaw = row.yaw;
+      autoTaredOnPad = true;
+    }
+
+    const displayPitch = row.pitch - tarePitch;
+    const displayRoll = row.roll - tareRoll;
+    const displayYaw = row.yaw - tareYaw;
+
     document.getElementById('info-vspd').innerText = row.vSpd.toFixed(2) + ' m/s';
-    document.getElementById('info-pitch').innerText = row.pitch.toFixed(1) + '°';
-    document.getElementById('info-roll').innerText = row.roll.toFixed(1) + '°';
+    document.getElementById('info-pitch').innerText = displayPitch.toFixed(1) + '°';
+    document.getElementById('info-roll').innerText = displayRoll.toFixed(1) + '°';
     document.getElementById('info-presstemp').innerText = row.pressure.toFixed(2) + ' hPa';
     document.getElementById('info-hum').innerText = row.humidity.toFixed(1) + ' %';
     document.getElementById('info-dewdensity').innerText = row.dewPoint.toFixed(1) + ' °C · ' + row.airDensity.toFixed(3) + ' kg/m³';
@@ -1956,9 +2255,9 @@
     document.getElementById('info-anomaly').innerText = currentAnomalyCode;
 
     // 3D Model Readings
-    document.getElementById('model-pitch').innerText = row.pitch.toFixed(1) + '°';
-    document.getElementById('model-roll').innerText = row.roll.toFixed(1) + '°';
-    document.getElementById('model-yaw').innerText = row.yaw.toFixed(1) + '°';
+    document.getElementById('model-pitch').innerText = displayPitch.toFixed(1) + '°';
+    document.getElementById('model-roll').innerText = displayRoll.toFixed(1) + '°';
+    document.getElementById('model-yaw').innerText = displayYaw.toFixed(1) + '°';
 
     // Map Floating HUD Readings
     document.getElementById('map-alt').innerText = row.altitude.toFixed(1);
@@ -1969,7 +2268,7 @@
 
     // Push Live Chart Data
     pushChart(accelChart, [row.ax, row.ay, row.az]);
-    pushChart(orientChart, [row.pitch, row.roll]);
+    pushChart(orientChart, [displayPitch, displayRoll]);
     pushChart(vSpeedChart, [row.vSpd]);
     pushChart(altChart, [row.altitude]);
     pushChart(gyroChart, [row.gx, row.gy, row.gz]);
@@ -1989,25 +2288,87 @@
     }
   }
 
-  // --- SERIAL USB (WEB SERIAL API) ---
+  // --- SERIAL USB (WEB SERIAL API & PYTHON BACKEND BRIDGE) ---
+  let bridgeSocket = null;
+
+  async function connectPythonSerialBridge() {
+    if (bridgeSocket) {
+      bridgeSocket.close();
+      bridgeSocket = null;
+      document.getElementById('connect-btn').innerText = 'CONNECT';
+      setConnectionState(false, 'DISCONNECTED');
+      return;
+    }
+    if (isDemo) toggleDemo();
+    if (replayPlaying) toggleReplayPlay();
+
+    setConnectionState(true, 'CONNECTING BRIDGE...');
+    try {
+      const host = location.hostname || '127.0.0.1';
+      const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + ':8000/ws/serial';
+      bridgeSocket = new WebSocket(wsUrl);
+      bridgeSocket.onopen = function () {
+        setConnectionState(true, 'ONLINE (BRIDGE: COM3)');
+        document.getElementById('connect-btn').innerText = 'DISCONNECT';
+      };
+      bridgeSocket.onmessage = function (event) {
+        if (event.data) {
+          ingestRawLine(event.data);
+        }
+      };
+      bridgeSocket.onerror = function (err) {
+        console.warn('Bridge socket error', err);
+        setConnectionState(false, 'BRIDGE OFFLINE');
+      };
+      bridgeSocket.onclose = function () {
+        document.getElementById('connect-btn').innerText = 'CONNECT';
+        setConnectionState(false, 'DISCONNECTED');
+        bridgeSocket = null;
+      };
+    } catch (e) {
+      alert('Could not connect to Python Serial Bridge: ' + e.message);
+      setConnectionState(false, 'DISCONNECTED');
+    }
+  }
+
   async function toggleConnect() {
+    if (bridgeSocket) {
+      bridgeSocket.close();
+      bridgeSocket = null;
+      return;
+    }
     if (serialPort) {
       await disconnectSerial();
       return;
     }
+
+    const baudSelect = document.getElementById('baud-select');
+    const selectedMode = baudSelect ? baudSelect.value : 'bridge';
+
+    if (selectedMode === 'bridge') {
+      await connectPythonSerialBridge();
+      return;
+    }
+
     if (!('serial' in navigator)) {
-      alert('Web Serial API is supported on Google Chrome and Microsoft Edge (HTTPS or localhost).');
+      await connectPythonSerialBridge();
       return;
     }
     if (isDemo) toggleDemo();
     if (replayPlaying) toggleReplayPlay();
 
     try {
+      const selectedBaud = parseInt(selectedMode, 10) || 9600;
       const port = await navigator.serial.requestPort();
-      await port.open({ baudRate: 115200 });
+      await port.open({ baudRate: selectedBaud });
+      try {
+        await port.setSignals({ dataTerminalReady: true, requestToSend: true });
+      } catch (sigErr) {
+        console.warn('DTR/RTS signals not supported on this adapter', sigErr);
+      }
       serialPort = port;
       serialKeepReading = true;
-      setConnectionState(true, 'ONLINE (115200 BAUD)');
+      setConnectionState(true, 'ONLINE (' + selectedBaud + ' BAUD)');
       document.getElementById('connect-btn').innerText = 'DISCONNECT';
       const decoder = new TextDecoderStream();
       const closed = port.readable.pipeTo(decoder.writable).catch(function () { /* stream closed */ });
@@ -2027,11 +2388,17 @@
       }
       await closed;
     } catch (err) {
+      if (err && err.name === 'NotFoundError') {
+        console.log('Web Serial device picker showed no device; automatically connecting via Python Serial Bridge...');
+        await connectPythonSerialBridge();
+        return;
+      }
       if (err && err.name !== 'NotFoundError') {
         console.warn('Serial connection error', err);
+        alert('Serial connection error: ' + (err.message || err));
       }
     } finally {
-      await disconnectSerial(true);
+      if (serialPort) await disconnectSerial(true);
     }
   }
 
@@ -2339,6 +2706,18 @@
     const isMax = tile.classList.contains('tile-maximized');
     const btn = tile.querySelector('.panel-expand-btn');
     if (btn) btn.innerText = isMax ? '✕' : '⤢';
+
+    // When closing, strip Chart.js / Three.js inline height overrides to prevent dashboard stretching
+    if (!isMax) {
+      tile.querySelectorAll('canvas').forEach(function (cvs) {
+        cvs.style.width = '';
+        cvs.style.height = '';
+      });
+      tile.querySelectorAll('.chart-container').forEach(function (cc) {
+        cc.style.height = '';
+      });
+    }
+
     requestAnimationFrame(function () {
       resizeVisibleCharts();
       resizeMap();
@@ -2470,12 +2849,14 @@
   window.openGoogleMapsRecovery = openGoogleMapsRecovery;
   window.toggleAudioSpeech = toggleAudioSpeech;
   window.dismissSafetyAlarm = dismissSafetyAlarm;
+  window.tareAttitude = tareAttitude;
 
   // Verification Testing Harness Exports
   window.__COGNITIVE_CANSAT__ = {
     parsePacketLine: parsePacketLine,
     batteryPct: batteryPct,
     updateAttitudeFusion: updateAttitudeFusion,
+    tareAttitude: tareAttitude,
     computeSoundingMetrics: computeSoundingMetrics,
     evaluateAnomalies: evaluateAnomalies,
     updateFlightPhase: updateFlightPhase,
