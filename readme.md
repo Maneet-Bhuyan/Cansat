@@ -108,71 +108,83 @@ ML models
 
 ## Getting started
 
-### 1. Set up the environment
+### 1. Clone the repository and navigate to the project directory
 
-```powershell
-cd E:\Cansat
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+```bash
+git clone https://github.com/Maneet-Bhuyan/Cansat.git
+cd Cansat
 ```
 
-### 2. Install dependencies
-
-```powershell
-pip install -r requirements.txt
-```
-
-### 3. Start the complete mission control system
+### 2. Quick start with the automated launcher (Windows)
 
 The included Windows launcher starts the frontend dashboard and FastAPI backend together:
 
-```powershell
-cd E:\Cansat
+```cmd
 START_MISSION_CONTROL.bat
 ```
 
-You can also double-click `START_MISSION_CONTROL.bat` from File Explorer. The launcher automatically:
+You can also simply double-click `START_MISSION_CONTROL.bat` from File Explorer. The launcher automatically:
 1. Verifies if `.venv` exists and contains required packages.
-2. If Python is installed but the virtual environment is missing, it creates `.venv` and installs dependencies automatically.
-3. If Python is not installed on the system, it provides an **Instant Native Mode** using Windows' built-in `.NET HttpListener` (requiring zero third-party software).
+2. If Python is installed on your computer but `.venv` is missing, it creates `.venv` and automatically installs all dependencies from `requirements.txt` on the first launch.
+3. If Python is not installed on your system, it offers an **Instant Native Mode** using Windows' built-in `.NET HttpListener`, launching the full ground station dashboard with zero external software required.
 
-The dashboard is available at:
+The dashboard will open automatically in your default browser at:
 
 ```text
 http://127.0.0.1:8000/
 ```
 
-Keep the launcher window open while using the dashboard. Press `Ctrl+C` in that window to stop the backend.
+Keep the launcher window open while using the ground station. Press `Ctrl+C` in that window to stop the server anytime.
 
-### 4. Manual startup
+### 3. Manual setup (Windows, Linux, macOS)
 
-Use the manual commands below when you need to run the backend and frontend separately.
+If you prefer to configure your environment manually or are deploying across different operating systems:
 
-#### Start the backend
+#### Set up the virtual environment
+
+On Windows (PowerShell):
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+On Linux or macOS:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Launch Mission Control
+
+```bash
+python launch.py
+```
+
+#### Running backend and frontend independently (optional)
+
+To start only the FastAPI machine learning backend:
 
 ```powershell
-cd E:\Cansat
 .\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Or use the included script:
+Or using the included PowerShell script:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File E:\Cansat\backend\start_server.ps1
+powershell -ExecutionPolicy Bypass -File .\backend\start_server.ps1
 ```
 
-#### Launch the dashboard
-
-Open the dashboard directly:
+To open the ground station dashboard directly in your browser:
 
 ```powershell
-start "E:\Cansat\index.html"
+start index.html
 ```
 
-Or serve locally:
+Or serve locally with Python:
 
 ```powershell
-cd E:\Cansat
 python -m http.server 8000
 ```
 
@@ -344,7 +356,7 @@ Validates 13-field CSV parsing, invalid packet rejection, kinematic derivations,
 
 ### PowerShell mission verification suite (17 assertions)
 ```powershell
-powershell -ExecutionPolicy Bypass -File E:\Cansat\selftest.ps1
+powershell -ExecutionPolicy Bypass -File .\selftest.ps1
 ```
 Validates Mission Elapsed Time (MET) clock formatting, all 10 CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
 
