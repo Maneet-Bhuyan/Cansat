@@ -111,7 +111,6 @@ ML models
 ### 1. Set up the environment
 
 ```powershell
-cd E:\Cansat
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
