@@ -1201,6 +1201,8 @@
   let previousAlt = null;
   let previousTs = null;
   let smoothedAltitude = null;
+  const ALT_FILTER_WINDOW = 3;
+  let altitudeBuffer = [];
   let apogee = 0;
   let padBaselineAlt = 0;
   let padBaselineTemp = 25.0;
@@ -1984,35 +1986,29 @@
     data: [], pointRadius: 0, tension: 0.2
   });
 
-  // Aerospace chart scale stabilizer: prevents micro-noise / sensor drafts from over-zooming Y-axes
-  const boundedScale = (minSpan) => ({
-    grid: chartOptions.scales.y.grid,
-    ticks: chartOptions.scales.y.ticks,
-    afterDataLimits: function (scale) {
-      if (!Number.isFinite(scale.min) || !Number.isFinite(scale.max)) return;
-      if (scale.max - scale.min < minSpan) {
-        const mid = (scale.max + scale.min) / 2;
-        scale.min = mid - minSpan / 2;
-        scale.max = mid + minSpan / 2;
+  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')]);
+  const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')]);
+  const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 0 }),
+        grace: 1
       }
     }
   });
-
-  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')], {
-    scales: { x: chartOptions.scales.x, y: boundedScale(2.0) }
-  });
-  const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')], {
-    scales: { x: chartOptions.scales.x, y: boundedScale(20.0) }
-  });
-  const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')], {
-    scales: { x: chartOptions.scales.x, y: boundedScale(4.0) }
-  });
   const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#38BDF8')], {
-    scales: { x: chartOptions.scales.x, y: boundedScale(10.0) }
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 0 }),
+        grace: 1
+      }
+    }
   });
-  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')], {
-    scales: { x: chartOptions.scales.x, y: boundedScale(10.0) }
-  });
+  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')]);
   const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#06B6D4')], {
     scales: {
       x: chartOptions.scales.x,
@@ -2027,27 +2023,11 @@
       x: chartOptions.scales.x,
       yP: {
         type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 11, weight: '500' } },
-        afterDataLimits: function (scale) {
-          if (!Number.isFinite(scale.min) || !Number.isFinite(scale.max)) return;
-          if (scale.max - scale.min < 15.0) {
-            const mid = (scale.max + scale.min) / 2;
-            scale.min = mid - 7.5;
-            scale.max = mid + 7.5;
-          }
-        }
+        ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 11, weight: '500' } }
       },
       yT: {
         type: 'linear', position: 'right', grid: { drawOnChartArea: false },
-        ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 11, weight: '500' } },
-        afterDataLimits: function (scale) {
-          if (!Number.isFinite(scale.min) || !Number.isFinite(scale.max)) return;
-          if (scale.max - scale.min < 5.0) {
-            const mid = (scale.max + scale.min) / 2;
-            scale.min = mid - 2.5;
-            scale.max = mid + 2.5;
-          }
-        }
+        ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 11, weight: '500' } }
       }
     }
   });
@@ -2535,16 +2515,14 @@
       if (measuredDt > 0.05 && measuredDt < 5.0) dt = measuredDt;
     }
 
-    // Adaptive Dual-Rate Altitude Low-Pass Filter
-    // Attenuates micro-drafts and ambient sensor noise when resting (delta < 0.40m),
-    // while tracking true vertical flight dynamics with zero lag (delta >= 0.40m).
-    if (smoothedAltitude === null) {
-      smoothedAltitude = parsed.altitude;
-    } else {
-      const deltaAlt = Math.abs(parsed.altitude - smoothedAltitude);
-      const alpha = deltaAlt < 0.40 ? 0.08 : (deltaAlt >= 1.5 ? 0.80 : 0.50);
-      smoothedAltitude = smoothedAltitude + alpha * (parsed.altitude - smoothedAltitude);
+    // 3-Point Rolling Moving Average Filter for Barometric Altitude
+    // Smooths out high-frequency sensor noise while responsively tracking 1-meter elevation changes
+    altitudeBuffer.push(parsed.altitude);
+    if (altitudeBuffer.length > ALT_FILTER_WINDOW) {
+      altitudeBuffer.shift();
     }
+    const altSum = altitudeBuffer.reduce((sum, val) => sum + val, 0);
+    smoothedAltitude = Number((altSum / altitudeBuffer.length).toFixed(2));
 
     const fusion = updateAttitudeFusion(parsed.ax, parsed.ay, parsed.az, parsed.gx, parsed.gy, parsed.gz, dt);
     const accelMag = Math.sqrt(parsed.ax * parsed.ax + parsed.ay * parsed.ay + parsed.az * parsed.az);
@@ -2552,8 +2530,7 @@
     if (previousAlt !== null && previousTs !== null) {
       if (dt > 0) {
         const rawVSpd = (smoothedAltitude - previousAlt) / dt;
-        // Barometric noise filter: small air currents / table drafts
-        vSpd = Math.abs(rawVSpd) < 0.25 ? 0.0 : rawVSpd;
+        vSpd = Math.abs(rawVSpd) < 0.10 ? 0.0 : rawVSpd;
       }
     }
     previousAlt = smoothedAltitude;
@@ -3046,6 +3023,7 @@
     previousAlt = null;
     previousTs = null;
     smoothedAltitude = null;
+    altitudeBuffer = [];
     currentFlightPhase = 'PAD_IDLE';
     speechAnnounced = { apogee: false, chute: false, alt100: false, touchdown: false };
     missionStartEpochMs = null;
@@ -3412,6 +3390,7 @@
     previousAlt = null;
     previousTs = null;
     smoothedAltitude = null;
+    altitudeBuffer = [];
     apogee = 0;
     missionStartEpochMs = null;
     padBaselineRecorded = false;

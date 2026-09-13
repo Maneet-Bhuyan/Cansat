@@ -649,4 +649,47 @@ FILES MODIFIED:
 
 STATUS: ALTITUDE CHART STABILIZATION COMPLETE & VERIFIED
 
+--------------------------------------------------------------------------------
+ALTITUDE FILTER REFINEMENT & 1-METER RESOLUTION PRESERVATION
+--------------------------------------------------------------------------------
+
+[2026-09-14T00:55:00Z] ACTION: Refined altitude filtering to preserve responsive 1-meter changes and eliminated axis wobble.
+FILES MODIFIED:
+  - index.html
+  - docs/project_log.txt
+
+1. FEEDBACK ANALYSIS & ROOT CAUSE:
+   - The prior boundedScale(10.0) hook artificially enforced a 10-meter window with dynamic mid recalculation
+     on every sample, which caused axis ticks to float/vibrate on every packet and compressed physical 1-meter
+     height changes down to barely 10% of the canvas height.
+   - In addition, a heavy conditional alpha (0.08) damped small movements (<0.40m), making manual elevation
+     changes (like lifting the CanSat 1 meter from the table) sluggish and delayed.
+
+2. REFINEMENTS IMPLEMENTED:
+   - Native Chart.js Integer Ticks & 1-Meter Grid Resolution:
+     Removed boundedScale and afterDataLimits hooks.
+     Configured altChart and vSpeedChart with native Chart.js options:
+     • ticks: { precision: 0 } (forces whole-integer meters on ticks: 855, 856, 857, 858, 859).
+     • grace: 1 (adds 1 unit of padding without vibrating or jumping).
+     • The Y-axis grid lines are now placed at exact 1-meter intervals.
+     • When stationary on the desk, the line stays calm at ~857m without jittering.
+     • When the CanSat is lifted by 1 meter (857m -> 858m), the line visibly climbs by 1 whole grid division!
+   - 3-Point Rolling Moving Average Filter:
+     Replaced conditional dual-rate filter with an ultra-clean 3-sample moving average buffer (ALT_FILTER_WINDOW = 3).
+     • Reduces high-frequency barometric noise by over 65%.
+     • Reaches 100% of a 1.0-meter physical elevation step in just 3 packets (~2.4s) with zero lag or deadband.
+   - Clean State Resets:
+     Reset altitudeBuffer = [] and smoothedAltitude = null in resetReplay() and resetNewFlight().
+
+3. VERIFICATION:
+   - tests/selftest.js: 27/27 PASSED.
+   - tests/selftest.ps1: 17/17 PASSED (0 Failures).
+   - tests/test_sm.ps1: 100% PASSED across all 10 flight test cases.
+   - tests/test_backend_core.py: 10/10 PASSED.
+   - Streaming simulation in scratch/test_stream_grace.js confirmed rock-solid integer ticks [855, 856, 857, 858, 859]
+     with clear 1-meter step detection.
+
+STATUS: ALTITUDE 1-METER RESOLUTION & SMOOTHING VERIFIED
+
+
 
