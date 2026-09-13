@@ -291,3 +291,91 @@ KEY ENHANCEMENTS:
 3. Verification:
    - Executed `selftest.ps1`: 100% passed (0 failures).
 
+--------------------------------------------------------------------------------
+PYTHON ML BACKEND, AUTONOMOUS LAUNCHER & FULL DASHBOARD OVERHAUL
+--------------------------------------------------------------------------------
+
+[2026-08-31T12:00:00Z] ACTION: Built production-grade Python ML backend and trained 3 flight models.
+FILES CREATED / MODIFIED:
+  - E:\Cansat\backend\app.py
+  - E:\Cansat\ml\train_models.py
+  - E:\Cansat\ml\model_metrics.json
+  - E:\Cansat\ml\saved_models\flight_phase_classifier.joblib
+  - E:\Cansat\ml\saved_models\anomaly_detector.joblib
+  - E:\Cansat\ml\saved_models\apogee_regressor.joblib
+  - E:\Cansat\explaination.txt
+CAPABILITIES DELIVERED:
+  - FastAPI full-duplex inference server supporting REST endpoints (/api/predict, /api/health)
+    and high-throughput WebSocket streams (/ws/telemetry).
+  - Random Forest Flight Phase Classifier achieving 99.61% accuracy across 3,602 flight frames.
+  - PyOD Isolation Forest anomaly detector computing normalized out-of-envelope anomaly scores.
+  - Gradient Boosted Apogee Regressor predicting peak altitude before apogee event.
+  - Comprehensive academic engineering documentation in explaination.txt detailing confusion
+    matrices, precision/recall breakdown, and feature importance rankings.
+
+--------------------------------------------------------------------------------
+PORTABILITY LAUNCHER, PFR REPORTING & MISSION CONTROL REFACTOR
+--------------------------------------------------------------------------------
+
+[2026-09-03T18:30:00Z] ACTION: Implemented zero-dependency launcher, Post-Flight Review, and UI polish.
+FILES CREATED / MODIFIED:
+  - E:\Cansat\START_MISSION_CONTROL.bat
+  - E:\Cansat\launch.py
+  - E:\Cansat\backend\standalone_server.ps1
+  - E:\Cansat\index.html
+  - E:\Cansat\readme.md
+CAPABILITIES DELIVERED:
+  - Smart Windows Bootstrap Launcher (START_MISSION_CONTROL.bat): Auto-detects Python environment,
+    bootstraps .venv, installs dependencies, and provides instant fallback via native .NET HttpListener
+    (standalone_server.ps1) for systems without Python installed.
+  - Synchronized multi-chart crosshairs across all 7 live Canvas plots in index.html.
+  - Post-Flight Review (PFR) automated report generator with flight envelope compliance, apogee
+    verification, descent velocity audits, and print/PDF export.
+  - Replaced hardcoded drive paths with universal relative paths and refined README documentation
+    with professional aerospace tone and zero emojis.
+
+--------------------------------------------------------------------------------
+HARDWARE SELECTION & AUXILIARY ESP32-CAM TINYML MODULE FINALIZATION
+--------------------------------------------------------------------------------
+
+[2026-09-06T17:00:00Z] ACTION: Finalized dual-bus hardware architecture and isolated TinyML vision module.
+SYSTEM ARCHITECTURE FINALIZED:
+  - CanSat Primary Bus: Arduino Nano flight computer, SX1278 433 MHz LoRa transceiver,
+    u-blox NEO-6M GPS, 3-layer circular PCB disc stack powered by dedicated 9V battery.
+  - Auxiliary TinyML Vision Pod: AI-Thinker ESP32-CAM module (OV5640 5MP / OV3660 3MP) mounted
+    in external bed with separate power circuit to preserve CanSat flight bus isolation.
+  - Power Circuit: 3.7V Li-ion battery (800-1000 mAh) paired with 5V DC-DC USB Step-Up Boost
+    Converter to eliminate AMS1117 regulator dropout brownouts during Wi-Fi transmission bursts.
+  - Ground Reception: Dedicated ESP-WROOM-32U node with high-gain directional antenna receiving
+    high-speed 2.4 GHz ESP-NOW image frames and feeding them into ground station PC.
+
+--------------------------------------------------------------------------------
+PYTHON & ML ARCHITECTURAL INVERSION & TINYML DATASET INGESTION
+--------------------------------------------------------------------------------
+
+[2026-09-07T07:25:00Z] ACTION: Initiated architectural shift to Python/ML core, installed deep learning suite, and ingested EuroSAT aerial dataset.
+FILES CREATED / MODIFIED:
+  - E:\Cansat\python-ml_focused.text
+  - E:\Cansat\ml\download_dataset.py
+  - E:\Cansat\data\eurosat\2750\* (27,000 images across 10 classes)
+  - E:\Cansat\project_log.txt
+CAPABILITIES DELIVERED:
+  1. Master Tracking Document (python-ml_focused.text):
+     - Established 4-pillar architectural blueprint: Python dual-port serial manager,
+       TinyML edge vision pipeline, multimodal real-time flight decision engine, and
+       scientific post-flight research notebooks.
+     - Formulated itemized milestone tracker (T01-T08 completed, P01-P12 execution roadmap).
+  2. Deep Learning Framework Installation:
+     - Verified and installed PyTorch (torch 2.14.0), TorchVision (0.29.0), and ONNX (1.22.0)
+       inside the .venv virtual environment.
+  3. EuroSAT Aerial Remote Sensing Dataset Acquisition:
+     - Developed automated download and extraction pipeline (ml/download_dataset.py) with
+       Hugging Face mirror failover and automated directory verification.
+     - Extracted and verified all 27,000 Sentinel-2 64x64 satellite images categorized into
+       10 land cover classes and mapped to CanSat Safe Landing Area Index (SLAI) tiers:
+       • SAFE_LZ: AnnualCrop (3000), HerbaceousVegetation (3000), Pasture (2000), PermanentCrop (2500)
+       • OBSTACLE_CANOPY: Forest (3000)
+       • CRITICAL_HAZARD: Highway (2500), Industrial (2500), Residential (3000)
+       • WATER_HAZARD: River (2500), SeaLake (3000)
+     - Milestone P04 marked 100% COMPLETE.
+STATUS: READY FOR TINYML MODEL TRAINING PIPELINE (P05)
