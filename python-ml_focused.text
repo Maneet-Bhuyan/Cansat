@@ -1,0 +1,125 @@
+================================================================================
+ COGNITIVE CANSAT & TINYML VISION PLATFORM
+ MASTER TRACKER: PYTHON & MACHINE LEARNING FOCUSED ARCHITECTURE
+ File: python-ml_focused.text
+ Target: Shift project majority focus from HTML/JS frontend to Python & ML/TinyML
+ Initialized: 2026-09-07
+================================================================================
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY & ARCHITECTURAL INVERSION
+--------------------------------------------------------------------------------
+Original State:
+- Frontend-heavy architecture where the browser's Web Serial API directly ingests
+  telemetry, computes derived kinematics, runs state machine logic, and drives UI.
+- Python backend acted as an auxiliary service called intermittently.
+- High visual weight on index.html (~150 KB), making the project appear as a web
+  development project rather than an aerospace AI & Machine Learning suite.
+
+Target State ("Heavy Python Brain / Thin Web Client"):
+- Python is the primary flight computer, ingestion engine, and analytics brain.
+- Python manages dual hardware serial links (COM1: CanSat LoRa, COM2: ESP32-CAM ESP-NOW).
+- All signal processing (Extended Kalman Filter, attitude estimation, atmospheric
+  sounding thermodynamics via MetPy) runs strictly in Python.
+- Real-time multimodal machine learning (tabular kinematics + downward aerial vision)
+  executes in Python and on the edge (TinyML on ESP32-CAM).
+- The web interface (index.html) is reduced to a passive, thin telemetry viewport
+  receiving pre-computed, synchronized flight packets via a unified WebSocket stream.
+- The repository profile on GitHub reflects >75% Python through code modularization
+  and Linguist vendoring overrides.
+
+--------------------------------------------------------------------------------
+2. THE FOUR PILLARS OF PYTHON & ML TRANSFORMATION
+--------------------------------------------------------------------------------
+
+PILLAR 1: INGESTION & SENSOR FUSION ENGINE (PYTHON BACKEND)
+- Native PySerial asynchronous dual-port listener.
+- Discrete Extended Kalman Filter (EKF) and 6-DOF IMU attitude fusion (ahrs/SciPy).
+- Mathematical atmospheric sounding physics engine (Magnus-Tetens, ELR, Air Density).
+- High-frequency full-duplex WebSocket dispatcher streaming at 60 Hz.
+
+PILLAR 2: TINYML EDGE VISION & COMPUTER VISION PIPELINE
+- Deep learning aerial classification and hazard patch segmentation (MobileNetV1-0.25).
+- Model trained on verified remote sensing data (EuroSAT Sentinel-2 aerial dataset).
+- Post-training INT8 quantization for sub-milliwatt edge microcontroller deployment.
+- Auto-generation of optimized C++ flatbuffer byte arrays (model_data.h) for ESP32.
+- Onboard execution via TensorFlow Lite for Microcontrollers (TFLM) on ESP32-CAM.
+
+PILLAR 3: MULTIMODAL REAL-TIME FLIGHT DECISION SYSTEM
+- Real-time multimodal fusion: Aligning downward 3x3 Safe Landing Area Index (SLAI)
+  matrices from the camera with barometric descent velocity and GPS drift vectors.
+- Automated Anomaly Root-Cause Analysis: Decomposing PyOD Isolation Forest anomaly
+  scores into contributing sensor/actuator dimensions.
+- Gradient Boosted Apogee Regressor predicting peak altitude before apogee event.
+
+PILLAR 4: SCIENTIFIC RESEARCH SUITE & BENCHMARKING (NOTEBOOKS & CLI)
+- Jupyter analysis notebooks for peer-reviewed academic validation.
+- Skew-T log-P atmospheric thermodynamics profiles using MetPy.
+- Model ablation studies comparing Random Forest, XGBoost, and HMM state classifiers.
+- Quantization efficiency benchmarks: FP32 vs. FP16 vs. INT8 latency, memory, and energy.
+
+--------------------------------------------------------------------------------
+3. MASTER PROGRESS TRACKER & IMPLEMENTATION STATUS
+--------------------------------------------------------------------------------
+
+[STATUS LEGEND: DONE | IN PROGRESS | PENDING]
+
+ID   | Task Name                               | Component        | Status     | Target File / Output
+-----+-----------------------------------------+------------------+------------+-----------------------------------
+T01  | Tabular Flight Phase Classifier         | ML (Tabular)     | DONE       | ml/saved_models/flight_phase_classifier.joblib
+T02  | Out-of-Envelope Anomaly Detector        | ML (Tabular)     | DONE       | ml/saved_models/anomaly_detector.joblib
+T03  | Gradient Boosted Apogee Regressor       | ML (Tabular)     | DONE       | ml/saved_models/apogee_regressor.joblib
+T04  | Tabular ML Training Script              | ML (Tabular)     | DONE       | ml/train_models.py
+T05  | Basic FastAPI Inference Server          | Backend          | DONE       | backend/app.py
+T06  | Ten Flight Scenario Replay Datasets     | Simulation       | DONE       | test_cases/*.csv
+T07  | Autonomous Windows Launcher             | DevOps           | DONE       | START_MISSION_CONTROL.bat, launch.py
+T08  | 4th-Year CSE Technical Documentation   | Documentation    | DONE       | explaination.txt, readme.md
+-----+-----------------------------------------+------------------+------------+-----------------------------------
+P01  | Python Dual-Port Serial Manager         | Backend (Core)   | PENDING(Maneet as I have the module on me)    | backend/core/serial_manager.py
+P02  | Python Kinematics & EKF Fusion Engine   | Backend (Core)   | PENDING    | backend/core/kinematics.py
+P03  | MetPy Atmospheric Sounding Engine       | Backend (Core)   | PENDING    | backend/core/atmospheric.py
+P04  | TinyML Vision Dataset Loader & Script   | TinyML / Vision  | DONE       | ml/download_dataset.py (27,000 verified)
+P05  | MobileNet Aerial Model Training Script  | TinyML / Vision(Evryone)  | PENDING    | ml/train_tinyml_vision.py
+P06  | INT8 Quantization & C++ Header Export   | TinyML / Vision(MAneet and anyone else)  | PENDING    | ml/export_tinyml_header.py
+P07  | ESP32-CAM Airborne Firmware (OV5640)    | Firmware (Edge)  | PENDING    | firmware/esp32_cam_airborne/
+P08  | ESP32 Ground Receiver Firmware          | Firmware (GCS)   | PENDING    | firmware/esp32_ground_receiver/
+P09  | Multimodal Landing Safety Index (MLSI)  | ML (Fusion)(Whoever wants to work with ML)      | PENDING    | backend/ml/multimodal_fusion.py
+P10  | Camera HUD & Hazard Overlay on Web UI   | Frontend HUD(Shubham also work on making it deployable and an app interface)     | PENDING    | index.html (video tile)
+P11  | Research Notebooks (MetPy & Ablation)   | Science / Eval(Rishi - Data analytics)   | PENDING    | analysis/*.ipynb
+P12  | GitHub Linguist Vendoring Override      | Repository       | PENDING    | .gitattributes
+
+--------------------------------------------------------------------------------
+4. MODEL SPECIFICATIONS & HARDWARE BUDGET
+--------------------------------------------------------------------------------
+
+A. Edge Model (ESP32-CAM Microcontroller):
+- Architecture: 8-bit Quantized MobileNetV1-0.25 (or Ultra-lightweight Patch CNN)
+- Input Dimensions: 96x96 grayscale or 64x64 RGB
+- Output: 3x3 Topological Landing Safety Matrix (Safe LZ, Hazard, Obstacle)
+- Target Model Size: < 60 KB INT8 weights
+- Peak SRAM Footprint: < 120 KB
+- Inference Latency: ~50-80 ms per frame on 240 MHz Xtensa LX6
+- Duty Cycle: 1 Hz to 2 Hz during parachute descent phase
+
+B. Ground Station Models (Python Backend):
+- Flight Phase Classifier: Random Forest (n_estimators=120, max_depth=12), Accuracy: 99.61%
+- Anomaly Detection: PyOD Isolation Forest (contamination=0.01) with feature attribution
+- Apogee Estimation: Gradient Boosting Regressor (n_estimators=100, max_depth=5)
+- Multimodal Fusion: Bayesian update combining visual landing hazard with GPS drift speed
+
+--------------------------------------------------------------------------------
+5. PREREQUISITES & ENVIRONMENT SETUP (FOR USER)
+--------------------------------------------------------------------------------
+1. Python Environment:
+   - System Python: Python 3.14.7 (Active)
+   - Virtual Environment: .venv/ (Configured)
+   - Required Deep Learning Packages: torch, torchvision, onnx
+
+2. Dataset Acquisition:
+   - Target Dataset: EuroSAT (Sentinel-2 satellite imagery of 10 land cover classes)
+   - Storage Location: data/eurosat/
+   - Automation: Fully scripted Python auto-downloader to avoid manual downloads.
+
+3. Edge Microcontroller Tooling:
+   - Arduino IDE 2.x or ESP-IDF with ESP32 board package (esp32 by Espressif Systems).
+   - MicroSD Card (1GB - 32GB) formatted to FAT32 for local flight image logging.
