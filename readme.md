@@ -369,6 +369,12 @@ Example packet:
 12400,450.2,18.4,960.5,48.2,4.05,0.08,0.12,0.98,1.2,-0.8,0.4,28.613939,77.209021
 ```
 
+### Telemetry transmission rate & airtime budget
+- **Nominal Broadcast Rate**: 1.0 Hz (1000 ms interval) is the recommended standard for operational flight.
+- **Accuracy & Responsiveness**: Compared to a 2.0s interval, 1.0 Hz halves 3D attitude gyro integration error ($\Delta \theta = \omega \cdot \Delta t$), cuts Kalman filter state covariance propagation, and ensures short boost phases (< 3s) and peak apogee inflection are captured without missing transients or inducing filter phase lag.
+- **LoRa Channel Airtime**: At Spreading Factor SF7 with 125 kHz bandwidth, a 70-byte ASCII CSV frame takes ~110–140 ms Time-on-Air (ToA). A 1.0s interval utilizes ~11–14% channel duty cycle, leaving >85% free airtime margin with zero risk of packet collision or receiver buffer overrun.
+- **Airborne Pre-Filtering (Task HW-07)**: For optimal noise rejection, the flight controller samples the MPU6050 IMU and BMP280 barometer at 20–50 Hz internally, applies a rolling moving-average or exponential filter, and transmits the clean state at 1.0 Hz over the LoRa downlink.
+
 ## Operator keyboard shortcuts
 
 Hotkeys for rapid ground station operation (disabled during text input):

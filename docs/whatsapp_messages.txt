@@ -1,4 +1,4 @@
-﻿================================================================================
+================================================================================
            COGNITIVE CANSAT MISSION - WHATSAPP TEAM BRIEFINGS
 ================================================================================
 
@@ -26,6 +26,8 @@ Hey Maneet! Here is your breakdown for the physical hardware, sensors, and modul
 5. *Parachute & 300m Field Range Test*:
    - Rig parachute (target descent rate 4-6 m/s) with swivel links to prevent tumbling.
    - Do an outdoor line-of-sight test at 100m, 200m, and 300m before the launch.
+6. *Telemetry Transmission Rate & Pre-Filtering (Low Priority)*:
+   - Evaluate broadcasting telemetry at 1.0s (1 Hz) or 500ms (2 Hz) instead of 2.0s for smoother 3D attitude and tighter Kalman tracking. If possible, sample sensors faster onboard (20-50 Hz) with moving average pre-filtering before LoRa dispatch.
 
 🤝 *Common ML Task (All 4 of us)*:
 We're jointly developing the TinyLandingNet vision model for autonomous safe landing zone classification. Check `docs/GPU_TRAINING_INSTRUCTIONS.md` and `ml/train_tinyml_vision.py`.

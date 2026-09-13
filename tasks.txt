@@ -1,7 +1,7 @@
 ================================================================================
                     COGNITIVE CANSAT MISSION - TASK TRACKER
                              File: tasks.txt
-                    Last Updated: 2026-09-13T21:18:00+05:30
+                    Last Updated: 2026-09-14T03:55:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -59,6 +59,12 @@ flashing microcontrollers, antenna RF matching, and mechanical recovery systems.
     - Conduct outdoor open-air line-of-sight range tests at 50m, 100m, 200m, and 300m.
     - Verify ESP-NOW video reception on COM5 and LoRa telemetry on COM3 simultaneously.
     - Verify RSSI levels and frame completion rates in open ground.
+
+[ ] TASK HW-07: TELEMETRY TRANSMISSION RATE & ONBOARD PRE-FILTERING (LOW PRIORITY)
+    - Evaluate increasing LoRa telemetry transmission rate from 0.5 Hz (2.0s interval) to 1.0 Hz (1.0s interval) or 2.0 Hz (500ms interval).
+    - Analyze LoRa time-on-air (ToA) at SF7/BW 125kHz (~100-140ms per 70-byte packet) to ensure duty cycle margin (> 80% free airtime channel headroom).
+    - Implement airborne high-rate sensor polling (MPU6050 6-DOF IMU and BMP280 baro at 20-50 Hz) with sliding-window moving average or exponential pre-filtering on the flight controller before LoRa packet dispatch.
+    - Validate reduction in ground station attitude numerical integration error (theta = omega * delta_t), elimination of filter phase lag, and heightened state machine sensitivity during rapid rocket boost (< 3s) and apogee transitions.
 
 ================================================================================
 2. RISHI — DATA ANALYTICS, TELEMETRY ANALYSIS & FLIGHT DYNAMICS

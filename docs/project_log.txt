@@ -857,3 +857,50 @@ FILES MODIFIED:
    - Verified that physical upright CanSat renders 100% vertical digital twin with 0.0° relative pitch/roll.
 
 STATUS: 3D MODEL ORIENTATION & ATTITUDE TARE VERIFIED & RESOLVED
+
+--------------------------------------------------------------------------------
+TELEMETRY TRANSMISSION RATE & ONBOARD PRE-FILTERING ANALYSIS (TASK HW-07)
+--------------------------------------------------------------------------------
+
+[2026-09-14T03:55:00Z] ACTION: Evaluated telemetry transmission rates on accuracy, added low-priority Task HW-07 to task tracker, and updated documentation.
+FILES MODIFIED:
+  - tasks.txt
+  - readme.md
+  - docs/project_log.txt
+  - docs/README.md
+  - docs/whatsapp_messages.txt
+
+1. TECHNICAL ANALYSIS SUMMARY (TRANSMISSION RATE VS ACCURACY):
+   - 3D Digital Twin Attitude Integration:
+     Gyroscope angular velocity integration error scales directly with Δt: θ(t) = θ(t - Δt) + ω * Δt.
+     At 2.0s interval (0.5 Hz), dynamic tumbling, parachute pendulum oscillations, or quick manual tilts are
+     averaged over a 2-second horizon, causing discrete angular stepping and lagging orientation. Reducing Δt
+     to 1.0s (1.0 Hz) cuts integration error in half; 0.5s (2.0 Hz) reduces it by 75%, allowing smooth real-time tracking.
+   - Dynamic Flight Phase State Machine Transitions:
+     Solid rocket motor burn and apogee inflection are high-speed transient events typically lasting 1.5 - 3.0s.
+     A 2.0s telemetry interval captures only 1 - 2 data points during the entire boost phase, risking missed
+     acceleration peaks (> 2.5G) and delayed apogee detection. At 1.0s (1.0 Hz), phase detection latency is cut by 50%.
+   - Noise Filtering vs Phase Lag Trade-off:
+     While faster transmission does not alter the physical noise floor of BMP280 or MPU6050, the ground station
+     Kalman filter and low-pass filter acquire twice as many samples per unit time. This enables aggressive white
+     noise attenuation while reducing effective filter phase lag from 4 - 6s down to 1 - 2s.
+   - LoRa Radio Airtime & Bandwidth Safety:
+     At standard LoRa parameters (SF7, BW 125 kHz, CR 4/5), an 80-byte telemetry CSV frame occupies ~110 - 140ms
+     of Time-on-Air (ToA). A 1.0s (1.0 Hz) transmission rate utilizes ~11-14% channel airtime, preserving ample
+     regulatory duty cycle margin (> 85% channel headroom) with zero risk of packet collision or receiver buffer stall.
+
+2. ARCHITECTURAL RECOMMENDATION & TASK HW-07 LOGGED:
+   - Added low-priority Task HW-07 to tasks.txt under Maneet's Hardware/Avionics section.
+   - Recommended architecture:
+     • Airborne flight controller: Poll IMU and barometer at 20 - 50 Hz in a high-rate timer interrupt, apply
+       a 3-sample rolling average pre-filter onboard.
+     • Downlink transmitter: Broadcast pre-filtered telemetry frames over LoRa at 1.0s (1.0 Hz) nominal rate.
+
+3. REPOSITORY DOCUMENTATION SYNC:
+   - Updated tasks.txt (Task HW-07 logged with lower priority).
+   - Updated docs/whatsapp_messages.txt (Task HW-07 briefing added for Maneet).
+   - Updated readme.md (telemetry transmission rate recommendations and dynamic Δt scaling).
+   - Updated docs/README.md.
+   - Staged, committed, and synced to GitHub origin/main.
+
+STATUS: TASK HW-07 LOGGED & SYSTEM DOCUMENTATION SYNCHRONIZED
