@@ -86,7 +86,7 @@ P08  | ESP32 Ground Receiver Firmware          | Firmware (GCS)   | DONE       |
 P09  | Multimodal Landing Safety Index (MLSI)  | ML (Fusion)      | PENDING    | backend/ml/multimodal_fusion.py
 P10  | Camera HUD & Video Tile on Web UI       | Frontend HUD     | DONE       | index.html (tile-camera)
 P11  | Research Notebooks (MetPy & Ablation)   | Science / Eval(Rishi - Data analytics)   | PENDING    | analysis/*.ipynb
-P12  | GitHub Linguist Vendoring Override      | Repository       | PENDING    | .gitattributes
+P12  | GitHub Linguist Vendoring Override      | Repository       | DONE       | .gitattributes
 
 --------------------------------------------------------------------------------
 4. MODEL SPECIFICATIONS & HARDWARE BUDGET
