@@ -983,6 +983,76 @@
           </div>
         </div>
 
+        <!-- ROW 4 / TILE 12: LIVE AERIAL CAMERA SCREEN & VIDEO HUD -->
+        <div id="tile-camera" class="dashboard-panel xl:col-span-2">
+          <div class="panel-header">
+            <div class="flex items-center gap-2">
+              <span class="panel-title">Live Aerial Camera Stream</span>
+              <span id="cam-status-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-semibold text-slate-300">
+                <span id="cam-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                <span id="cam-status-text">STANDBY</span>
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono text-cyan-300 hidden sm:inline" id="cam-metric-fps">0.0 FPS</span>
+              <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View">⤢</button>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[220px] flex items-center justify-center bg-[#07090e] overflow-hidden rounded-b-md">
+            <img id="live-cam-img" class="w-full h-full object-contain" alt="Aerial Camera Stream" style="display: none;" />
+            <div id="cam-placeholder" class="text-center p-4 space-y-2">
+              <div class="w-10 h-10 mx-auto rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400 text-lg">
+                📹
+              </div>
+              <div class="text-xs font-tech tracking-wider text-slate-300 uppercase font-bold">AERIAL CAMERA FEED STANDBY</div>
+              <div class="text-[11px] font-mono text-slate-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
+            </div>
+            <!-- Tactical Camera HUD Overlay -->
+            <div id="cam-hud" class="absolute top-2 left-2 bg-[#090d16]/90 border border-sky-900/40 p-2 rounded text-[10.5px] text-slate-300 font-mono shadow-md backdrop-blur-sm space-y-0.5 pointer-events-none tabular-nums hidden">
+              <div class="text-[9.5px] text-sky-300 font-bold uppercase tracking-wider border-b border-sky-900/40 pb-0.5 flex justify-between gap-3">
+                <span>OV3660 DESCENT VIEW</span>
+                <span id="cam-hud-res" class="text-white">320x240</span>
+              </div>
+              <div class="flex justify-between gap-3"><span>Frame:</span><span id="cam-hud-frame" class="text-cyan-300 font-bold">#0000</span></div>
+              <div class="flex justify-between gap-3"><span>Size:</span><span id="cam-hud-size" class="text-white">0.0 KB</span></div>
+              <div class="flex justify-between gap-3"><span>Airtime:</span><span id="cam-hud-airtime" class="text-emerald-400">0 ms</span></div>
+              <div class="flex justify-between gap-3"><span>Radio:</span><span class="text-sky-400">ESP-NOW Ch1</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 4 / TILE 13: CAMERA LINK TELEMETRY & STATS -->
+        <div id="tile-cam-stats" class="dashboard-panel xl:col-span-2">
+          <div class="panel-header">
+            <span class="panel-title">Camera Wireless Link Quality</span>
+            <span class="text-[11px] font-mono text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">2.4 GHz Radio Diagnostics</span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-center space-y-2.5 font-mono text-xs">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">FRAMES RX</div>
+                <div id="cam-stat-rx" class="text-base font-bold text-cyan-300">0</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">DATA RATE</div>
+                <div id="cam-stat-kbps" class="text-base font-bold text-emerald-400">0.0 KB/s</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">LAST AIRTIME</div>
+                <div id="cam-stat-ms" class="text-base font-bold text-sky-400">-- ms</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">AVG PACKET</div>
+                <div id="cam-stat-chunks" class="text-base font-bold text-amber-300">~20 chunks</div>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 flex justify-between">
+              <span>Sensor: <b class="text-white">OmniVision OV3660 (3MP)</b></span>
+              <span>Ground Ant: <b class="text-cyan-300">External IPEX/SMA</b></span>
+            </div>
+          </div>
+        </div>
+
       </main>
     </div>
 
@@ -2317,8 +2387,76 @@
     if (housing) housing.style.borderColor = color;
   }
 
+  // --- CAMERA WIRELESS STREAM HANDLER ($CAM_FRAME,<id>,<len>,<dur_ms>,<base64>) ---
+  let camFrameCount = 0;
+  let camTotalBytes = 0;
+  let lastCamFrameTs = null;
+  let camFps = 0.0;
+
+  function handleCameraFrameLine(line) {
+    const parts = line.split(',', 5);
+    if (parts.length < 5) return;
+    const frameId = parts[1];
+    const sizeBytes = parseInt(parts[2], 10) || 0;
+    const durationMs = parseInt(parts[3], 10) || 0;
+    const b64Data = parts[4].trim();
+
+    camFrameCount++;
+    camTotalBytes += sizeBytes;
+
+    const now = Date.now();
+    if (lastCamFrameTs) {
+      const dt = (now - lastCamFrameTs) / 1000.0;
+      if (dt > 0.05 && dt < 10) {
+        const instFps = 1.0 / dt;
+        camFps = camFps === 0 ? instFps : (camFps * 0.75 + instFps * 0.25);
+      }
+    }
+    lastCamFrameTs = now;
+
+    const imgEl = document.getElementById('live-cam-img');
+    const placeholderEl = document.getElementById('cam-placeholder');
+    const hudEl = document.getElementById('cam-hud');
+    if (imgEl && b64Data) {
+      imgEl.src = "data:image/jpeg;base64," + b64Data;
+      imgEl.style.display = 'block';
+      if (placeholderEl) placeholderEl.style.display = 'none';
+      if (hudEl) hudEl.classList.remove('hidden');
+    }
+
+    const hudFrame = document.getElementById('cam-hud-frame');
+    if (hudFrame) hudFrame.innerText = '#' + String(frameId).padStart(4, '0');
+    const hudSize = document.getElementById('cam-hud-size');
+    if (hudSize) hudSize.innerText = (sizeBytes / 1024.0).toFixed(1) + ' KB';
+    const hudAirtime = document.getElementById('cam-hud-airtime');
+    if (hudAirtime) hudAirtime.innerText = durationMs + ' ms';
+
+    const fpsEl = document.getElementById('cam-metric-fps');
+    if (fpsEl) fpsEl.innerText = camFps.toFixed(1) + ' FPS';
+
+    const rxEl = document.getElementById('cam-stat-rx');
+    if (rxEl) rxEl.innerText = String(camFrameCount);
+    const msEl = document.getElementById('cam-stat-ms');
+    if (msEl) msEl.innerText = durationMs + ' ms';
+    const kbpsEl = document.getElementById('cam-stat-kbps');
+    if (kbpsEl) kbpsEl.innerText = (camTotalBytes / 1024.0 / Math.max(1, (now - (missionStartEpochMs || now)) / 1000.0)).toFixed(1) + ' KB/s';
+
+    const pill = document.getElementById('cam-status-pill');
+    const dot = document.getElementById('cam-status-dot');
+    const txt = document.getElementById('cam-status-text');
+    if (pill && dot && txt) {
+      pill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300';
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+      txt.innerText = 'LIVE STREAM';
+    }
+  }
+
   // --- MAIN TELEMETRY INGESTION PIPELINE ---
   function ingestRawLine(line) {
+    if (line.startsWith('$CAM_FRAME,')) {
+      handleCameraFrameLine(line);
+      return;
+    }
     linesReceived += 1;
     const rfRec = document.getElementById('rf-received');
     if (rfRec) rfRec.innerText = String(linesReceived);

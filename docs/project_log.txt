@@ -407,3 +407,35 @@ CAPABILITIES DELIVERED:
      - Auto-generates model_data.h with 8-bit integer tables (< 25 KB footprint) ready for direct
        compilation in Arduino IDE on the ESP32-CAM.
 STATUS: COMMITTED & READY FOR MULTI-MACHINE CONCURRENT WORKFLOW
+--------------------------------------------------------------------------------
+AIRBORNE ESP32-CAM & GROUND RECEIVER (ESP-WROOM-32U) ZERO-LAG VIDEO PIPELINE
+--------------------------------------------------------------------------------
+
+[2026-09-13T17:15:00Z] ACTION: Implemented zero-lag wireless aerial video pipeline.
+FILES CREATED / MODIFIED:
+  - firmware/esp32_cam_airborne/camera_pins.h
+  - firmware/esp32_cam_airborne/esp32_cam_airborne.ino
+  - firmware/esp32_cam_airborne/README.md
+  - firmware/esp32_ground_receiver/esp32_ground_receiver.ino
+  - firmware/esp32_ground_receiver/README.md
+  - firmware/ground_cam_viewer.py
+  - index.html (Tile 12 Live Aerial Camera & Tile 13 Wireless Link Diagnostics)
+  - tests/test_firmware_protocol.py
+  - docs/python-ml_focused.text
+CAPABILITIES DELIVERED:
+  1. Airborne Node (firmware/esp32_cam_airborne/):
+     - Sensor driver for OmniVision OV3660 (3MP) with OV2640/OV5640 autodetect on AI-Thinker ESP32-CAM.
+     - Fast non-blocking capture scheduler configured for QVGA (320x240) JPEG at 3 FPS.
+     - Chunking engine slicing frames into 200-byte packets (well under the 250-byte ESP-NOW MTU).
+     - 2.4 GHz ESP-NOW broadcast on Channel 1 (zero-handshake peer-to-peer transmission).
+  2. Ground Receiver Node (firmware/esp32_ground_receiver/):
+     - ESP-NOW listener configured for ESP-WROOM-32U / WROVER with high-gain external antenna.
+     - In-memory real-time chunk reassembler with timeout and packet loss protection.
+     - Embedded Base64 encoder streaming formatted $CAM_FRAME serial packets at 115200 baud.
+  3. Ground Station Laptop Inspection Tools:
+     - Standalone OpenCV camera viewer (firmware/ground_cam_viewer.py) with real-time HUD, FPS counter,
+       latency metric, and demo test mode.
+     - Web UI Camera Tile in index.html with live video display and link quality diagnostics.
+  4. Automated Protocol Verification (tests/test_firmware_protocol.py):
+     - Verified struct packing MTU, 200-byte slicing, bit-for-bit SHA-256 reconstruction, and Base64 streaming.
+STATUS: ALL TESTS PASSING (27/27 selftest.js, 17/17 selftest.ps1, 4/4 test_firmware_protocol.py)
