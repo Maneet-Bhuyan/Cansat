@@ -225,10 +225,15 @@ http://localhost:8000/
 
 The ground station performs real-time mathematical derivations on incoming telemetry packets:
 
-### Vertical velocity
-Derived using first-order backward numerical differentiation across filtered barometric altitudes:
+### Precision altitude estimation & body-axis decoupling
+Atmospheric barometric pressure decreases monotonically with elevation. To prevent human hand tilts (e.g. $15^\circ - 25^\circ$ pitch during manual pickup where $a_z = \cos(\theta) < 1.0\text{G}$) from being falsely interpreted as downward kinematic acceleration, vertical state estimation is decoupled from the unrotated body-axis accelerometer. An adaptive dual-rate state estimator maintains a sub-0.18 m stationarity deadband at rest (locking vertical speed $v_z = 0.00\text{ m/s}$) while rapidly scaling tracking rates ($\alpha = 0.75 - 0.95$) upon physical displacement, guaranteeing that physical elevation ALWAYS causes the altitude chart to climb upwards:
 
-$$v_z = \frac{h(t) - h(t - \Delta t)}{\Delta t}$$
+$$z_{k} = z_{k-1} + \alpha \cdot (z_{\text{baro}} - z_{k-1})$$
+
+### Vertical velocity
+Derived continuously from the precision state estimator across consecutive packets:
+
+$$v_z = \beta \cdot \frac{z_k - z_{k-1}}{\Delta t} + (1 - \beta) \cdot v_{z, k-1}$$
 
 ### Vehicle attitude angles (Euler angles)
 Derived from normalized 3-axis accelerometer gravity vectors with singularity protection:
@@ -381,11 +386,11 @@ Hotkeys for rapid ground station operation (disabled during text input):
 
 The project includes comprehensive test suites for unit, firmware, and integration testing:
 
-### Python backend core unit tests (10 assertions)
+### Python backend core unit tests (16 assertions)
 ```bash
 python -m unittest tests/test_backend_core.py
 ```
-Validates 1D Kalman filter state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, Magnus-Tetens dew point, air density, and multi-threaded serial lifecycle without hardware attached.
+Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, ML model predictions, and multi-threaded serial lifecycle without hardware attached.
 
 ### Firmware protocol & ESP-NOW chunking tests (4 assertions)
 ```bash
@@ -403,7 +408,13 @@ Validates 13-field CSV parsing, invalid packet rejection, kinematic derivations,
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/selftest.ps1
 ```
-Validates Mission Elapsed Time (MET) clock formatting, all 10 CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
+Validates Mission Elapsed Time (MET) clock formatting, CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
+
+### 5-Phase flight state machine verification (10 mission profiles)
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/test_sm.ps1
+```
+Validates end-to-end HMM and ML state transitions across all 10 mission profiles (`PAD_IDLE` -> `BALLOON_ASCENT` -> `APOGEE_BURST` -> `PARACHUTE_DESCENT` -> `TOUCHDOWN_RECOVERY`).
 
 ## Project status
 

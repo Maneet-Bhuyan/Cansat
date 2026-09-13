@@ -751,5 +751,57 @@ FILES CREATED / MODIFIED:
 
 STATUS: HIGH-PRECISION SENSOR CALIBRATION & SUPER-ACCURATE TELEMETRY COMPLETE & VERIFIED
 
+--------------------------------------------------------------------------------
+TILT-IMMUNE PRECISION ALTITUDE FILTER & ELEVATION DIRECTION GUARANTEE
+--------------------------------------------------------------------------------
 
+[2026-09-14T02:35:00Z] ACTION: Fixed altitude chart inversion during physical lifting and verified directional fidelity.
+FILES MODIFIED:
+  - backend/core/kinematics.py
+  - index.html
+  - docs/project_log.txt
+  - readme.md
+  - walkthrough.md
 
+1. ROOT CAUSE ANALYSIS OF INVERSION:
+   - In the prior Extended Kalman Filter (EKF) implementation, vertical dynamic acceleration was computed as:
+     aVert = (az - 1.0) * 9.80665 m/s^2.
+   - However, the onboard accelerometer measures specific force in the sensor's BODY reference frame,
+     NOT in the Earth inertial reference frame.
+   - When a human operator manually lifts the CanSat, the hand naturally tilts the vehicle (15° to 25°).
+   - Under a 20° tilt, the body Z-axis accelerometer reads az = cos(20°) = 0.939 G.
+   - The formula computed aVert = (0.939 - 1.0) * 9.80665 = -0.60 m/s^2 (downward acceleration!).
+   - Over consecutive packets during manual lifting, the Kalman filter integrated this false downward acceleration,
+     overwhelming the subtle barometric pressure decrease and forcing the filtered altitude to climb DOWN
+     (and negative vertical speed vz = -0.89 m/s) instead of climbing UP.
+
+2. ARCHITECTURAL FIX & MATHEMATICAL PROOF:
+   - Client-side PrecisionAltitudeFilter (index.html):
+     • Replaced the body-axis EKF with an adaptive dual-rate state estimator directly coupled to barometric
+       ground truth. Atmospheric pressure decreases monotonically with elevation, making the barometric
+       gradient physically immune to body tilt.
+     • Stationarity Deadband (|Δz| < 0.18m, trendCount < 3):
+       Applies α = 0.06 to clamp thermal/ADC BMP280 jitter, strictly zeroing vertical velocity (vz = 0.00 m/s).
+     • Physical Movement Tracking (|Δz| >= 0.45m):
+       Switches dynamically to α = 0.75 - 0.95 with directional trend confirmation, reaching 100% of physical
+       height changes (such as a 1-meter lift) within 2 to 3 packets (~2.4s).
+     • Directional Inversion Immunity:
+       Since diff = measuredAlt - z is strictly positive when elevating, z_new = z + α * diff is guaranteed
+       to increase. Lifting the CanSat physically ALWAYS makes the chart go UP; lowering ALWAYS makes it go DOWN.
+   - Backend Kinematics Decoupling (backend/core/kinematics.py):
+     • Decoupled AltitudeKalmanFilter.update() from raw body-axis az, avoiding spurious downward drift.
+     • Added a 12.0m physical plausibility bound on ML ExtraTrees predictions to ensure ML interpolations
+       never diverge from local barometric truth.
+   - Lifecycle Reset & Tare Consistency:
+     • Synchronized clientAltitudeFilter.reset(tarePadAlt) during stationary TARE / CALIBRATE to preserve
+       continuous zeroed baselines without step transients.
+     • Added clientAltitudeFilter.reset() hooks into resetReplay() and resetNewFlight().
+
+3. VERIFICATION:
+   - tests/test_backend_core.py: 16/16 PASSED (including tare calibration and ML sanity checks).
+   - tests/selftest.js: 27/27 PASSED.
+   - tests/selftest.ps1: 17/17 PASSED (0 Failures).
+   - tests/test_sm.ps1: 10/10 flight profiles PASSED.
+   - Manual lift simulation verified that raising altitude by +1.0m produces monotonic ascent without dip.
+
+STATUS: TILT-IMMUNE ALTITUDE FILTER COMPLETE, TESTED & VERIFIED

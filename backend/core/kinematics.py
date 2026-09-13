@@ -95,18 +95,9 @@ class AltitudeKalmanFilter:
         # Clamp dt to prevent numerical divergence if packets stall
         dt = max(0.01, min(dt, 2.0))
 
-        # Acceleration in m/s^2:
-        # If az reading is close to 0 (< 0.25G, e.g. bench uncalibrated sensor), avoid artificial -1G freefall
-        if abs(a_z_g) < 0.25:
-            a_vertical = 0.0
-        else:
-            a_vertical = (a_z_g - 1.0) * 9.80665
-
         # 1. State Prediction:
-        # z = z + vz * dt + 0.5 * a * dt^2
-        # vz = vz + a * dt
-        self.z += self.vz * dt + 0.5 * a_vertical * (dt ** 2)
-        self.vz += a_vertical * dt
+        # Continuous kinematic state prediction tracking altitude and vertical speed
+        self.z += self.vz * dt
 
         # 2. Covariance Prediction: P = F * P * F^T + Q
         dt2 = dt * dt
@@ -279,8 +270,15 @@ class KinematicsEngine:
                     float(v_spd)
                 ]]
                 pred = self.ml_pipeline.predict(feat)[0]
-                calibrated_alt = float(pred[0])
-                calibrated_vz = float(pred[1])
+                pred_alt = float(pred[0])
+                pred_vz = float(pred[1])
+                # Physical consistency guard: only apply ML correction if within physical vicinity of barometric truth
+                if abs(pred_alt - altitude) < 12.0:
+                    calibrated_alt = pred_alt
+                    calibrated_vz = pred_vz
+                else:
+                    calibrated_alt = filt_alt
+                    calibrated_vz = v_spd
             except Exception:
                 calibrated_alt = filt_alt
                 calibrated_vz = v_spd
