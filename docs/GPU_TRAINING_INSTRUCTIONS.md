@@ -22,19 +22,28 @@
 
 ---
 
-## 2. Step 1: Environment Verification & GPU Setup
+## 2. Step 1: Environment Verification & GPU Setup (Clean Machine Bootstrapping)
 
-When the user says *"Prepare the GPU environment"* or *"Run the setup"*:
+If this machine has **no Python, no virtualenv, and no coding tools installed**:
 
-### A. Verify Python Installation
-Check if Python 3.10, 3.11, 3.12, or 3.14 is installed:
+### Option A: Autonomous 1-Click Bootstrapper (Recommended)
+Simply execute the included workstation bootstrapper:
 ```powershell
-python --version
+powershell -ExecutionPolicy Bypass -File .\setup_gpu_workstation.ps1
 ```
-If Python is not installed, prompt the user to install Python 64-bit from python.org (ensure *"Add python.exe to PATH"* is checked).
+*(Or double-click `SETUP_GPU_WORKSTATION.bat` from File Explorer).*
 
-### B. Create and Activate Virtual Environment
+**What this automatically executes with zero user intervention:**
+1. Detects if Python is installed. If missing, silently downloads and installs official Python 3.11 64-bit and refreshes `PATH`.
+2. Creates the local `.venv` virtual environment.
+3. Installs CUDA-accelerated PyTorch (bundling CUDA 12.1 runtime - **no separate NVIDIA SDK download required!**).
+4. Installs `requirements.txt` and `onnx`.
+5. Extracts and verifies the 27,000 EuroSAT images from `data/EuroSAT_RGB.zip`.
+6. Probes the GPU and outputs confirmation that Tensor Cores are active.
+
+### Option B: Manual Setup (If Python is already installed)
 ```powershell
+# 1. Create and activate virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```

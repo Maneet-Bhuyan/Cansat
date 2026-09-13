@@ -67,6 +67,8 @@ ML models
 .
 ├── index.html                  # Mission dashboard and frontend logic
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
+├── SETUP_GPU_WORKSTATION.bat   # 1-Click autonomous bootstrapper for fresh NVIDIA GPU machines
+├── setup_gpu_workstation.ps1   # PowerShell zero-to-hero GPU environment installer
 ├── launch.py                   # System launcher with port manager and browser dispatch
 ├── requirements.txt            # Python dependencies
 ├── backend/
