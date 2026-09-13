@@ -356,7 +356,10 @@ def on_telemetry_csv_processor(line: str):
         parts = [float(x.strip()) for x in line.split(",")]
         if len(parts) >= 13:
             temp, press, alt, gx, gy, gz, ax, ay, az, lat, lon, hum, volt = parts[:13]
-            kin_state = kinematics_engine.process_packet(alt, ax, ay, az, gx, gy, gz)
+            kin_state = kinematics_engine.process_packet(
+                alt, ax, ay, az, gx, gy, gz,
+                pressure=press, temp=temp, humidity=hum
+            )
             atmo_state = atmospheric_engine.process_sounding(press, temp, hum, alt)
             with state_lock:
                 latest_kinematic_state = kin_state
@@ -366,12 +369,14 @@ def on_telemetry_csv_processor(line: str):
                 "temp": temp,
                 "pressure": press,
                 "altitude": alt,
+                "calibrated_altitude": kin_state.calibrated_altitude if kin_state else alt,
                 "ax": ax, "ay": ay, "az": az,
                 "gx": gx, "gy": gy, "gz": gz,
                 "lat": lat, "lon": lon,
                 "humidity": hum,
                 "batteryVoltage": volt,
                 "vSpd": kin_state.vertical_speed if kin_state else 0.0,
+                "calibrated_vspd": kin_state.calibrated_vspd if kin_state else 0.0,
             })
     except Exception:
         pass
@@ -477,6 +482,34 @@ def get_latest_sounding():
         if latest_sounding_state is None:
             return {"status": "waiting_for_data"}
         return {"status": "active", "data": latest_sounding_state.__dict__}
+
+@app.post("/hardware/tare")
+def trigger_hardware_tare(samples: int = 15):
+    """Trigger stationary pad tare calibration across baro and IMU sensors."""
+    kinematics_engine.start_tare(num_samples=samples)
+    return {
+        "status": "taring_started",
+        "samples_target": samples,
+        "is_taring": kinematics_engine.is_taring
+    }
+
+@app.get("/hardware/tare")
+def get_hardware_tare_status():
+    """Get current tare calibration state."""
+    return {
+        "status": "success",
+        "is_calibrated": kinematics_engine.tare.is_calibrated,
+        "is_taring": kinematics_engine.is_taring,
+        "samples_count": kinematics_engine.tare.samples_count,
+        "tare": {
+            "gyro_bias_x": round(kinematics_engine.tare.gyro_bias_x, 3),
+            "gyro_bias_y": round(kinematics_engine.tare.gyro_bias_y, 3),
+            "gyro_bias_z": round(kinematics_engine.tare.gyro_bias_z, 3),
+            "pad_altitude": round(kinematics_engine.tare.pad_altitude, 2),
+            "tare_pitch": round(kinematics_engine.tare.tare_pitch, 2),
+            "tare_roll": round(kinematics_engine.tare.tare_roll, 2),
+        }
+    }
 
 @app.websocket("/ws/serial")
 async def websocket_serial_bridge(websocket: WebSocket):

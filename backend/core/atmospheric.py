@@ -65,16 +65,30 @@ class AtmosphericEngine:
         t_dew = (self.MAGNUS_B * alpha) / (self.MAGNUS_A - alpha)
         return round(t_dew, 2)
 
-    def compute_air_density(self, pressure_hpa: float, temp_c: float) -> float:
+    def compute_air_density(self, pressure_hpa: float, temp_c: float, humidity_pct: Optional[float] = None) -> float:
         """
-        Ideal Gas Law for dry air density: rho = P / (R_spec * T_kelvin).
-        Pressure converted to Pa (hPa * 100).
+        Computes air density in kg/m^3.
+        If humidity_pct is provided, applies virtual temperature correction for moist air:
+        rho = P / (R_spec * T_virtual).
+        Otherwise uses dry air Ideal Gas Law.
         """
         t_kelvin = temp_c + 273.15
         if t_kelvin <= 0:
             t_kelvin = 288.15
         pressure_pa = pressure_hpa * 100.0
-        rho = pressure_pa / (self.R_SPECIFIC_DRY_AIR * t_kelvin)
+
+        if humidity_pct is not None and humidity_pct > 0:
+            # Saturation vapor pressure (Tetens formula in hPa)
+            e_sat = 6.1078 * (10.0 ** ((7.5 * temp_c) / (237.3 + temp_c)))
+            # Actual vapor pressure in hPa
+            e_actual = (min(100.0, max(0.0, humidity_pct)) / 100.0) * e_sat
+            # Virtual temperature: Tv = T * (1 + 0.378 * (e / P))
+            p_safe = max(10.0, pressure_hpa)
+            t_virtual = t_kelvin * (1.0 + 0.378 * (e_actual / p_safe))
+            rho = pressure_pa / (self.R_SPECIFIC_DRY_AIR * t_virtual)
+        else:
+            rho = pressure_pa / (self.R_SPECIFIC_DRY_AIR * t_kelvin)
+
         return round(rho, 4)
 
     def compute_barometric_altitude(self, pressure_hpa: float) -> float:
@@ -120,7 +134,7 @@ class AtmosphericEngine:
         """
         alt = altitude_override if altitude_override is not None else self.compute_barometric_altitude(pressure_hpa)
         dew_pt = self.compute_dew_point(temp_c, humidity_pct)
-        density = self.compute_air_density(pressure_hpa, temp_c)
+        density = self.compute_air_density(pressure_hpa, temp_c, humidity_pct)
         elr, is_inv = self.compute_lapse_rate(alt, temp_c)
 
         # Compare with International Standard Atmosphere (ISA) temperature at this altitude

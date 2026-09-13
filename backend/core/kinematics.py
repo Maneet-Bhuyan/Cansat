@@ -29,6 +29,8 @@ class KinematicState:
     is_high_g_shock: bool
     descent_compliant: bool     # True if descending at safe parachute speed
     timestamp: float
+    calibrated_altitude: Optional[float] = None
+    calibrated_vspd: Optional[float] = None
 
 
 @dataclass
@@ -38,6 +40,18 @@ class KinematicAlarms:
     freefall_threshold_g: float = 0.20
     safe_descent_min_mps: float = 4.0
     safe_descent_max_mps: float = 6.5
+
+
+@dataclass
+class TareCalibration:
+    gyro_bias_x: float = 0.0
+    gyro_bias_y: float = 0.0
+    gyro_bias_z: float = 0.0
+    pad_altitude: float = 0.0
+    tare_pitch: float = 0.0
+    tare_roll: float = 0.0
+    is_calibrated: bool = False
+    samples_count: int = 0
 
 
 class AltitudeKalmanFilter:
@@ -81,8 +95,12 @@ class AltitudeKalmanFilter:
         # Clamp dt to prevent numerical divergence if packets stall
         dt = max(0.01, min(dt, 2.0))
 
-        # Acceleration in m/s^2 (remove 1G gravity bias from vertical axis)
-        a_vertical = (a_z_g - 1.0) * 9.80665
+        # Acceleration in m/s^2:
+        # If az reading is close to 0 (< 0.25G, e.g. bench uncalibrated sensor), avoid artificial -1G freefall
+        if abs(a_z_g) < 0.25:
+            a_vertical = 0.0
+        else:
+            a_vertical = (a_z_g - 1.0) * 9.80665
 
         # 1. State Prediction:
         # z = z + vz * dt + 0.5 * a * dt^2
@@ -119,10 +137,15 @@ class AltitudeKalmanFilter:
         return self.z, self.vz
 
 
+import os
+import joblib
+from typing import Dict, Any, Optional, Tuple, List
+
+
 class KinematicsEngine:
     """
     Comprehensive flight kinematics processor integrating Kalman state estimation,
-    IMU attitude complementary fusion, and safety threshold alarms.
+    IMU attitude complementary fusion, stationary TARE calibration, and ML-calibrated kinematics.
     """
 
     def __init__(self, alarms: Optional[KinematicAlarms] = None, complementary_alpha: float = 0.95):
@@ -135,12 +158,54 @@ class KinematicsEngine:
         self.last_imu_time: Optional[float] = None
         self.peak_shock_g: float = 0.0
 
+        # Tare / Stationary Calibration
+        self.tare = TareCalibration()
+        self._tare_samples: List[Dict[str, float]] = []
+        self._is_taring: bool = False
+        self._tare_target: int = 15
+
+        # ML Sensor Calibrator Model
+        self.ml_pipeline = None
+        self.ml_feature_names = None
+        self._load_ml_model()
+
+    def _load_ml_model(self):
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            model_path = os.path.join(base_dir, "ml", "saved_models", "sensor_calibrator.joblib")
+            if os.path.exists(model_path):
+                artifact = joblib.load(model_path)
+                if isinstance(artifact, dict) and "pipeline" in artifact:
+                    self.ml_pipeline = artifact["pipeline"]
+                    self.ml_feature_names = artifact.get("feature_names", [])
+        except Exception:
+            self.ml_pipeline = None
+
+    @property
+    def is_taring(self) -> bool:
+        return self._is_taring
+
+    def start_tare(self, num_samples: int = 15):
+        """Initiate stationary sensor tare routine."""
+        self._tare_target = max(5, num_samples)
+        self._tare_samples.clear()
+        self._is_taring = True
+
+    def reset_tare(self):
+        """Reset calibration back to uncalibrated factory state."""
+        self.tare = TareCalibration()
+        self._tare_samples.clear()
+        self._is_taring = False
+
     def process_packet(
         self,
         altitude: float,
         ax: float, ay: float, az: float,
         gx: float, gy: float, gz: float,
-        timestamp: Optional[float] = None
+        timestamp: Optional[float] = None,
+        pressure: float = 1013.25,
+        temp: float = 25.0,
+        humidity: float = 50.0,
     ) -> KinematicState:
         """
         Process a single 6-DOF IMU + barometric packet.
@@ -149,9 +214,36 @@ class KinematicsEngine:
         """
         now = timestamp if timestamp is not None else time.time()
 
+        # Handle TARE sample collection if active
+        if self._is_taring:
+            self._tare_samples.append({
+                'alt': altitude, 'ax': ax, 'ay': ay, 'az': az,
+                'gx': gx, 'gy': gy, 'gz': gz,
+                'pressure': pressure, 'temp': temp, 'humidity': humidity
+            })
+            if len(self._tare_samples) >= self._tare_target:
+                n = len(self._tare_samples)
+                self.tare.gyro_bias_x = sum(s['gx'] for s in self._tare_samples) / n
+                self.tare.gyro_bias_y = sum(s['gy'] for s in self._tare_samples) / n
+                self.tare.gyro_bias_z = sum(s['gz'] for s in self._tare_samples) / n
+                self.tare.pad_altitude = sum(s['alt'] for s in self._tare_samples) / n
+                avg_ax = sum(s['ax'] for s in self._tare_samples) / n
+                avg_ay = sum(s['ay'] for s in self._tare_samples) / n
+                avg_az = sum(s['az'] for s in self._tare_samples) / n
+                self.tare.tare_pitch = math.atan2(avg_ay, avg_az) * (180.0 / math.pi)
+                self.tare.tare_roll = math.atan2(-avg_ax, math.sqrt(avg_ay * avg_ay + avg_az * avg_az)) * (180.0 / math.pi)
+                self.tare.is_calibrated = True
+                self.tare.samples_count = n
+                self._is_taring = False
+
+        # Gyro zero-bias correction
+        gx_eff = gx - self.tare.gyro_bias_x if self.tare.is_calibrated else gx
+        gy_eff = gy - self.tare.gyro_bias_y if self.tare.is_calibrated else gy
+        gz_eff = gz - self.tare.gyro_bias_z if self.tare.is_calibrated else gz
+
         # 1. Accelerometer Force & Gyro Rates
         accel_mag = math.sqrt(ax * ax + ay * ay + az * az)
-        gyro_mag = math.sqrt(gx * gx + gy * gy + gz * gz)
+        gyro_mag = math.sqrt(gx_eff * gx_eff + gy_eff * gy_eff + gz_eff * gz_eff)
         if accel_mag > self.peak_shock_g:
             self.peak_shock_g = accel_mag
 
@@ -166,16 +258,34 @@ class KinematicsEngine:
             dt_imu = 0.02
         else:
             dt_imu = max(0.001, min(now - self.last_imu_time, 1.0))
-            # Gyro integration + Accel correction
-            self.pitch = self.alpha * (self.pitch + gx * dt_imu) + (1.0 - self.alpha) * acc_pitch
-            self.roll = self.alpha * (self.roll + gy * dt_imu) + (1.0 - self.alpha) * acc_roll
+            # Gyro integration + Accel correction using effective rate
+            self.pitch = self.alpha * (self.pitch + gx_eff * dt_imu) + (1.0 - self.alpha) * acc_pitch
+            self.roll = self.alpha * (self.roll + gy_eff * dt_imu) + (1.0 - self.alpha) * acc_roll
 
         self.last_imu_time = now
 
         # 4. Kalman Filter Altitude & Velocity
         filt_alt, v_spd = self.kalman.update(altitude, a_z_g=az, current_time=now)
 
-        # 5. Alarm Conditions
+        # 5. ML Sensor Calibration Model inference (if available)
+        calibrated_alt = filt_alt
+        calibrated_vz = v_spd
+        if self.ml_pipeline is not None:
+            try:
+                feat = [[
+                    float(altitude), float(pressure), float(temp), float(humidity),
+                    float(ax), float(ay), float(az), float(accel_mag),
+                    float(gx_eff), float(gy_eff), float(gz_eff), float(gyro_mag),
+                    float(v_spd)
+                ]]
+                pred = self.ml_pipeline.predict(feat)[0]
+                calibrated_alt = float(pred[0])
+                calibrated_vz = float(pred[1])
+            except Exception:
+                calibrated_alt = filt_alt
+                calibrated_vz = v_spd
+
+        # 6. Alarm Conditions
         is_shock = accel_mag >= self.alarms.shock_threshold_g
         is_tumble = gyro_mag >= self.alarms.tumble_threshold_dps
         is_freefall = accel_mag <= self.alarms.freefall_threshold_g
@@ -197,4 +307,6 @@ class KinematicsEngine:
             is_high_g_shock=is_shock,
             descent_compliant=descent_ok,
             timestamp=now,
+            calibrated_altitude=round(calibrated_alt, 2),
+            calibrated_vspd=round(calibrated_vz, 2),
         )

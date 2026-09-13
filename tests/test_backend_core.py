@@ -53,6 +53,26 @@ class TestKinematicsEngine(unittest.TestCase):
         state_tumble = engine.process_packet(100.0, ax=0.0, ay=0.0, az=1.0, gx=150.0, gy=150.0, gz=0.0)
         self.assertTrue(state_tumble.is_tumble)
 
+    def test_tare_calibration(self):
+        engine = KinematicsEngine()
+        engine.start_tare(num_samples=5)
+        self.assertTrue(engine.is_taring)
+
+        # Feed 5 stationary samples with 2.0 deg/s bias on gx and 150m pad altitude
+        for _ in range(5):
+            state = engine.process_packet(150.0, ax=0.0, ay=0.0, az=1.0, gx=2.0, gy=0.0, gz=0.0)
+
+        self.assertFalse(engine.is_taring)
+        self.assertTrue(engine.tare.is_calibrated)
+        self.assertAlmostEqual(engine.tare.gyro_bias_x, 2.0, delta=0.01)
+        self.assertAlmostEqual(engine.tare.pad_altitude, 150.0, delta=0.01)
+
+        # Next packet with 2.0 deg/s gx reading should yield ~0 deg/s effective gyro rate
+        next_state = engine.process_packet(150.0, ax=0.0, ay=0.0, az=1.0, gx=2.0, gy=0.0, gz=0.0)
+        self.assertAlmostEqual(next_state.gyro_magnitude_dps, 0.0, delta=0.05)
+        self.assertIsNotNone(next_state.calibrated_altitude)
+        self.assertIsNotNone(next_state.calibrated_vspd)
+
 
 class TestAtmosphericEngine(unittest.TestCase):
 
@@ -81,6 +101,12 @@ class TestAtmosphericEngine(unittest.TestCase):
         # Standard sea level: 1013.25 hPa @ 15 deg C is ~1.225 kg/m^3
         density = self.atmo.compute_air_density(1013.25, 15.0)
         self.assertAlmostEqual(density, 1.225, delta=0.01)
+
+    def test_moist_air_density_lighter_than_dry(self):
+        # Humid air is less dense than dry air at the same T and P
+        dry_density = self.atmo.compute_air_density(1013.25, 30.0)
+        moist_density = self.atmo.compute_air_density(1013.25, 30.0, humidity_pct=85.0)
+        self.assertLess(moist_density, dry_density)
 
     def test_sounding_processing(self):
         sounding = self.atmo.process_sounding(950.0, 18.0, 60.0)

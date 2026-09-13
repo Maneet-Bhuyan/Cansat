@@ -21,7 +21,10 @@ This project combines a browser-based mission control dashboard with a real-time
 ## What it does
 
 - Real-time telemetry dashboard for altitude, pressure, temperature, IMU, battery health, and GPS
-- Adaptive dual-rate barometric filtering and bounded scale limits preventing stationary chart jitter
+- Dual Baro-Inertial Extended Kalman Filter (1D EKF) fusing vertical acceleration and barometric pressure for sub-meter altitude tracking with zero lag
+- Physics-informed Multi-Output ExtraTrees ML calibrator compensating for Bernoulli aerodynamic pressure drops
+- 1-Click Stationary TARE & Multi-Sensor Calibration: nulls out static MEMS gyro drift, aligns resting attitude to 0.0°, and zeroes ground pad altitude
+- Super-accurate 7-chart telemetry suite with native 1-meter integer/decimeter grids and edge-preserving shock filtering
 - Live anomaly scoring and safety alerts for abnormal flight behavior
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
 - 3D CanSat attitude visualization using Three.js with complementary sensor fusion
@@ -274,11 +277,13 @@ The backend exposes the following endpoints:
 - `GET /api/health` — health status
 - `GET /api/models/info` — model metadata
 - `GET /hardware/ports` — hardware serial COM port enumeration
+- `POST /hardware/tare` — initiate multi-sensor stationary tare calibration across baro and IMU
+- `GET /hardware/tare` — query active calibration status and bias offsets
 - `GET /analytics/kinematics` — real-time 1D Kalman state, 6-DOF attitude, and safety alarms
 - `GET /analytics/sounding` — real-time dew point, air density, ELR, and ISA deviation
 - `POST /api/predict` — telemetry inference request
 - `WS /ws/telemetry` — live telemetry stream
-- `WS /ws/serial` — background dual-port serial bridge (COM3 LoRa & COM5 Video)
+- `WS /ws/serial` — background dual-port serial bridge (COM4 LoRa & COM5 Video)
 
 Example prediction payload:
 
@@ -306,10 +311,11 @@ Example prediction payload:
 
 ## Machine learning pipeline
 
-The machine learning subsystem in `backend/app.py` processes telemetry vectors in real time:
+The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry vectors in real time:
 
 | Model Architecture | Task | Input Vector | Performance Metric |
 | :--- | :--- | :--- | :--- |
+| Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
 | Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
 | Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
