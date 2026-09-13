@@ -350,40 +350,117 @@ def on_serial_line_dispatcher(label: str, line: str, loop: asyncio.AbstractEvent
     asyncio.run_coroutine_threadsafe(broadcast_serial_line(line), loop)
 
 def on_telemetry_csv_processor(line: str):
-    """Process incoming 13-field CSV through Kinematics and Atmospheric engines."""
+    """Process incoming 13-field (or 14-field) CSV through Kinematics and Atmospheric engines."""
     global latest_kinematic_state, latest_sounding_state
     try:
         parts = [float(x.strip()) for x in line.split(",")]
-        if len(parts) == 13:
-            temp, press, alt, gx, gy, gz, ax, ay, az, lat, lon, hum, volt = parts
+        if len(parts) >= 13:
+            temp, press, alt, gx, gy, gz, ax, ay, az, lat, lon, hum, volt = parts[:13]
             kin_state = kinematics_engine.process_packet(alt, ax, ay, az, gx, gy, gz)
             atmo_state = atmospheric_engine.process_sounding(press, temp, hum, alt)
             with state_lock:
                 latest_kinematic_state = kin_state
                 latest_sounding_state = atmo_state
+            live_telemetry_history.append({
+                "time": time.time(),
+                "temp": temp,
+                "pressure": press,
+                "altitude": alt,
+                "ax": ax, "ay": ay, "az": az,
+                "gx": gx, "gy": gy, "gz": gz,
+                "lat": lat, "lon": lon,
+                "humidity": hum,
+                "batteryVoltage": volt,
+                "vSpd": kin_state.vertical_speed if kin_state else 0.0,
+            })
     except Exception:
         pass
 
 # Global serial manager instance
 dual_serial_manager: Optional[DualSerialManager] = None
 
+class HardwareConfigRequest(BaseModel):
+    telemetry_port: Optional[str] = None
+    telemetry_baud: Optional[int] = None
+    video_port: Optional[str] = None
+    video_baud: Optional[int] = None
+
 def get_or_create_serial_manager(loop: asyncio.AbstractEventLoop) -> DualSerialManager:
     global dual_serial_manager
     if dual_serial_manager is None:
+        telemetry_port = os.environ.get("CANSAT_TELEMETRY_PORT", "COM4")
+        telemetry_baud = int(os.environ.get("CANSAT_TELEMETRY_BAUD", "9600"))
+        video_port = os.environ.get("CANSAT_VIDEO_PORT", "COM5")
+        video_baud = int(os.environ.get("CANSAT_VIDEO_BAUD", "460800"))
         dual_serial_manager = DualSerialManager(
-            telemetry_port="COM3",
-            telemetry_baud=9600,
-            video_port="COM5",
-            video_baud=460800,
+            telemetry_port=telemetry_port,
+            telemetry_baud=telemetry_baud,
+            video_port=video_port,
+            video_baud=video_baud,
             on_line_received=lambda label, line: on_serial_line_dispatcher(label, line, loop),
             on_telemetry_csv=on_telemetry_csv_processor,
         )
     return dual_serial_manager
 
+def _get_loop() -> asyncio.AbstractEventLoop:
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+
 @app.get("/hardware/ports")
 def get_hardware_ports():
     """Enumerate all serial ports on the host system."""
     return {"ports": list_available_ports()}
+
+@app.get("/hardware/config")
+def get_hardware_config():
+    """Return active serial port and baud rate configuration."""
+    loop = _get_loop()
+    mgr = get_or_create_serial_manager(loop)
+    conn_status = mgr.get_connection_status()
+    return {
+        "status": "success",
+        "telemetry": {
+            "port": mgr.telemetry_cfg.port,
+            "baud_rate": mgr.telemetry_cfg.baud_rate,
+            "connected": conn_status.get(mgr.telemetry_cfg.label, False),
+        },
+        "video": {
+            "port": mgr.video_cfg.port,
+            "baud_rate": mgr.video_cfg.baud_rate,
+            "connected": conn_status.get(mgr.video_cfg.label, False),
+        },
+        "is_running": mgr.is_running,
+        "available_ports": list_available_ports(),
+    }
+
+@app.post("/hardware/config")
+def set_hardware_config(cfg: HardwareConfigRequest):
+    """Reconfigure serial ports and baud rates dynamically at runtime."""
+    loop = _get_loop()
+    mgr = get_or_create_serial_manager(loop)
+    mgr.reconfigure(
+        telemetry_port=cfg.telemetry_port,
+        telemetry_baud=cfg.telemetry_baud,
+        video_port=cfg.video_port,
+        video_baud=cfg.video_baud,
+    )
+    conn_status = mgr.get_connection_status()
+    return {
+        "status": "reconfigured",
+        "telemetry_port": mgr.telemetry_cfg.port,
+        "telemetry_baud": mgr.telemetry_cfg.baud_rate,
+        "telemetry_connected": conn_status.get(mgr.telemetry_cfg.label, False),
+        "video_port": mgr.video_cfg.port,
+        "video_baud": mgr.video_cfg.baud_rate,
+        "video_connected": conn_status.get(mgr.video_cfg.label, False),
+    }
 
 @app.get("/analytics/kinematics")
 def get_latest_kinematics():
@@ -413,6 +490,14 @@ async def websocket_serial_bridge(websocket: WebSocket):
     manager = get_or_create_serial_manager(loop)
     if not manager.is_running:
         manager.start()
+
+    # Send initial hardware link status to HUD
+    init_msg = (
+        f"# [HARDWARE] Active dual bridge: Telemetry ({manager.telemetry_cfg.port} @ "
+        f"{manager.telemetry_cfg.baud_rate} baud) | Video ({manager.video_cfg.port} @ "
+        f"{manager.video_cfg.baud_rate} baud)"
+    )
+    await websocket.send_text(init_msg)
 
     try:
         while True:

@@ -21,6 +21,7 @@ This project combines a browser-based mission control dashboard with a real-time
 ## What it does
 
 - Real-time telemetry dashboard for altitude, pressure, temperature, IMU, battery health, and GPS
+- Adaptive dual-rate barometric filtering and bounded scale limits preventing stationary chart jitter
 - Live anomaly scoring and safety alerts for abnormal flight behavior
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
 - 3D CanSat attitude visualization using Three.js with complementary sensor fusion
@@ -38,7 +39,7 @@ This project combines a browser-based mission control dashboard with a real-time
 CanSat Primary Flight Bus (LoRa @ 9600) + Airborne ESP32-CAM (ESP-NOW 2.4 GHz)
                                 |
                                 v
-Ground Receiver Node (COM5 @ 460800) + Primary Ground Transceiver (COM3 @ 9600)
+Ground Receiver Node (COM5 @ 460800) + Primary Ground Transceiver (COM4/COM3 @ 9600)
                                 |
                                 v
 Python Backend Core (backend/core/):
@@ -75,7 +76,7 @@ Ground Station Web UI (index.html):
 ├── backend/
 │   ├── app.py                 # FastAPI ML inference & telemetry backend
 │   ├── core/                  # Python core signal processing & ingestion engines
-│   │   ├── serial_manager.py  # DualSerialManager (COM3 LoRa @ 9600 & COM5 Video @ 460800)
+│   │   ├── serial_manager.py  # DualSerialManager (COM4/COM3 LoRa @ 9600 & COM5 Video @ 460800)
 │   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
 │   │   └── atmospheric.py     # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
 │   └── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)

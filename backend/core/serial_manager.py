@@ -56,7 +56,7 @@ class DualSerialManager:
 
     def __init__(
         self,
-        telemetry_port: str = "COM3",
+        telemetry_port: str = "COM4",
         telemetry_baud: int = 9600,
         video_port: str = "COM5",
         video_baud: int = 460800,
@@ -99,6 +99,62 @@ class DualSerialManager:
         with self._lock:
             return dict(self._connection_states)
 
+    def reconfigure(
+        self,
+        telemetry_port: Optional[str] = None,
+        telemetry_baud: Optional[int] = None,
+        video_port: Optional[str] = None,
+        video_baud: Optional[int] = None,
+    ) -> None:
+        """Dynamically update port/baud settings and restart active workers."""
+        was_running = self._running
+        if was_running:
+            self.stop()
+
+        with self._lock:
+            if telemetry_port is not None:
+                self.telemetry_cfg.port = telemetry_port
+            if telemetry_baud is not None:
+                self.telemetry_cfg.baud_rate = telemetry_baud
+            if video_port is not None:
+                self.video_cfg.port = video_port
+            if video_baud is not None:
+                self.video_cfg.baud_rate = video_baud
+
+        if was_running:
+            self.start()
+
+    def _resolve_port(self, requested_port: str, is_video: bool) -> str:
+        """
+        Intelligently resolve requested port against available hardware ports.
+        If requested port exists, return it.
+        If COM3/COM4/AUTO is requested, auto-fallback between available non-video ports.
+        """
+        if not HAS_SERIAL:
+            return requested_port
+
+        available = [p.device.upper() for p in serial.tools.list_ports.comports()]
+        if not available:
+            return requested_port
+
+        if requested_port.upper() in available:
+            return requested_port
+
+        # Auto-fallback between COM4 and COM3 or when AUTO is requested
+        if requested_port.upper() in ("COM3", "COM4", "AUTO"):
+            other_port = (self.video_cfg.port if not is_video else self.telemetry_cfg.port).upper()
+            candidates = [p for p in available if p != other_port]
+            if candidates:
+                if requested_port.upper() in candidates:
+                    return requested_port.upper()
+                if "COM4" in candidates:
+                    return "COM4"
+                if "COM3" in candidates:
+                    return "COM3"
+                return candidates[0]
+
+        return requested_port
+
     def start(self) -> None:
         """Start background listener threads for both ports."""
         with self._lock:
@@ -121,7 +177,11 @@ class DualSerialManager:
             self._threads = [t1, t2]
             t1.start()
             t2.start()
-            logger.info("[DualSerialManager] Worker threads started for COM3 and COM5.")
+            logger.info(
+                f"[DualSerialManager] Worker threads started. "
+                f"Telemetry: {self.telemetry_cfg.port} @ {self.telemetry_cfg.baud_rate} baud. "
+                f"Video: {self.video_cfg.port} @ {self.video_cfg.baud_rate} baud."
+            )
 
     def stop(self) -> None:
         """Gracefully terminate all background workers."""
@@ -153,8 +213,6 @@ class DualSerialManager:
 
     def _worker_loop(self, cfg: SerialPortConfig) -> None:
         """Worker loop for an individual serial port with auto-reconnect resilience."""
-        logger.info(f"[{cfg.label}] Listener starting on {cfg.port} @ {cfg.baud_rate} baud...")
-
         while self._running:
             ser = None
             try:
@@ -162,11 +220,13 @@ class DualSerialManager:
                     time.sleep(cfg.reconnect_interval)
                     continue
 
-                ser = serial.Serial(cfg.port, cfg.baud_rate, timeout=cfg.timeout)
+                active_port = self._resolve_port(cfg.port, cfg.is_video)
+                logger.info(f"[{cfg.label}] Opening {active_port} @ {cfg.baud_rate} baud...")
+                ser = serial.Serial(active_port, cfg.baud_rate, timeout=cfg.timeout)
                 ser.dtr = True
                 ser.rts = True
                 self._update_status(cfg.label, True)
-                logger.info(f"[{cfg.label}] [+] Successfully connected to {cfg.port} @ {cfg.baud_rate}.")
+                logger.info(f"[{cfg.label}] [+] Successfully connected to {active_port} @ {cfg.baud_rate}.")
 
                 while self._running:
                     if ser.in_waiting:
@@ -178,6 +238,7 @@ class DualSerialManager:
                         time.sleep(0.005 if cfg.is_video else 0.020)
 
             except Exception as e:
+                logger.debug(f"[{cfg.label}] Serial read/connect error on {cfg.port}: {e}")
                 self._update_status(cfg.label, False)
                 time.sleep(cfg.reconnect_interval)
             finally:
@@ -214,7 +275,7 @@ class DualSerialManager:
 
         if not line.startswith("#") and not line.startswith("$"):
             parts = line.split(",")
-            if len(parts) == 13:
+            if len(parts) >= 13:
                 if self.on_telemetry_csv:
                     try:
                         self.on_telemetry_csv(line)

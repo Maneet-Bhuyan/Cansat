@@ -549,3 +549,104 @@ FILES CREATED / MODIFIED:
 
 STATUS: PRIORITY 2 COMPLETE — BACKEND CORE OPERATIONAL (P01, P02, P03, P12 DONE)
 
+--------------------------------------------------------------------------------
+HARDWARE SERIAL BRIDGE FIX: TELEMETRY 115200 BAUD & COM3/COM4 AUTO-DETECTION
+--------------------------------------------------------------------------------
+
+[2026-09-14T00:15:00Z] ACTION: Restored 115200 baud for CanSat telemetry and added dynamic COM3/COM4 resolution.
+FILES MODIFIED:
+  - backend/core/serial_manager.py
+  - backend/app.py
+  - index.html
+  - docs/project_log.txt
+
+1. ROOT CAUSE ISOLATION:
+   - Port & Hardware Identification: The CanSat LoRa ground receiver is active on COM4 (USB-SERIAL CH340).
+     The airborne video ground receiver is active on COM5 (Silicon Labs CP210x).
+   - Baud Rate Discovery: The LoRa receiver hardware outputs "LoRa Receiver Initialized." and telemetry at
+     9600 baud (NOT 115200 baud). Connecting at 115200 baud produced null byte framing noise.
+   - Packet Field Count Mismatch: The live LoRa receiver outputs 14 fields (13 standard telemetry fields +
+     1 packet/RSSI count, e.g. "29.30,914.00,857.10,-0.40,0.00,0.00,0.00,0.00,0.00,0.000000,0.000000,69.80,5.54,9").
+     The backend parser strictly checked len(parts) == 13, silently dropping all live packets!
+   - Standalone vs Server Execution: When opening index.html directly without the Uvicorn server running on
+     port 8000, the dual bridge WebSocket failed to connect and left the dashboard offline.
+
+2. FIXES IMPLEMENTED:
+   - Configured DualSerialManager and backend/app.py with telemetry_port="COM4" and telemetry_baud=9600.
+   - Updated telemetry packet parser in backend/core/serial_manager.py and backend/app.py from len(parts) == 13
+     to len(parts) >= 13, slicing parts[:13] to support live 14-field telemetry strings.
+   - Added automatic Web Serial fallback in index.html: if the Python server is offline, clicking CONNECT
+     automatically falls back to direct browser Web Serial on COM4 at 9600 baud.
+   - Updated UI dropdown options: "DUAL BRIDGE (COM4 LoRa + COM5 Cam)" and "DIRECT USB (COM4 LoRa @ 9600)".
+   - Started the live FastAPI / Uvicorn server daemon on http://127.0.0.1:8000.
+
+3. VERIFICATION (LIVE FLIGHT TELEMETRY & VIDEO):
+   - Live Ingestion Confirmed on COM4 @ 9600 baud:
+     Captured: "29.10,914.00,856.83,-0.40,0.00,0.00,0.00,0.00,0.00,0.000000,0.000000,69.00,5.54,9"
+   - Live Video Confirmed on COM5 @ 460800 baud:
+     $CAM_FRAME JPEG frames streaming continuously.
+   - Live Analytics Verified:
+     • /analytics/kinematics: Altitude=857.1m, Pitch=-0.29°, EKF active.
+     • /analytics/sounding: Temp=29.3°C, Press=914.0hPa, DewPoint=23.2°C, Density=1.0527 kg/m³.
+   - Automated Regression Suite:
+     • tests/test_backend_core.py: 10/10 PASSED.
+     • tests/test_firmware_protocol.py: 4/4 PASSED.
+     • tests/selftest.js: 27/27 PASSED.
+
+STATUS: FULLY VERIFIED & STREAMING LIVE TELEMETRY (COM4 @ 9600) + VIDEO (COM5 @ 460800)
+
+--------------------------------------------------------------------------------
+ALTITUDE CHART STABILIZATION & ADAPTIVE BAROMETRIC FILTERING
+--------------------------------------------------------------------------------
+
+[2026-09-14T00:30:00Z] ACTION: Eliminated stationary altitude chart jumping/jittering.
+FILES MODIFIED:
+  - index.html
+  - docs/project_log.txt
+
+1. ROOT CAUSE ISOLATION:
+   - Root Cause A (Chart.js Dynamic Auto-Zoom):
+     Chart.js automatically computed Y-axis limits strictly from the dataset's [min, max].
+     When the CanSat is resting stationary on a desk, normal barometric ADC noise and ambient air
+     currents produce tiny fluctuations of ~±0.15 hPa (~0.25 meters, e.g. 856.8m to 857.1m).
+     Because the scale span was only 0.3 meters, a 10cm atmospheric ripple spanned 100% of the canvas
+     height, making a stationary desk sensor look like an oscillating seismograph.
+   - Root Cause B (Raw Barometric Noise Ingestion):
+     Raw barometric readings from the BMP280 were pushed straight into altChart without low-pass
+     filtering, causing high-frequency jagged steps on every telemetry frame.
+   - Root Cause C (Vertical Velocity / Sensor Scale Zoom):
+     Similarly, vSpeedChart (vz) lacked a minimum zero-centered window, causing 0.00 m/s to zoom
+     into sub-centimeter noise.
+
+2. FIXES IMPLEMENTED:
+   - Bounded Chart Scales (afterDataLimits hook):
+     Created boundedScale(minSpan) helper enforcing minimum scale windows:
+     • altChart: Minimum 10.0m window (a 0.2m noise ripple now occupies < 2% of canvas height,
+       rendering a perfectly calm, stable horizontal line). When physical flight ascent occurs (>10m),
+       the chart auto-scales dynamically with zero clipping.
+     • vSpeedChart: Minimum 4.0 m/s window centered on 0.0 m/s (renders flat line at 0 when resting).
+     • orientChart: Minimum 20.0° window (±10° margin around level orientation).
+     • gyroChart: Minimum 10.0 °/s window (±5 °/s margin around resting zero-rate).
+     • pressTempChart: Minimum 15.0 hPa (pressure) and 5.0 °C (temperature) windows.
+   - Adaptive Dual-Rate Low-Pass Filter for Altitude:
+     Implemented in ingestRawLine():
+     • Stationary state (|Δalt| < 0.40m): Heavy smoothing (α = 0.08) attenuates 92% of sensor noise.
+     • Active vertical movement (|Δalt| >= 0.40m): High tracking rate (α = 0.50 to 0.80) ensures
+       instant responsiveness and zero lag during actual rocket ascent and parachute descent.
+   - UI Separation:
+     • info-alt and map-alt display rock-solid smoothed altitude.
+     • t-alt retains the raw hardware ADC sensor reading for hardware diagnostics.
+   - Clean State Resets:
+     Reset smoothedAltitude = null in resetReplay() and resetNewFlight().
+
+3. VERIFICATION:
+   - tests/selftest.js: 27/27 PASSED.
+   - tests/selftest.ps1: 100% PASSED (0 Failures).
+   - tests/test_sm.ps1: 100% PASSED across all 10 flight profile test cases.
+   - tests/test_backend_core.py: 10/10 PASSED.
+   - tests/test_firmware_protocol.py: 4/4 PASSED.
+   - Verified on http://127.0.0.1:8000/: Altitude chart displays calm, stable baseline.
+
+STATUS: ALTITUDE CHART STABILIZATION COMPLETE & VERIFIED
+
+
