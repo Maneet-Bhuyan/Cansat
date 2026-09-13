@@ -13,4 +13,8 @@ This directory contains the firmware source code for the Cognitive CanSat auxili
 * **`esp32_ground_receiver/`**: Arduino sketch for the ground ESP-WROOM-32U node.
   * Connects to high-gain external antenna.
   * Listens for 2.4 GHz ESP-NOW packets transmitted from the descending CanSat.
-  * Bridges frames and telemetry over USB Serial (115200 baud) into the ground station laptop.
+  * Bridges frames and telemetry over USB Serial (460800 baud) into the ground station laptop.
+
+* **`captures/`**: Wireless aerial frame captures and test snapshot image artifacts.
+
+* **`ground_cam_viewer.py`**: Standalone OpenCV desktop HUD viewer for headless or diagnostic video reception.

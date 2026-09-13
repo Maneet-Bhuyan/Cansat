@@ -904,3 +904,38 @@ FILES MODIFIED:
    - Staged, committed, and synced to GitHub origin/main.
 
 STATUS: TASK HW-07 LOGGED & SYSTEM DOCUMENTATION SYNCHRONIZED
+
+--------------------------------------------------------------------------------
+WORKSPACE REORGANIZATION & DIRECTORY STRUCTURE CLEANUP
+--------------------------------------------------------------------------------
+
+[2026-09-14T04:10:00Z] ACTION: Reorganized repository files, cleaned clutter, isolated frame captures, purged caches, and established modular subsystem documentation.
+FILES MODIFIED / CREATED / MOVED:
+  - firmware/captures/ (CREATED: dedicated directory for wireless video frame captures)
+  - firmware/last_live_snapshot.jpg -> firmware/captures/last_live_snapshot.jpg (MOVED)
+  - firmware/last_live_snapshot_optimized.jpg -> firmware/captures/last_live_snapshot_optimized.jpg (MOVED)
+  - firmware/captures/README.md (CREATED)
+  - firmware/README.md (MODIFIED: documented captures/ and ground_cam_viewer.py)
+  - backend/README.md (CREATED: documented app.py, core engines, and standalone server)
+  - data/README.md (CREATED: documented EuroSAT archive and extraction rules)
+  - ml/README.md (CREATED: documented training scripts, sensor calibrator, and saved models)
+  - test_cases/README.md (CREATED: documented 10 mission telemetry profiles)
+  - tests/README.md (MODIFIED: added test_backend_core.py and test_firmware_protocol.py)
+  - readme.md (MODIFIED: fixed standalone_server.ps1 path reference and updated repo tree)
+  - docs/project_log.txt (MODIFIED)
+
+1. ACTIONS PERFORMED:
+   - Root & Firmware Clutter Elimination:
+     Isolated test snapshot images into firmware/captures/ to keep firmware/ cleanly restricted to MCU sketches and Python HUD.
+   - Comprehensive Subsystem Indexing:
+     Equipped every top-level directory (backend/, data/, firmware/, ml/, test_cases/, tests/, docs/) with dedicated README guides.
+   - Python Cache Purge:
+     Purged all stale __pycache__ bytecode directories across the project root and source modules.
+   - Fixed Documentation Inconsistencies:
+     Corrected start_server.ps1 typo to backend/standalone_server.ps1 in root readme.md.
+
+2. VERIFICATION:
+   - Automated tests rerun: selftest.js (27/27), selftest.ps1 (17/17), test_sm.ps1 (10/10), test_backend_core.py (12/12).
+   - Clean git status with all files tracked and categorized.
+
+STATUS: WORKSPACE CLEANED, ORGANIZED & SYNCHRONIZED

@@ -87,6 +87,7 @@ Ground Station Web UI (index.html):
 │   ├── download_dataset.py    # Automated EuroSAT aerial dataset downloader
 │   ├── train_tinyml_vision.py # TinyLandingNet depthwise separable CNN training pipeline
 │   ├── export_tinyml_header.py# INT8 post-training quantization & C++ header exporter
+│   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
 │   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
@@ -96,6 +97,7 @@ Ground Station Web UI (index.html):
 ├── firmware/
 │   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware (16 MHz XCLK, 5 FPS)
 │   ├── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware (460800 baud)
+│   ├── captures/              # Wireless video frame captures & test snapshots
 │   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
 ├── test_cases/                # Ten mission profile CSV datasets
 ├── docs/
@@ -200,7 +202,7 @@ To start only the FastAPI machine learning backend:
 Or using the included PowerShell script:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backend\start_server.ps1
+powershell -ExecutionPolicy Bypass -File .\backend\standalone_server.ps1
 ```
 
 To open the ground station dashboard directly in your browser:
