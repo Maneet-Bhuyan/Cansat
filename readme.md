@@ -35,30 +35,30 @@ This project combines a browser-based mission control dashboard with a real-time
 ## Architecture
 
 ```text
-CanSat / RF Receiver / USB Serial
-            |
-            v
-Ground Station Frontend (index.html)
-  - telemetry parsing and checksum validation
-  - derived kinematics and atmospheric sounding
-  - 3D attitude visualization (Three.js)
-  - synchronized telemetry charts (Chart.js 4)
-  - tactical GIS ground track (Leaflet)
-  - post-flight review generator (PFR)
-  - replay engine and RFC 4180 export
-            |
-            v
-FastAPI backend (backend/app.py)
-  - /api/predict
-  - /api/health
-  - /api/models/info
-  - WebSocket telemetry stream
-            |
-            v
-ML models
-  - Random Forest phase classifier
-  - Isolation Forest anomaly detector
-  - Gradient Boosting apogee regressor
+CanSat Primary Flight Bus (LoRa @ 9600) + Airborne ESP32-CAM (ESP-NOW 2.4 GHz)
+                                |
+                                v
+Ground Receiver Node (COM5 @ 460800) + Primary Ground Transceiver (COM3 @ 9600)
+                                |
+                                v
+Python Backend Core (backend/core/):
+  - DualSerialManager: Asynchronous multi-port listener & auto-reconnect
+  - KinematicsEngine: 1D Kalman Filter (alt, v_z) & 6-DOF IMU attitude fusion
+  - AtmosphericEngine: Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+                                |
+                                v
+FastAPI Telemetry & Inference Server (backend/app.py):
+  - /ws/serial: Real-time dual-port WebSocket dispatcher to web HUD
+  - /analytics/kinematics & /analytics/sounding REST APIs
+  - /hardware/ports: Enumeration of system serial ports
+  - /api/predict: Random Forest phase classifier & Isolation Forest anomaly detector
+                                |
+                                v
+Ground Station Web UI (index.html):
+  - Live 3D vehicle orientation (Three.js with quaternion slerp)
+  - Synchronized telemetry charts (Chart.js 4 with multi-chart crosshairs)
+  - Tile 12: Real-time Aerial Video Stream & Link Diagnostics HUD
+  - Tactical GIS satellite tracker (Leaflet with ESRI & CartoDB tiles)
 ```
 
 ## Repository structure
@@ -66,16 +66,23 @@ ML models
 ```text
 .
 ├── index.html                  # Mission dashboard and frontend logic
+├── tasks.txt                   # Master task tracker & team assignments (Maneet, Rishi, Shubham, Ganesh)
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
 ├── SETUP_GPU_WORKSTATION.bat   # 1-Click autonomous bootstrapper for fresh NVIDIA GPU machines
 ├── setup_gpu_workstation.ps1   # PowerShell zero-to-hero GPU environment installer
 ├── launch.py                   # System launcher with port manager and browser dispatch
 ├── requirements.txt            # Python dependencies
 ├── backend/
-│   ├── app.py                 # FastAPI ML inference backend
+│   ├── app.py                 # FastAPI ML inference & telemetry backend
+│   ├── core/                  # Python core signal processing & ingestion engines
+│   │   ├── serial_manager.py  # DualSerialManager (COM3 LoRa @ 9600 & COM5 Video @ 460800)
+│   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
+│   │   └── atmospheric.py     # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
 │   └── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)
 ├── ml/
 │   ├── download_dataset.py    # Automated EuroSAT aerial dataset downloader
+│   ├── train_tinyml_vision.py # TinyLandingNet depthwise separable CNN training pipeline
+│   ├── export_tinyml_header.py# INT8 post-training quantization & C++ header exporter
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
 │   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
@@ -83,19 +90,25 @@ ML models
 │   ├── EuroSAT_RGB.zip        # [Tracked] EuroSAT 89.9 MB aerial dataset archive
 │   └── eurosat/               # [Gitignored] 27,000 extracted Sentinel-2 images
 ├── firmware/
-│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware
-│   └── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware
+│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware (16 MHz XCLK, 5 FPS)
+│   ├── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware (460800 baud)
+│   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
 ├── test_cases/                # Ten mission profile CSV datasets
 ├── docs/
 │   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
 │   ├── project_log.txt        # Development and mission log
+│   ├── whatsapp_messages.txt  # Formatted team task briefings
+│   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
 │   └── python-ml_focused.text # Python & ML transformation master roadmap
 ├── tests/
+│   ├── test_backend_core.py   # Python backend core unit test suite (10 assertions)
+│   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
+│   ├── selftest.js            # Node.js automated unit testing suite (27 assertions)
 │   ├── selftest.ps1           # PowerShell mission verification suite (17 assertions)
-│   ├── selftest.js            # Node.js automated unit testing suite (26 assertions)
 │   ├── test_sm.ps1            # Flight state machine transition checker
 │   ├── generate_test_cases.ps1# Synthetic scenario generator (PowerShell)
 │   └── generate_test_cases.js # Synthetic scenario generator (JavaScript)
+├── .gitattributes             # Accurate GitHub Linguist language classifications
 └── .gitignore
 ```
 
@@ -259,9 +272,12 @@ The backend exposes the following endpoints:
 - `GET /` — service info
 - `GET /api/health` — health status
 - `GET /api/models/info` — model metadata
+- `GET /hardware/ports` — hardware serial COM port enumeration
+- `GET /analytics/kinematics` — real-time 1D Kalman state, 6-DOF attitude, and safety alarms
+- `GET /analytics/sounding` — real-time dew point, air density, ELR, and ISA deviation
 - `POST /api/predict` — telemetry inference request
 - `WS /ws/telemetry` — live telemetry stream
-- `WS /ws/serial` — background serial port bridge
+- `WS /ws/serial` — background dual-port serial bridge (COM3 LoRa & COM5 Video)
 
 Example prediction payload:
 
@@ -356,9 +372,21 @@ Hotkeys for rapid ground station operation (disabled during text input):
 
 ## Verification
 
-The project includes comprehensive test suites for unit and integration testing:
+The project includes comprehensive test suites for unit, firmware, and integration testing:
 
-### JavaScript unit test suite (26 assertions)
+### Python backend core unit tests (10 assertions)
+```bash
+python -m unittest tests/test_backend_core.py
+```
+Validates 1D Kalman filter state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, Magnus-Tetens dew point, air density, and multi-threaded serial lifecycle without hardware attached.
+
+### Firmware protocol & ESP-NOW chunking tests (4 assertions)
+```bash
+python tests/test_firmware_protocol.py
+```
+Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
+
+### JavaScript unit test suite (27 assertions)
 ```bash
 node tests/selftest.js
 ```
