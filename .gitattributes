@@ -1,0 +1,20 @@
+# GitHub Linguist Configuration (.gitattributes)
+# Accurately reflect actual software engineering (Python and C++ firmware)
+# and prevent non-code assets (CSVs, HTML templates, docs) from skewing stats.
+
+# 1. Simulation Flight Datasets & Test Fixtures (Data, not code)
+test_cases/* linguist-vendored
+*.csv linguist-vendored
+
+# 2. Web UI Ground Station Viewport (Presentation template)
+index.html linguist-vendored
+
+# 3. Microcontroller Firmware Recognition (C++)
+*.ino linguist-language=C++
+*.h linguist-language=C++
+
+# 4. Project Documentation
+docs/* linguist-documentation
+*.md linguist-documentation
+*.txt linguist-documentation
+tasks.txt linguist-documentation

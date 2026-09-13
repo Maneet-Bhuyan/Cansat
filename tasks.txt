@@ -142,6 +142,14 @@ bridges, high-performance UI rendering, and automated test suites.
       * launch.py (activates .venv, launches Uvicorn backend, opens browser)
       * backend/standalone_server.ps1
 
+[X] TASK WD-06: GITHUB LINGUIST REPOSITORY CONFIGURATION (COMPLETED)
+    - Created .gitattributes with accurate Linguist classifications:
+      * Mark test_cases/*.csv as data fixtures (linguist-vendored)
+      * Mark index.html as single-page presentation viewport (linguist-vendored)
+      * Explicitly map *.ino and *.h firmware to C++ (linguist-language=C++)
+      * Mark docs/* and markdown logs as documentation (linguist-documentation)
+    - Guarantees repository language distribution accurately reflects core Python & C++ logic.
+
 ================================================================================
 4. GANESH — DOCUMENTATION, TECHNICAL ARCHITECTURE & RESEARCH PAPER
 ================================================================================
