@@ -98,28 +98,45 @@ def run_opencv_viewer(port_name: str, baud_rate: int, demo_mode: bool = False):
                 frame_size = 4250
                 rx_duration = 24
             else:
-                line = ser.readline().decode('utf-8', errors='ignore').strip()
-                if not line:
-                    # Check window keypress during idle
-                    if cv2.waitKey(1) & 0xFF in (ord('q'), 27):
-                        break
-                    continue
+                if ser.in_waiting:
+                    line = ser.readline().decode('utf-8', errors='ignore').strip()
+                    if line.startswith("#"):
+                        print(f"[Ground Receiver Status] {line}")
+                    elif line.startswith("$CAM_FRAME,"):
+                        parts = line.split(",", 4)
+                        if len(parts) >= 5:
+                            try:
+                                frame_id = int(parts[1])
+                                frame_size = int(parts[2])
+                                rx_duration = int(parts[3])
+                                b64_data = parts[4].strip()
 
-                if line.startswith("$CAM_FRAME,"):
-                    parts = line.split(",", 4)
-                    if len(parts) >= 5:
-                        try:
-                            frame_id = int(parts[1])
-                            frame_size = int(parts[2])
-                            rx_duration = int(parts[3])
-                            b64_data = parts[4].strip()
+                                img_bytes = base64.b64decode(b64_data)
+                                np_arr = np.frombuffer(img_bytes, dtype=np.uint8)
+                                frame_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                            except Exception as decode_err:
+                                print(f"[!] Decode error: {decode_err}")
+                else:
+                    time.sleep(0.01)
 
-                            img_bytes = base64.b64decode(b64_data)
-                            np_arr = np.frombuffer(img_bytes, dtype=np.uint8)
-                            frame_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                        except Exception as decode_err:
-                            print(f"[!] Decode error: {decode_err}")
-                            continue
+            # If no frame has arrived yet, show an active Standby HUD screen
+            if frame_img is None and total_frames == 0:
+                standby_screen = np.zeros((240, 320, 3), dtype=np.uint8)
+                standby_screen[:] = (15, 18, 25) # Dark space blue
+
+                # Draw blinking standby indicator
+                pulse = int((time.time() * 2) % 2)
+                dot_color = (0, 255, 0) if pulse else (0, 150, 0)
+                cv2.circle(standby_screen, (24, 24), 6, dot_color, -1)
+
+                cv2.putText(standby_screen, "RECEIVER ACTIVE (COM5)", (38, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 200), 1, cv2.LINE_AA)
+                cv2.putText(standby_screen, "Awaiting ESP-NOW feed from ESP32-CAM...", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (180, 180, 180), 1, cv2.LINE_AA)
+                cv2.putText(standby_screen, "1. Verify IO0 is DISCONNECTED from GND", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (120, 160, 200), 1, cv2.LINE_AA)
+                cv2.putText(standby_screen, "2. Press RST button on ESP32-CAM", (20, 172), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (120, 160, 200), 1, cv2.LINE_AA)
+                cv2.imshow(window_name, standby_screen)
+                if cv2.waitKey(10) & 0xFF in (ord('q'), 27):
+                    break
+                continue
 
             if frame_img is not None:
                 total_frames += 1
@@ -170,7 +187,7 @@ def run_opencv_viewer(port_name: str, baud_rate: int, demo_mode: bool = False):
 def main():
     parser = argparse.ArgumentParser(description="Cognitive CanSat Ground Video Stream Viewer")
     parser.add_argument("--port", type=str, default=None, help="Serial COM port (e.g. COM3 or COM4)")
-    parser.add_argument("--baud", type=int, default=115200, help="Baud rate (default: 115200)")
+    parser.add_argument("--baud", type=int, default=460800, help="Baud rate (default: 460800)")
     parser.add_argument("--demo", action="store_true", help="Run with synthetic test stream")
     args = parser.parse_args()
 

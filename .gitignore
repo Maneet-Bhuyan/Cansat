@@ -18,3 +18,4 @@ data/eurosat/
 .vscode/
 .DS_Store
 Thumbs.db
+drivers/

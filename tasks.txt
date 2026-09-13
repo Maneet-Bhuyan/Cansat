@@ -1,0 +1,232 @@
+================================================================================
+                    COGNITIVE CANSAT MISSION - TASK TRACKER
+                             File: tasks.txt
+                    Last Updated: 2026-09-13T21:18:00+05:30
+================================================================================
+
+PROJECT OVERVIEW:
+Sounding atmospheric pico-satellite (CanSat) with real-time 915/433 MHz LoRa
+sensor telemetry, dual-node 2.4 GHz ESP-NOW wireless aerial video streaming,
+Edge TinyML safe landing zone classification, and aerospace ground station HUD.
+
+TEAM ROLES & RESPONSIBILITIES:
+  - Maneet   : Physical Hardware, Avionics, Modules, Power, RF Antennas & Airframe
+  - Rishi    : Telemetry Data Analytics, Kinematics, Atmospheric Science & Accuracy
+  - Shubham  : Web Development (Dashboard, WebSockets, Serial Bridge) & Batch Testing
+  - Ganesh   : System Documentation, Technical Architecture & Research Paper Publication
+  - ALL 4    : Machine Learning (TinyML Training Pipeline, Safe Landing Model, Inference)
+
+================================================================================
+1. MANEET — PHYSICAL HARDWARE, AVIONICS, MODULES & POWER
+================================================================================
+Primary Responsibilities: Physical payload assembly, sensor wiring, power supply,
+flashing microcontrollers, antenna RF matching, and mechanical recovery systems.
+
+[ ] TASK HW-01: AIRBORNE ESP32-CAM MECHANICAL & OPTICAL MOUNTING
+    - Secure AI-Thinker ESP32-CAM module facing nadir (downward) inside CanSat payload bay.
+    - Ensure OV2640 / OV3660 camera lens is focused at infinity and centered through bottom aperture.
+    - Shield camera flexible flat cable (FFC) with kapton tape to prevent RF/motor vibration decoupling.
+    - Reference files: firmware/esp32_cam_airborne/esp32_cam_airborne.ino, camera_pins.h
+
+[X] TASK HW-02: GROUND STATION RECEIVER RF ANTENNA SETUP (COMPLETED)
+    - Inspect the ESP-WROOM-32U ground receiver module (on COM5).
+    - CRITICAL: Connect a high-gain 2.4 GHz rubber-duck/whip antenna (3-5 dBi) to the IPEX/U.FL connector.
+      (The "U" model has no onboard PCB antenna; without external antenna, range is < 5 meters).
+    - Ensure solid USB-to-UART CP210x cable connection to ground laptop.
+    - Reference files: firmware/esp32_ground_receiver/esp32_ground_receiver.ino
+
+[ ] TASK HW-03: PRIMARY CANSAT FLIGHT AVIONICS & SENSOR BUS WIRING
+    - Wire primary flight controller (ESP32 / Arduino / STM32) with sensor array:
+      * BMP280 / BME280 (Pressure & Temperature on I2C: SDA/SCL)
+      * MPU6050 / ICM20948 (6-DOF Accelerometer & Gyroscope on I2C)
+      * NEO-6M / NEO-8M (GPS Receiver on Hardware Serial UART)
+      * SX1278 / RFM95W (LoRa Transceiver on SPI Bus: MOSI/MISO/SCK/NSS)
+    - Verify 13-field CSV string format output to ground over LoRa at 9600 baud.
+    - Reference schema: docs/project_log.txt (Section 3)
+
+[ ] TASK HW-04: POWER DISTRIBUTION & REGULATION
+    - Assemble 1S / 2S LiPo battery power train (recommended: 3.7V - 7.4V, >= 800 mAh).
+    - Add low-dropout voltage regulator (LDO) capable of supplying 5V @ 1A peak (ESP32 Wi-Fi bursts draw ~300 mA at 19.5 dBm).
+    - Install hardware slide switch for master power cutoff.
+    - Solder two-resistor voltage divider (e.g. 100k / 100k) to an ADC pin for battery voltage telemetry.
+
+[ ] TASK HW-05: PARACHUTE & RECOVERY SYSTEM
+    - Pack and rig parachute deployment system (target descent rate: 4.0 - 6.0 m/s).
+    - Rig shock cord and swivel links to prevent payload tumbling / pendulum resonance.
+    - Test mechanical ejection mechanism or top separation latch.
+
+[ ] TASK HW-06: FIELD 300M LINE-OF-SIGHT RANGE TESTING
+    - Conduct outdoor open-air line-of-sight range tests at 50m, 100m, 200m, and 300m.
+    - Verify ESP-NOW video reception on COM5 and LoRa telemetry on COM3 simultaneously.
+    - Verify RSSI levels and frame completion rates in open ground.
+
+================================================================================
+2. RISHI — DATA ANALYTICS, TELEMETRY ANALYSIS & FLIGHT DYNAMICS
+================================================================================
+Primary Responsibilities: Validating kinematics formulas, analyzing recorded flight
+profiles, sensor accuracy auditing, and statistical post-flight analysis.
+
+[ ] TASK DA-01: FLIGHT KINEMATICS & TRAJECTORY ANALYSIS
+    - Analyze real-time and recorded 17-column CSV telemetry logs.
+    - Validate vertical descent speed: v_spd = (alt[t] - alt[t-1]) / delta_t.
+    - Verify resultant G-force calculations: |G| = sqrt(ax^2 + ay^2 + az^2).
+    - Check for g-shock peaks during launch, apogee ejection, and parachute deployment.
+    - Reference files: test_cases/*.csv, tests/selftest.js
+
+[ ] TASK DA-02: ATMOSPHERIC SOUNDING & METEOROLOGICAL METRICS
+    - Validate barometric pressure decay profiles against standard atmosphere model (ISA).
+    - Compute Environmental Lapse Rate (ELR in °C / 100m) from temperature-altitude slopes.
+    - Verify Magnus-Tetens Dew Point calculation: T_dew = (b * alpha) / (a - alpha).
+    - Verify Ideal Gas Law dry air density calculation: rho = P / (R_spec * T_kelvin).
+
+[ ] TASK DA-03: SENSOR FUSION DRIFT & ATTITUDE ACCURACY AUDIT
+    - Benchmark raw gyroscope angular rates (gx, gy, gz) against fused pitch/roll angles.
+    - Audit drift behavior over 10-minute static pad test (test_cases/10_ground_pad_static_test.csv).
+    - Validate Madgwick quaternion filter attitude accuracy during dynamic rotational wobble.
+
+[ ] TASK DA-04: ANOMALY DETECTION THRESHOLD CALIBRATION
+    - Calibrate empirical anomaly detection trigger boundaries:
+      * Excessive Gyro Tumble (> 150°/s)
+      * Severe Shock Impact (> 4.5 G)
+      * Low Battery Voltage Sag (< 3.50 V)
+      * Freefall Drop Glitch (|G| < 0.15 G for > 2 seconds)
+    - Review false-positive rates on historical sounding test runs.
+
+[ ] TASK DA-05: AUTOMATED POST-FLIGHT ANALYSIS REPORT SCRIPT
+    - Develop Python notebook / script (using pandas, matplotlib, scipy) in ml/ or backend/:
+      * Automated CSV ingestion
+      * Time-series plots: Altitude vs Time, Velocity Profile, G-Forces, Pressure-Temperature Profile
+      * Flight summary statistics table (Apogee altitude, Max ascent velocity, Touchdown shock, Mission duration)
+      * Export publication-ready PDF/PNG figures for Ganesh's paper.
+
+================================================================================
+3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
+================================================================================
+Primary Responsibilities: Ground station web interface, WebSocket server, serial
+bridges, high-performance UI rendering, and automated test suites.
+
+[ ] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE
+    - Maintain and optimize index.html (aerospace dark-mode dashboard).
+    - Optimize Chart.js real-time rendering pipelines to avoid UI lagging under continuous streaming.
+    - Ensure Three.js 3D CanSat cylinder orientation renders smoothly with quaternion slerp.
+    - Maintain Leaflet multi-layer map tracking (satellite tiles, live GPS marker, drift trail).
+    - Reference files: index.html
+
+[ ] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE (FASTAPI WEBSOCKET)
+    - Manage backend/app.py dual-port serial ingestion:
+      * COM3: Primary LoRa Telemetry @ 9600 baud
+      * COM5: ESP32 Aerial Video Feed @ 460800 baud
+    - Ensure WebSocket server (/ws/serial) reconnect resilience and client disconnect cleanup.
+    - Test port auto-reconnect logic if hardware is unplugged and re-inserted.
+    - Reference files: backend/app.py, backend/standalone_server.ps1, launch.py
+
+[ ] TASK WD-03: AERIAL VIDEO HUD & LINK QUALITY MONITORING
+    - Maintain Tile 12 (Live Aerial Camera Stream) and Tile 13 (Link Diagnostics) in index.html.
+    - Maintain standalone OpenCV HUD viewer (firmware/ground_cam_viewer.py) for fallback/headless inspection.
+    - Track live video metrics: Received frames, dropped frames, data throughput (KB/s), live FPS.
+
+[ ] TASK WD-04: COMPREHENSIVE BATCH TESTING SUITE
+    - Expand and execute automated test suites:
+      * node tests/selftest.js (telemetry math, parser, UI probe assertions)
+      * powershell -File tests/selftest.ps1 (full regression)
+      * python tests/test_firmware_protocol.py (ESP-NOW packet slicing & CRC verification)
+    - Run batch validation against all 10 standard test profiles in test_cases/:
+      01_nominal_sounding_flight.csv, 02_high_altitude_burst_1200m.csv,
+      03_severe_wind_shear_drift.csv, 04_apogee_ejection_shock_tumble.csv,
+      05_parachute_pendulum_resonance.csv, 06_delayed_chute_deployment.csv,
+      07_thermal_inversion_sounding.csv, 08_sensor_glitch_gps_recovery.csv,
+      09_low_battery_voltage_sag.csv, 10_ground_pad_static_test.csv.
+
+[ ] TASK WD-05: PRODUCTION BUILD & PACKAGING
+    - Verify one-click launch scripts work seamlessly on any Windows machine:
+      * launch.py (activates .venv, launches Uvicorn backend, opens browser)
+      * backend/standalone_server.ps1
+
+================================================================================
+4. GANESH — DOCUMENTATION, TECHNICAL ARCHITECTURE & RESEARCH PAPER
+================================================================================
+Primary Responsibilities: Comprehensive system documentation, engineering diagrams,
+academic literature review, conference research paper authorship and submission.
+
+[ ] TASK DOC-01: RESEARCH PAPER TARGET SELECTION & TEMPLATE SETUP
+    - Identify target publication venue (e.g. IEEE Aerospace Conference, AIAA SciTech,
+      Springer Space Engineering, or National Aerospace Symposium).
+    - Set up IEEE standard two-column LaTeX / Overleaf manuscript repository:
+      * Abstract, Keywords
+      * Section I: Introduction & CanSat Mission Objectives
+      * Section II: Related Work (Atmospheric Sounding & Edge Vision Pico-Satellites)
+      * Section III: System Architecture & Dual-Band Telemetry (LoRa + ESP-NOW)
+      * Section IV: Mathematical Foundations (Kinematics, Sensor Fusion & Lapse Rates)
+      * Section V: Edge AI TinyML Safe Landing Area Classification (TinyLandingNet)
+      * Section VI: Experimental Results, Field Trials & Flight Validation
+      * Section VII: Conclusion & Future Scope
+      * References (IEEE style)
+
+[ ] TASK DOC-02: SYSTEM ARCHITECTURE & BLOCK DIAGRAMS
+    - Create clean block diagrams:
+      * Physical CanSat Avionics Architecture (Sensors -> MCU -> LoRa / ESP-NOW)
+      * Ground Station Dual-Channel Data Ingestion Pipeline (COM3 + COM5 -> Backend -> Web UI)
+      * Deep Learning Safe Landing Classifier Pipeline (EuroSAT -> PyTorch -> INT8 -> ESP32)
+    - Export diagrams as crisp vector SVGs and high-res PDFs.
+
+[ ] TASK DOC-03: MATHEMATICAL & ALGORITHMIC FORMALIZATION
+    - Document and typeset all flight equations:
+      * Madgwick IMU sensor fusion quaternion attitude integration
+      * Free-Space Path Loss (FSPL) and 2.4 GHz link margin formulas
+      * Magnus-Tetens atmospheric sounding equations
+      * TinyLandingNet depthwise separable convolution complexity metrics
+
+[ ] TASK DOC-04: EXPERIMENTAL DATA INTEGRATION & PAPER DRAFTING
+    - Work with Rishi to insert real/test-case flight graphs (altitude curves, descent rates).
+    - Work with ML team to insert TinyLandingNet confusion matrices, ROC curves, and latency metrics.
+    - Write complete first draft and coordinate co-author reviews.
+
+[ ] TASK DOC-05: PROJECT LOG & REPOSITORY DOCUMENTATION
+    - Keep docs/project_log.txt, docs/README.md, and docs/GPU_TRAINING_INSTRUCTIONS.md updated.
+    - Ensure all code modules have clean docstrings and setup guides.
+
+================================================================================
+5. COMMON ML TEAM (MANEET, RISHI, SHUBHAM, GANESH) — TINYML PIPELINE
+================================================================================
+Primary Responsibilities: Training, validating, quantizing, and deploying the Edge
+AI TinyML vision model (TinyLandingNet) for autonomous Safe Landing Area Index (SLAI).
+
+[ ] TASK ML-01: EUROSAT AERIAL DATASET CURATION & VERIFICATION
+    - Dataset: 27,000 satellite/aerial image tiles (64x64 RGB, 10 spectral classes).
+    - Map the 10 EuroSAT classes into the 4 CanSat Safe Landing Area Index (SLAI) tiers:
+      * Tier 0: Pasture / Herbaceous Vegetation -> SAFE / OPTIMAL
+      * Tier 1: Annual Crops / Permanent Crops -> ACCEPTABLE
+      * Tier 2: Forest / River / Highway -> HAZARDOUS / CAUTION
+      * Tier 3: Industrial / Residential Buildings -> UNSAFE / ABORT
+    - Verify dataset structure in ml/data/EuroSAT/ (or follow docs/GPU_TRAINING_INSTRUCTIONS.md).
+
+[ ] TASK ML-02: MODEL TRAINING (TINYLANDINGNET) ON GPU
+    - Script: ml/train_tinyml_vision.py
+    - Architecture: Depthwise separable CNN (~22,000 parameters).
+    - Run training on GPU workstation with mixed-precision acceleration:
+        python ml/train_tinyml_vision.py --data-dir ml/data/EuroSAT --epochs 30 --batch-size 64
+    - Target Metrics: Validation Accuracy >= 90%, F1-score >= 0.88 across all 4 tiers.
+    - Deliverables: ml/tinylandingnet_best.pth and ml/tinylandingnet.onnx.
+
+[ ] TASK ML-03: INT8 POST-TRAINING QUANTIZATION & C++ HEADER EXPORT
+    - Script: ml/export_tinyml_header.py
+    - Quantize float32 weights into 8-bit integers (INT8) to achieve < 25 KB ROM footprint.
+    - Generate deployment header: firmware/esp32_cam_airborne/model_data.h
+    - Deliverable: Ready-to-compile C++ byte array header for microcontroller embedding.
+
+[ ] TASK ML-04: INFERENCE BENCHMARKING & EMBEDDED INTEGRATION
+    - Benchmark inference execution:
+      * Edge execution on ESP32-CAM (FreeRTOS task or interrupt-driven)
+      * Offloaded ground execution on Mission Control laptop via ONNX runtime
+    - Measure latency (target: < 150 ms per inference).
+    - Validate telemetry SLAI index output to ground station HUD.
+
+================================================================================
+CROSS-TEAM MILESTONES & LAUNCH READINESS CHECKLIST
+================================================================================
+Milestone M1: Subsystem Standalone Verification (Hardware, Analytics, Web, ML)
+Milestone M2: Dual-Port Ingestion Integration (COM3 LoRa Telemetry + COM5 Video Feed)
+Milestone M3: TinyML Vision Model Validation & Embedded Quantization
+Milestone M4: Full 300m Outdoor Field Range Sounding Test
+Milestone M5: Complete Research Paper Draft & Submission
+================================================================================

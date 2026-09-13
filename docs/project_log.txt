@@ -439,3 +439,58 @@ CAPABILITIES DELIVERED:
   4. Automated Protocol Verification (tests/test_firmware_protocol.py):
      - Verified struct packing MTU, 200-byte slicing, bit-for-bit SHA-256 reconstruction, and Base64 streaming.
 STATUS: ALL TESTS PASSING (27/27 selftest.js, 17/17 selftest.ps1, 4/4 test_firmware_protocol.py)
+
+--------------------------------------------------------------------------------
+RF LINK STABILIZATION, 460800 BAUD UPGRADE, MACROBLOCK ELIMINATION & 300M SOUNDING BUDGET
+--------------------------------------------------------------------------------
+
+[2026-09-13T20:30:00Z] ACTION: Diagnosed and resolved wireless video stream corruption, accelerated throughput to 460800 baud, eliminated macroblock artifacts, and validated 300m line-of-sight RF link budget.
+FILES MODIFIED / TESTED:
+  - firmware/esp32_cam_airborne/esp32_cam_airborne.ino
+  - firmware/esp32_ground_receiver/esp32_ground_receiver.ino
+  - firmware/ground_cam_viewer.py
+  - backend/app.py
+  - firmware/last_live_snapshot_optimized.jpg
+
+1. WIRELESS RECEIVER BUG ISOLATION & FIXES:
+   - Diagnosed 0 FPS / silent receiver bug on ESP-IDF Core 3.x:
+     a) Unassociated STA Mode Bug: Calling WiFi.mode(WIFI_STA) without router association left the ESP32
+        radio synthesizer on Channel 0. Fixed by initializing WiFi.mode(WIFI_AP_STA) and starting a dummy
+        SoftAP ("CanSat-GCS") to hard-lock the hardware PLL to Channel 1 (2412 MHz).
+     b) Interface Mismatch Error (0x306C ESP_ERR_ESPNOW_IF): Fixed peerInfo.ifidx = WIFI_IF_AP and peerInfo.channel = 0.
+     c) Base64 Triplet Padding: Rewrote stream_base64_to_serial() with strict RFC 4648 triplet slicing, fixing
+        invalid character padding on non-divisible-by-3 buffer lengths.
+     d) High-Priority Wi-Fi Task Decoupling: Moved Base64 serial transmission out of the OnDataRecv ISR callback
+        into loop() via volatile s_new_frame_ready flag, eliminating FreeRTOS interrupt blocking.
+
+2. HIGH-SPEED SERIAL BAUD RATE UPGRADE (460,800 BAUD):
+   - At 115200 baud, transferring a 6 KB Base64 image took ~520 ms, physically bottlenecking video to <= 2 FPS.
+   - Upgraded Ground Receiver (firmware/esp32_ground_receiver.ino), Python Viewer (firmware/ground_cam_viewer.py),
+     and FastAPI serial bridge (backend/app.py) to 460800 baud (4x speedup).
+   - Serial transmission time reduced to ~130 ms per frame.
+   - Configured TARGET_FPS = 5 in airborne scheduler and optimized JPEG quality factor to 14 (saving ~25% payload).
+
+3. MACROBLOCK TEARING & CORRUPTION ELIMINATION:
+   - Root Cause A (Missing Chunk Stale Buffer): If packets dropped, duplicate chunks falsely satisfied the counter,
+     leaving stale bytes in s_frame_buffer and shattering Huffman entropy decoding into glitch boxes.
+     Solution: Implemented strict bitmask deduplication s_chunk_received[MAX_CHUNKS]. Only 100% complete frames
+     are dispatched; incomplete frames are dropped cleanly.
+   - Root Cause B (Camera XCLK Ribbon Jitter): Lowered config.xclk_freq_hz from 20 MHz to 16 MHz, eliminating
+     capacitive bus noise on AI-Thinker flexible ribbon cables.
+   - Root Cause C (DMA Grab Collision): Switched config.grab_mode from CAMERA_GRAB_LATEST to CAMERA_GRAB_WHEN_EMPTY.
+
+4. 300-METER SOUNDING FLIGHT RF LINK BUDGET ANALYSIS:
+   - Analyzed indoor vs outdoor propagation physics: indoor drops (10-18 dB per wall) explained range stoppage across 2 rooms.
+   - Calculated Free-Space Path Loss (FSPL) at 300m for 2.412 GHz: FSPL = 89.6 dB.
+   - Computed Link Budget with +19.5 dBm TX power, +2 dBi TX antenna, +3 dBi RX antenna, -98 dBm sensitivity:
+     RSSI = -65.1 dBm -> Link Margin = +32.9 dB (excellent safety margin for 300m open-air sounding).
+   - Flagged mandatory external IPEX antenna connection for the ESP-WROOM-32U ground station receiver node.
+
+5. HARDWARE VERIFICATION:
+   - Flashed firmware/esp32_ground_receiver.ino to COM5 (ESP32-WROOM-32U).
+   - Flashed firmware/esp32_cam_airborne.ino to COM4 (ESP32-CAM).
+   - Live stream test on COM5 at 460800 baud: 20/20 valid frames, 0 corrupt, 3.3 FPS, 320x240 full color.
+   - Snapshot saved and verified at firmware/last_live_snapshot_optimized.jpg.
+   - Regression suite: 27/27 node tests/selftest.js PASSED.
+
+STATUS: HARDWARE VERIFIED & READY FOR TEAM DISPATCH (P06)

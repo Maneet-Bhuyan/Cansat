@@ -19,8 +19,8 @@
 //   FRAMESIZE_QVGA  : 320x240 (~3.5 - 6.5 KB) -> Recommended (Crisp visual quality)
 //   FRAMESIZE_VGA   : 640x480 (~12 - 20 KB)   -> High resolution
 #define CAMERA_FRAME_SIZE    FRAMESIZE_QVGA
-#define CAMERA_JPEG_QUALITY  12   // 10-63 (Lower = Higher Quality, 12 is optimal)
-#define TARGET_FPS           3    // Target descent capture rate (1-5 FPS)
+#define CAMERA_JPEG_QUALITY  14   // 10-63 (Lower = Higher Quality, 14 is optimal for high FPS & link stability)
+#define TARGET_FPS           5    // Target descent capture rate (5 FPS fluid streaming)
 #define CHUNK_MAX_SIZE       200  // Bytes per ESP-NOW packet (Hard limit: 250)
 #define WIFI_CHANNEL         1    // Must match Ground Receiver channel
 
@@ -88,7 +88,7 @@ bool init_camera() {
     config.pin_sccb_scl = SIOC_GPIO_NUM;
     config.pin_pwdn     = PWDN_GPIO_NUM;
     config.pin_reset    = RESET_GPIO_NUM;
-    config.xclk_freq_hz = 20000000; // 20 MHz
+    config.xclk_freq_hz = 16000000; // 16 MHz (eliminates ribbon cable jitter & macroblock artifacts)
     config.pixel_format = PIXFORMAT_JPEG;
     config.frame_size   = CAMERA_FRAME_SIZE;
     config.jpeg_quality = CAMERA_JPEG_QUALITY;
@@ -96,7 +96,7 @@ bool init_camera() {
     // Check for external PSRAM
     if (psramFound()) {
         config.fb_count = 2;
-        config.grab_mode = CAMERA_GRAB_LATEST;
+        config.grab_mode = CAMERA_GRAB_WHEN_EMPTY; // Avoid grabbing mid-DMA frame buffers
         config.fb_location = CAMERA_FB_IN_PSRAM;
         Serial.println(F("[CAM] PSRAM detected (4MB). Double frame buffering enabled."));
     } else {
@@ -132,23 +132,28 @@ bool init_camera() {
 // ESP-NOW RADIO INITIALIZATION
 // ----------------------------------------------------------------------------
 bool init_esp_now() {
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect(true);
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("CanSat-CAM", nullptr, WIFI_CHANNEL, 1, 0); // Locks 2.4 GHz PLL to Channel 1
 
-    // Lock to Channel 1 for deterministic peer-to-peer radio matching
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_set_promiscuous(false);
+    // Maximize 2.4 GHz RF output power for long-range sounding flight
+    WiFi.setTxPower(WIFI_POWER_19_5dBm);
+    esp_wifi_set_max_tx_power(78);
+
+    uint8_t primaryChan = 0;
+    wifi_second_chan_t secondChan;
+    esp_wifi_get_channel(&primaryChan, &secondChan);
+    Serial.printf("[RADIO] Airborne radio locked to 2.4 GHz Channel %d.\n", primaryChan);
 
     if (esp_now_init() != ESP_OK) {
         Serial.println(F("[RADIO ERROR] ESP-NOW initialization failed."));
         return false;
     }
 
-    // Register broadcast peer
+    // Register broadcast peer on active WIFI_IF_AP interface
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = WIFI_CHANNEL;
+    peerInfo.channel = 0; // Current channel
+    peerInfo.ifidx   = WIFI_IF_AP; // Matches WIFI_AP interface!
     peerInfo.encrypt = false;
 
     if (esp_now_add_peer(&peerInfo) != ESP_OK) {
@@ -156,7 +161,7 @@ bool init_esp_now() {
         return false;
     }
 
-    Serial.printf("[RADIO] ESP-NOW ready. Broadcasting on 2.4 GHz Channel %d.\n", WIFI_CHANNEL);
+    Serial.printf("[RADIO] ESP-NOW ready. Broadcasting on 2.4 GHz Channel %d.\n", primaryChan);
     return true;
 }
 
@@ -189,7 +194,10 @@ void capture_and_transmit() {
     header.height       = fb->height;
     header.quality      = CAMERA_JPEG_QUALITY;
 
-    esp_now_send(broadcastAddress, (uint8_t *)&header, sizeof(header));
+    esp_err_t res_hdr = esp_now_send(broadcastAddress, (uint8_t *)&header, sizeof(header));
+    if (res_hdr != ESP_OK) {
+        Serial.printf("[RADIO ERROR] Header send failed: 0x%X\n", res_hdr);
+    }
     delayMicroseconds(600); // Allow MAC queue clearance
 
     // 2. Transmit Consecutive Slices
@@ -210,7 +218,10 @@ void capture_and_transmit() {
 
         esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&chunk, sizeof(chunk) - (CHUNK_MAX_SIZE - len));
         if (result != ESP_OK) {
-            // Transient backoff if queue was busy
+            static uint32_t s_send_err_cnt = 0;
+            if (s_send_err_cnt++ < 3) {
+                Serial.printf("[RADIO ERROR] Chunk %u send failed: 0x%X\n", i, result);
+            }
             delayMicroseconds(200);
         }
         delayMicroseconds(450); // Inter-packet spacing prevents ground FIFO overflow
@@ -244,20 +255,22 @@ void setup() {
 
     // Initialize Camera
     if (!init_camera()) {
-        Serial.println(F("[FATAL] Camera hardware halt. Halting setup."));
-        while (true) {
+        Serial.println(F("[FATAL] Camera hardware halt. Retrying in 3s..."));
+        for (int i = 0; i < 5; i++) {
             digitalWrite(ONBOARD_LED_PIN, !digitalRead(ONBOARD_LED_PIN));
-            delay(150);
+            delay(200);
         }
+        ESP.restart();
     }
 
     // Initialize ESP-NOW Radio
     if (!init_esp_now()) {
-        Serial.println(F("[FATAL] Radio hardware halt. Halting setup."));
-        while (true) {
+        Serial.println(F("[FATAL] Radio hardware halt. Retrying in 3s..."));
+        for (int i = 0; i < 5; i++) {
             digitalWrite(ONBOARD_LED_PIN, !digitalRead(ONBOARD_LED_PIN));
-            delay(500);
+            delay(200);
         }
+        ESP.restart();
     }
 
     Serial.println(F("[INIT COMPLETE] Commencing aerial video transmission..."));

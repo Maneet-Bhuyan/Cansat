@@ -530,11 +530,11 @@
             <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline flex-1">
               CONNECT
             </button>
-            <select id="baud-select" class="bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2 py-2 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer" title="Serial Connection Mode (COM3 Bridge or Web Serial)">
-              <option value="bridge" selected>COM3 BRIDGE</option>
-              <option value="9600">USB 9600</option>
-              <option value="57600">USB 57600</option>
+            <select id="baud-select" class="bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2 py-2 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer" title="Serial Connection Mode (Dual Bridge or Web Serial)">
+              <option value="bridge" selected>DUAL BRIDGE (COM3 + COM5)</option>
               <option value="115200">USB 115200</option>
+              <option value="57600">USB 57600</option>
+              <option value="9600">USB 9600</option>
             </select>
           </div>
 
@@ -2668,7 +2668,7 @@
       const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + ':8000/ws/serial';
       bridgeSocket = new WebSocket(wsUrl);
       bridgeSocket.onopen = function () {
-        setConnectionState(true, 'ONLINE (BRIDGE: COM3)');
+        setConnectionState(true, 'ONLINE (DUAL BRIDGE: COM3 + COM5)');
         document.getElementById('connect-btn').innerText = 'DISCONNECT';
       };
       bridgeSocket.onmessage = function (event) {
