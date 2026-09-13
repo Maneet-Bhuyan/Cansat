@@ -10,11 +10,11 @@ sensor telemetry, dual-node 2.4 GHz ESP-NOW wireless aerial video streaming,
 Edge TinyML safe landing zone classification, and aerospace ground station HUD.
 
 TEAM ROLES & RESPONSIBILITIES:
-  - Maneet   : Physical Hardware, Avionics, Modules, Power, RF Antennas & Airframe
-  - Rishi    : Telemetry Data Analytics, Kinematics, Atmospheric Science & Accuracy
-  - Shubham  : Web Development (Dashboard, WebSockets, Serial Bridge) & Batch Testing
-  - Ganesh   : System Documentation, Technical Architecture & Research Paper Publication
-  - ALL 4    : Machine Learning (TinyML Training Pipeline, Safe Landing Model, Inference)
+  - Maneet Bhuyan (@Maneet-Bhuyan) : Hardware, Avionics, Power, Antennas & Airframe (Repo Admin)
+  - Rishi (@Rishe17 - gurbashishsenanayak17@gmail.com) : Telemetry Analytics, Kinematics & Sounding
+  - Shubham (@shxbhxm7 - 837shubham461@gmail.com)       : Web Development, WebSockets & Batch Testing
+  - Ganesh (@ganeshvallabhm - ganeshvallabhm7@gmail.com) : Documentation, Architecture & Research Paper
+  - ALL 4                                               : Common ML Track (TinyLandingNet TinyML Pipeline)
 
 ================================================================================
 1. MANEET — PHYSICAL HARDWARE, AVIONICS, MODULES & POWER
