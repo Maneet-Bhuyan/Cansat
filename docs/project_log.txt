@@ -494,3 +494,58 @@ FILES MODIFIED / TESTED:
    - Regression suite: 27/27 node tests/selftest.js PASSED.
 
 STATUS: HARDWARE VERIFIED & READY FOR TEAM DISPATCH (P06)
+
+--------------------------------------------------------------------------------
+PYTHON CORE INGESTION BRAIN & KINEMATICS/ATMOSPHERIC ENGINES (PRIORITY 2)
+--------------------------------------------------------------------------------
+
+[2026-09-13T22:20:00Z] ACTION: Implemented modular backend/core/ architecture and verified all unit tests.
+FILES CREATED / MODIFIED:
+  - backend/core/__init__.py
+  - backend/core/serial_manager.py
+  - backend/core/kinematics.py
+  - backend/core/atmospheric.py
+  - backend/app.py
+  - tests/test_backend_core.py
+  - .gitattributes
+  - tasks.txt
+  - docs/python-ml_focused.text
+
+1. DUAL-PORT SERIAL INGESTION MANAGER (backend/core/serial_manager.py - P01):
+   - Modularized multi-threaded serial listener for simultaneous ingestion:
+     • Port 1: Primary LoRa Flight Telemetry (COM3 @ 9600 baud, 13-field CSV).
+     • Port 2: High-Speed Airborne Video Stream (COM5 @ 460800 baud, $CAM_FRAME Base64).
+   - Implemented thread-safe lifecycle control (start/stop), port auto-discovery (list_available_ports),
+     and resilient auto-reconnect with exponential backoff on USB disconnect/reconnect.
+   - Decoupled parsing for video frames, telemetry packets, and diagnostic comments.
+
+2. KINEMATICS & SENSOR FUSION ENGINE (backend/core/kinematics.py - P02):
+   - Discrete 1D Extended Kalman Filter (AltitudeKalmanFilter) estimating true altitude and instantaneous
+     vertical speed (v_z) from barometric altimeter and accelerometer Z-axis.
+   - 6-DOF IMU Complementary Attitude Fusion combining low-frequency accelerometer gravity vectors
+     with high-frequency gyroscope integration to calculate drift-free Pitch and Roll angles.
+   - Real-time kinematic alarms: high-G shock (> 4.5G), gyro tumble (> 150 deg/s), freefall detection (< 0.2G),
+     and parachute descent rate envelope compliance verification (4.0 - 6.5 m/s).
+
+3. ATMOSPHERIC SOUNDING THERMODYNAMICS (backend/core/atmospheric.py - P03):
+   - Hypsometric Altimetry relative to calibrated ground pad reference (P0, T0).
+   - Numerical Environmental Lapse Rate (ELR, deg C / 100m) with thermal inversion layer detection.
+   - Magnus-Tetens formula for Dew Point (T_dew) from ambient temperature and relative humidity.
+   - Ideal Gas Law dry air density calculation (rho in kg/m^3).
+   - Comparison with International Standard Atmosphere (ISA) temperature profile.
+
+4. FASTAPI INTEGRATION & REST ANALYTICS ENDPOINTS (backend/app.py):
+   - Refactored /ws/serial bridge to use DualSerialManager, retaining 100% backward compatibility with index.html.
+   - Added REST endpoints:
+     • GET /hardware/ports: Enumerate connected serial devices.
+     • GET /analytics/kinematics: Live Kalman state, attitude, and safety alarms.
+     • GET /analytics/sounding: Live dew point, air density, ELR, and ISA deviations.
+
+5. VERIFICATION & REPOSITORY SYNC:
+   - Created comprehensive unit test suite: tests/test_backend_core.py (10/10 PASSED).
+   - Regression suites verified: tests/test_firmware_protocol.py (4/4 PASSED), tests/selftest.js (27/27 PASSED).
+   - Created .gitattributes accurately classifying Python/C++ code and marking data fixtures as vendored.
+   - Successfully created and merged Pull Request #1 and Pull Request #2 into main on GitHub.
+
+STATUS: PRIORITY 2 COMPLETE — BACKEND CORE OPERATIONAL (P01, P02, P03, P12 DONE)
+
