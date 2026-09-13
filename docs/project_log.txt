@@ -379,3 +379,31 @@ CAPABILITIES DELIVERED:
        • WATER_HAZARD: River (2500), SeaLake (3000)
      - Milestone P04 marked 100% COMPLETE.
 STATUS: READY FOR TINYML MODEL TRAINING PIPELINE (P05)
+--------------------------------------------------------------------------------
+GPU TRAINING INSTRUCTION SUITE & HARDWARE-AGNOSTIC TINYML PIPELINE
+--------------------------------------------------------------------------------
+
+[2026-09-13T16:15:00Z] ACTION: Created standalone GPU instructions and complete TinyML training pipeline.
+FILES CREATED / COMMITTED:
+  - docs/GPU_TRAINING_INSTRUCTIONS.md
+  - ml/train_tinyml_vision.py
+  - ml/export_tinyml_header.py
+  - docs/README.md
+CAPABILITIES DELIVERED:
+  1. Standalone GPU Workstation Directive (docs/GPU_TRAINING_INSTRUCTIONS.md):
+     - Complete step-by-step instructions for the Antigravity instance on the second (NVIDIA GPU)
+       laptop to perform zero-friction setup, environment installation (CUDA 12.1 PyTorch),
+       dataset extraction, GPU training, quantization, and Git sync.
+     - Enforces 100% path-independent relative resolution so folder path changes across machines
+       do not cause breakage.
+  2. Hardware-Agnostic Deep Learning Trainer (ml/train_tinyml_vision.py):
+     - Automatically detects CUDA GPUs and activates mixed-precision Tensor Core acceleration
+       (torch.amp.autocast('cuda')), while falling back gracefully to CPU.
+     - Implements TinyLandingNet: ultra-compact depthwise separable CNN (~22k params) mapping 27,000
+       EuroSAT aerial images into the 4 CanSat Safe Landing Area Index (SLAI) tiers.
+     - Computes full confusion matrices, per-class precision/recall/F1 metrics, and exports
+       both PyTorch weights (.pth) and ONNX (.onnx).
+  3. INT8 Quantization & C++ Header Exporter (ml/export_tinyml_header.py):
+     - Auto-generates model_data.h with 8-bit integer tables (< 25 KB footprint) ready for direct
+       compilation in Arduino IDE on the ESP32-CAM.
+STATUS: COMMITTED & READY FOR MULTI-MACHINE CONCURRENT WORKFLOW
