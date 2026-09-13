@@ -805,3 +805,55 @@ FILES MODIFIED:
    - Manual lift simulation verified that raising altitude by +1.0m produces monotonic ascent without dip.
 
 STATUS: TILT-IMMUNE ALTITUDE FILTER COMPLETE, TESTED & VERIFIED
+
+--------------------------------------------------------------------------------
+3D CANSAT DIGITAL TWIN ORIENTATION FIX & ATTITUDE FUSION ALIGNMENT
+--------------------------------------------------------------------------------
+
+[2026-09-14T03:40:00Z] ACTION: Fixed 3D CanSat digital twin horizontal orientation bug and restored immediate upright tare.
+FILES MODIFIED:
+  - index.html
+  - docs/project_log.txt
+  - walkthrough.md
+
+1. ROOT CAUSE ANALYSIS:
+   - Discontinuous Dual-Branch Fusion:
+     In updateAttitudeFusion(), stationary table state (< 0.55 deg/s) calculated pitch from the gravity vector
+     using Math.atan2(ay, az), which evaluates to ~90.0° because the user's sensor breakout PCB is mounted
+     vertically inside the CanSat cylinder. However, during initial packet arrival (when gyros have raw boot noise),
+     the function ran the Madgwick filter initialized from identity quaternion [1, 0, 0, 0], producing ~0° pitch.
+   - Desynchronized Auto-Tare:
+     The prior autoTaredOnPad check waited for linesParsed >= 3. On packet 3, Madgwick was at -0.5°, capturing
+     tarePitch = -0.5°. Once the device settled on the table and gyros fell below 0.55 deg/s, fusedPitch jumped
+     to 90.0° from the gravity vector. This yielded displayPitch = fusedPitch - tarePitch = 90.5°, rotating the 3D
+     model 90° on the X-axis and causing it to lie completely flat horizontally on its side.
+   - Delayed Tare Button:
+     In commit 4f397f66, tareAttitude() was routed into the 3.5s async triggerStationaryTare() routine rather than
+     immediately snapping cansatGroup.rotation.set(0, 0, 0) and zeroing HUD readouts.
+
+2. FIXES IMPLEMENTED:
+   - Seamless Complementary Attitude Fusion:
+     Aligned index.html updateAttitudeFusion() with the Python backend (backend/core/kinematics.py):
+     • Immediately initializes compPitch = accPitch and compRoll = accRoll on packet 1.
+     • Table rest (< 0.55 deg/s): Smoothly locks to the gravity vector with zero drift.
+     • Dynamic motion: Blends 94% gyro rate integration with 6% accelerometer gravity correction.
+     • Continuously maintains quaternion state q0, q1, q2, q3 to prevent any branch discontinuities.
+   - Immediate Auto-Tare on Launchpad:
+     In ingestRawLine(), autoTaredOnPad now seeds tarePitch = row.pitch and tareRoll = row.roll on the very first
+     valid packet in PAD_IDLE, guaranteeing displayPitch = 0.0° and keeping the 3D model upright from packet 1.
+   - Instant 1-Click TARE UPRIGHT:
+     Updated tareAttitude() to immediately capture tare angles, snap cansatGroup.rotation.set(0, 0, 0), zero HUD
+     numbers (model-pitch, model-roll, model-yaw = 0.0°), and display emerald "✓ ZEROED" feedback while synchronizing
+     with the backend in the background.
+   - Complete Lifecycle Resets:
+     Synchronized autoTaredOnPad = false, tare angles, compPitch/compRoll, and cansatGroup orientation in
+     resetNewFlight() and resetReplay().
+
+3. VERIFICATION:
+   - tests/selftest.js: 27/27 PASSED.
+   - tests/selftest.ps1: 17/17 PASSED (0 Failures).
+   - tests/test_sm.ps1: 10/10 flight profiles PASSED.
+   - tests/test_backend_core.py: 16/16 PASSED.
+   - Verified that physical upright CanSat renders 100% vertical digital twin with 0.0° relative pitch/roll.
+
+STATUS: 3D MODEL ORIENTATION & ATTITUDE TARE VERIFIED & RESOLVED

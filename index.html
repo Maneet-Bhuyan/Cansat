@@ -1313,6 +1313,7 @@
   let fusedPitch = 0, fusedRoll = 0, fusedYaw = 0;
   let tarePitch = 0.0, tareRoll = 0.0, tareYaw = 0.0;
   let autoTaredOnPad = false;
+  let compPitch = null, compRoll = null, compYaw = 0.0;
 
   function triggerStationaryTare() {
     isCalibratingTare = true;
@@ -1352,24 +1353,13 @@
     tarePitch = fusedPitch;
     tareRoll = fusedRoll;
     tareYaw = fusedYaw;
+    autoTaredOnPad = true;
     isCalibratingTare = false;
     isStationaryCalibrated = true;
 
-    if (tarePadAlt !== 0) {
+    if (tarePadAlt !== 0 && clientAltitudeFilter) {
       clientAltitudeFilter.reset(tarePadAlt);
     }
-
-    const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
-    btns.forEach(b => {
-      b.innerText = '✓ CALIBRATED';
-      b.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-md';
-      setTimeout(() => {
-        b.innerText = b.id === 'tare-btn' ? 'TARE UPRIGHT' : 'TARE / CALIBRATE';
-        b.className = b.id === 'tare-btn'
-          ? 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm'
-          : 'btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold';
-      }, 2500);
-    });
 
     if (cansatGroup) {
       cansatGroup.rotation.set(0, 0, 0);
@@ -1386,12 +1376,56 @@
     const ir = document.getElementById('info-roll');
     if (ip) ip.innerText = '0.0°';
     if (ir) ir.innerText = '0.0°';
+
+    const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
+    btns.forEach(b => {
+      b.innerText = '✓ CALIBRATED';
+      b.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-md';
+      setTimeout(() => {
+        b.innerText = b.id === 'tare-btn' ? 'TARE UPRIGHT' : 'TARE / CALIBRATE';
+        b.className = b.id === 'tare-btn'
+          ? 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm'
+          : 'btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold';
+      }, 2500);
+    });
   }
 
   function tareAttitude() {
     tarePitch = fusedPitch;
     tareRoll = fusedRoll;
     tareYaw = fusedYaw;
+    autoTaredOnPad = true;
+
+    // Instantly force 3D model to stand 100% vertically upright
+    if (cansatGroup) {
+      cansatGroup.rotation.set(0, 0, 0);
+    }
+
+    // Immediately zero HUD numbers
+    const mp = document.getElementById('model-pitch');
+    const mr = document.getElementById('model-roll');
+    const my = document.getElementById('model-yaw');
+    if (mp) mp.innerText = '0.0°';
+    if (mr) mr.innerText = '0.0°';
+    if (my) my.innerText = '0.0°';
+
+    const ip = document.getElementById('info-pitch');
+    const ir = document.getElementById('info-roll');
+    if (ip) ip.innerText = '0.0°';
+    if (ir) ir.innerText = '0.0°';
+
+    // Instant tactile feedback on button
+    const btn = document.getElementById('tare-btn');
+    if (btn) {
+      btn.innerText = '✓ ZEROED';
+      btn.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-sm';
+      setTimeout(function () {
+        btn.innerText = 'TARE UPRIGHT';
+        btn.className = 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm';
+      }, 1600);
+    }
+
+    // Also trigger full sensor calibration in background
     triggerStationaryTare();
   }
 
@@ -1594,77 +1628,57 @@
     };
   }
 
-  // --- SENSOR FUSION ENGINE (MADGWICK / COMPLEMENTARY FILTER) ---
+  // --- SENSOR FUSION ENGINE (COMPLEMENTARY / MADGWICK FILTER) ---
   function updateAttitudeFusion(ax, ay, az, gx, gy, gz, dt) {
+    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
+    let accPitch = 0.0, accRoll = 0.0;
+    if (aNorm > 0.05) {
+      accPitch = Math.atan2(ay, az) * (180.0 / Math.PI);
+      accRoll = Math.atan2(-ax, Math.sqrt(ay * ay + az * az)) * (180.0 / Math.PI);
+    }
+
+    if (compPitch === null || compRoll === null) {
+      compPitch = accPitch;
+      compRoll = accRoll;
+      compYaw = 0.0;
+      fusedPitch = compPitch;
+      fusedRoll = compRoll;
+      fusedYaw = compYaw;
+      return { pitch: fusedPitch, roll: fusedRoll, yaw: fusedYaw, q: [q0, q1, q2, q3] };
+    }
+
+    const dtClamped = Math.max(0.01, Math.min(dt || 0.8, 2.0));
     // Gyro noise deadband: prevents raw MEMS sensor bias from continuously rotating 3D model when stationary
     const gyroNoiseThreshold = 0.55; // deg/s
-    const filteredGx = Math.abs(gx) < gyroNoiseThreshold ? 0 : gx;
-    const filteredGy = Math.abs(gy) < gyroNoiseThreshold ? 0 : gy;
-    const filteredGz = Math.abs(gz) < gyroNoiseThreshold ? 0 : gz;
+    const filteredGx = Math.abs(gx) < gyroNoiseThreshold ? 0.0 : gx;
+    const filteredGy = Math.abs(gy) < gyroNoiseThreshold ? 0.0 : gy;
+    const filteredGz = Math.abs(gz) < gyroNoiseThreshold ? 0.0 : gz;
 
-    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
-
-    // If stationary on table (no rotation), lock orientation directly to gravity vector
     if (filteredGx === 0 && filteredGy === 0 && filteredGz === 0 && aNorm > 0.05) {
-      fusedPitch = Math.atan2(ay, az) * (180.0 / Math.PI);
-      fusedRoll = Math.atan2(-ax, Math.sqrt(ay * ay + az * az)) * (180.0 / Math.PI);
-      return { pitch: fusedPitch, roll: fusedRoll, yaw: 0.0 };
-    }
-
-    const gxRad = (filteredGx * Math.PI) / 180;
-    const gyRad = (filteredGy * Math.PI) / 180;
-    const gzRad = (filteredGz * Math.PI) / 180;
-
-    let recipNorm;
-    if (aNorm > 0.01) {
-      recipNorm = 1.0 / aNorm;
-      ax *= recipNorm;
-      ay *= recipNorm;
-      az *= recipNorm;
-
-      const halfvx = q1 * q3 - q0 * q2;
-      const halfvy = q0 * q1 + q2 * q3;
-      const halfvz = q0 * q0 - 0.5 + q3 * q3;
-
-      const halfex = (ay * halfvz - az * halfvy);
-      const halfey = (az * halfvx - ax * halfvz);
-      const halfez = (ax * halfvy - ay * halfvx);
-
-      const beta = 0.45;
-      const gxAdj = gxRad + 2.0 * beta * halfex;
-      const gyAdj = gyRad + 2.0 * beta * halfey;
-      const gzAdj = gzRad + 2.0 * beta * halfez;
-
-      const dtHalf = 0.5 * dt;
-      const dq0 = (-q1 * gxAdj - q2 * gyAdj - q3 * gzAdj) * dtHalf;
-      const dq1 = (q0 * gxAdj + q2 * gzAdj - q3 * gyAdj) * dtHalf;
-      const dq2 = (q0 * gyAdj - q1 * gzAdj + q3 * gxAdj) * dtHalf;
-      const dq3 = (q0 * gzAdj + q1 * gyAdj - q2 * gxAdj) * dtHalf;
-
-      q0 += dq0; q1 += dq1; q2 += dq2; q3 += dq3;
+      // Table / Pad Rest: Lock tightly to physical gravity vector without drift or gimbal jump
+      compPitch = 0.85 * compPitch + 0.15 * accPitch;
+      compRoll = 0.85 * compRoll + 0.15 * accRoll;
     } else {
-      const dtHalf = 0.5 * dt;
-      const dq0 = (-q1 * gxRad - q2 * gyRad - q3 * gzRad) * dtHalf;
-      const dq1 = (q0 * gxRad + q2 * gzRad - q3 * gyRad) * dtHalf;
-      const dq2 = (q0 * gyRad - q1 * gzRad + q3 * gxRad) * dtHalf;
-      const dq3 = (q0 * gzRad + q1 * gyRad - q2 * gxRad) * dtHalf;
-      q0 += dq0; q1 += dq1; q2 += dq2; q3 += dq3;
+      // Dynamic Motion: Complementary fusion blending high-rate gyro integration with accelerometer gravity
+      const alpha = 0.94;
+      compPitch = alpha * (compPitch + filteredGx * dtClamped) + (1.0 - alpha) * accPitch;
+      compRoll = alpha * (compRoll + filteredGy * dtClamped) + (1.0 - alpha) * accRoll;
+      compYaw += filteredGz * dtClamped;
     }
 
-    recipNorm = 1.0 / Math.sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
-    q0 *= recipNorm; q1 *= recipNorm; q2 *= recipNorm; q3 *= recipNorm;
+    fusedPitch = compPitch;
+    fusedRoll = compRoll;
+    fusedYaw = compYaw;
 
-    const sinp = 2.0 * (q0 * q2 - q3 * q1);
-    if (Math.abs(sinp) >= 0.995) {
-      // Gimbal Lock Singularity at Pitch = ±90°: roll and yaw are collinear; lock roll to 0.0 to prevent 0/0 oscillation
-      fusedPitch = Math.sign(sinp) * 90.0;
-      fusedRoll = 0.0;
-      fusedYaw = 2.0 * Math.atan2(q1, q0) * (180.0 / Math.PI);
-    } else {
-      fusedPitch = Math.asin(sinp) * (180.0 / Math.PI);
-      fusedRoll = Math.atan2(2.0 * (q0 * q1 + q2 * q3), 1.0 - 2.0 * (q1 * q1 + q2 * q2)) * (180.0 / Math.PI);
-      fusedYaw = Math.atan2(2.0 * (q0 * q3 + q1 * q2), 1.0 - 2.0 * (q2 * q2 + q3 * q3)) * (180.0 / Math.PI);
-    }
+    // Maintain quaternion representation for 3D engine and testing harness
+    const pRad = (fusedPitch * Math.PI) / 360.0;
+    const rRad = (fusedRoll * Math.PI) / 360.0;
+    const cp = Math.cos(pRad), sp = Math.sin(pRad);
+    const cr = Math.cos(rRad), sr = Math.sin(rRad);
+    q0 = cr * cp;
+    q1 = sr * cp;
+    q2 = cr * sp;
+    q3 = -sr * sp;
 
     return { pitch: fusedPitch, roll: fusedRoll, yaw: fusedYaw, q: [q0, q1, q2, q3] };
   }
@@ -2819,8 +2833,8 @@
     document.getElementById('info-gpsfix').innerText = locked ? 'Locked (WGS84 3D)' : 'No lock / Searching';
     document.getElementById('info-alt').innerText = row.altitude.toFixed(2) + ' m';
     document.getElementById('info-apogee').innerText = apogee.toFixed(2) + ' m';
-    // Auto-tare initial resting orientation on launchpad
-    if (!autoTaredOnPad && currentFlightPhase === 'PAD_IDLE' && linesParsed >= 3) {
+    // Auto-tare initial resting orientation on launchpad immediately on first valid packet
+    if (!autoTaredOnPad && currentFlightPhase === 'PAD_IDLE') {
       tarePitch = row.pitch;
       tareRoll = row.roll;
       tareYaw = row.yaw;
@@ -3238,6 +3252,16 @@
     if (clientAltitudeFilter && typeof clientAltitudeFilter.reset === 'function') {
       clientAltitudeFilter.reset();
     }
+    autoTaredOnPad = false;
+    tarePitch = 0.0;
+    tareRoll = 0.0;
+    tareYaw = 0.0;
+    compPitch = null;
+    compRoll = null;
+    compYaw = 0.0;
+    if (cansatGroup) {
+      cansatGroup.rotation.set(0, 0, 0);
+    }
     currentFlightPhase = 'PAD_IDLE';
     speechAnnounced = { apogee: false, chute: false, alt100: false, touchdown: false };
     missionStartEpochMs = null;
@@ -3608,6 +3632,13 @@
     if (clientAltitudeFilter && typeof clientAltitudeFilter.reset === 'function') {
       clientAltitudeFilter.reset();
     }
+    autoTaredOnPad = false;
+    tarePitch = 0.0;
+    tareRoll = 0.0;
+    tareYaw = 0.0;
+    compPitch = null;
+    compRoll = null;
+    compYaw = 0.0;
     apogee = 0;
     missionStartEpochMs = null;
     padBaselineRecorded = false;
