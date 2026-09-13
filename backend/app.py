@@ -317,78 +317,114 @@ async def websocket_telemetry_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("[WebSocket] Client disconnected.")
 
-# --- REAL-TIME DUAL-PORT HARDWARE SERIAL BRIDGE (COM3 LoRa & COM5 Video) ---
-import serial
-import serial.tools.list_ports
-import threading
+# --- REAL-TIME DUAL-PORT HARDWARE SERIAL BRIDGE & PYTHON CORE ENGINES ---
 import asyncio
+import threading
+from backend.core.serial_manager import DualSerialManager, list_available_ports
+from backend.core.kinematics import KinematicsEngine, KinematicState
+from backend.core.atmospheric import AtmosphericEngine, AtmosphericSounding
 
 serial_subscribers: List[WebSocket] = []
-dual_bridge_running = False
-dual_bridge_lock = threading.Lock()
+subscribers_lock = threading.Lock()
+
+# Core computation engines
+kinematics_engine = KinematicsEngine()
+atmospheric_engine = AtmosphericEngine()
+
+# Thread-safe cache of latest processed states
+latest_kinematic_state: Optional[KinematicState] = None
+latest_sounding_state: Optional[AtmosphericSounding] = None
+state_lock = threading.Lock()
 
 async def broadcast_serial_line(line: str):
-    for ws in list(serial_subscribers):
+    with subscribers_lock:
+        targets = list(serial_subscribers)
+    for ws in targets:
         try:
             await ws.send_text(line)
         except Exception:
             pass
 
-def port_listener_worker(loop, port_name: str, baud_rate: int, label: str):
-    global dual_bridge_running
-    print(f"[Serial Bridge] Starting {label} listener on {port_name} at {baud_rate} baud...")
-    while dual_bridge_running:
-        ser = None
-        try:
-            ser = serial.Serial(port_name, baud_rate, timeout=1)
-            ser.dtr = True
-            ser.rts = True
-            print(f"[Serial Bridge] [+] Successfully connected to {label} ({port_name} @ {baud_rate}).")
-            while dual_bridge_running:
-                if ser.in_waiting:
-                    raw_bytes = ser.readline()
-                    line = raw_bytes.decode('utf-8', errors='ignore').strip()
-                    if line:
-                        asyncio.run_coroutine_threadsafe(broadcast_serial_line(line), loop)
-                else:
-                    time.sleep(0.015)
-        except Exception as e:
-            # Port may be busy or temporarily unplugged; retry periodically
-            time.sleep(2.0)
-        finally:
-            if ser:
-                try:
-                    ser.close()
-                except Exception:
-                    pass
-    print(f"[Serial Bridge] {label} listener on {port_name} cleanly terminated.")
+def on_serial_line_dispatcher(label: str, line: str, loop: asyncio.AbstractEventLoop):
+    # Broadcast raw line directly to all active WebSocket clients (index.html HUD)
+    asyncio.run_coroutine_threadsafe(broadcast_serial_line(line), loop)
+
+def on_telemetry_csv_processor(line: str):
+    """Process incoming 13-field CSV through Kinematics and Atmospheric engines."""
+    global latest_kinematic_state, latest_sounding_state
+    try:
+        parts = [float(x.strip()) for x in line.split(",")]
+        if len(parts) == 13:
+            temp, press, alt, gx, gy, gz, ax, ay, az, lat, lon, hum, volt = parts
+            kin_state = kinematics_engine.process_packet(alt, ax, ay, az, gx, gy, gz)
+            atmo_state = atmospheric_engine.process_sounding(press, temp, hum, alt)
+            with state_lock:
+                latest_kinematic_state = kin_state
+                latest_sounding_state = atmo_state
+    except Exception:
+        pass
+
+# Global serial manager instance
+dual_serial_manager: Optional[DualSerialManager] = None
+
+def get_or_create_serial_manager(loop: asyncio.AbstractEventLoop) -> DualSerialManager:
+    global dual_serial_manager
+    if dual_serial_manager is None:
+        dual_serial_manager = DualSerialManager(
+            telemetry_port="COM3",
+            telemetry_baud=9600,
+            video_port="COM5",
+            video_baud=460800,
+            on_line_received=lambda label, line: on_serial_line_dispatcher(label, line, loop),
+            on_telemetry_csv=on_telemetry_csv_processor,
+        )
+    return dual_serial_manager
+
+@app.get("/hardware/ports")
+def get_hardware_ports():
+    """Enumerate all serial ports on the host system."""
+    return {"ports": list_available_ports()}
+
+@app.get("/analytics/kinematics")
+def get_latest_kinematics():
+    """Return latest real-time Kinematics state (Kalman altitude, attitude, alarms)."""
+    with state_lock:
+        if latest_kinematic_state is None:
+            return {"status": "waiting_for_data"}
+        return {"status": "active", "data": latest_kinematic_state.__dict__}
+
+@app.get("/analytics/sounding")
+def get_latest_sounding():
+    """Return latest Atmospheric Thermodynamics state (dew point, air density, ELR)."""
+    with state_lock:
+        if latest_sounding_state is None:
+            return {"status": "waiting_for_data"}
+        return {"status": "active", "data": latest_sounding_state.__dict__}
 
 @app.websocket("/ws/serial")
 async def websocket_serial_bridge(websocket: WebSocket):
-    global dual_bridge_running
     await websocket.accept()
-    serial_subscribers.append(websocket)
-    print(f"[WebSocket] Serial bridge client connected. (Total subscribers: {len(serial_subscribers)})")
+    with subscribers_lock:
+        serial_subscribers.append(websocket)
+        count = len(serial_subscribers)
+    print(f"[WebSocket] Serial bridge client connected. (Total subscribers: {count})")
     
     loop = asyncio.get_running_loop()
-    with dual_bridge_lock:
-        if not dual_bridge_running:
-            dual_bridge_running = True
-            # Worker 1: CanSat Primary Telemetry Ground Station (COM3 @ 9600)
-            t1 = threading.Thread(target=port_listener_worker, args=(loop, "COM3", 9600, "CanSat LoRa Telemetry"), daemon=True)
-            t1.start()
-            # Worker 2: ESP32 Ground Receiver Video Stream (COM5 @ 460800)
-            t2 = threading.Thread(target=port_listener_worker, args=(loop, "COM5", 460800, "ESP32 Aerial Video Feed"), daemon=True)
-            t2.start()
-            
+    manager = get_or_create_serial_manager(loop)
+    if not manager.is_running:
+        manager.start()
+
     try:
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        if websocket in serial_subscribers:
-            serial_subscribers.remove(websocket)
-        print(f"[WebSocket] Serial client disconnected. (Remaining: {len(serial_subscribers)})")
-        if len(serial_subscribers) == 0:
-            dual_bridge_running = False
+        with subscribers_lock:
+            if websocket in serial_subscribers:
+                serial_subscribers.remove(websocket)
+            remaining = len(serial_subscribers)
+        print(f"[WebSocket] Serial client disconnected. (Remaining: {remaining})")
+        if remaining == 0:
+            manager.stop()
+
 
 
