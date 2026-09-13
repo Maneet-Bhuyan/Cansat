@@ -1,8 +1,6 @@
-﻿# ==============================================================================
 # GitHub Linguist Configuration (.gitattributes)
-# Ensures GitHub reflects actual software engineering (Python & C++ firmware)
-# and does not misclassify markup, simulation datasets, or documentation.
-# ==============================================================================
+# Accurately reflect actual software engineering (Python and C++ firmware)
+# and prevent non-code assets (CSVs, HTML templates, docs) from skewing stats.
 
 # 1. Simulation Flight Datasets & Test Fixtures (Data, not code)
 test_cases/* linguist-vendored
