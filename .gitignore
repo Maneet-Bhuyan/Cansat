@@ -1,10 +1,20 @@
+# Virtual Environments
 .venv/
+.venv*/
+.env
+
+# Python caches
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.log
-.DS_Store
+
+# Extracted heavy dataset directories (27,000 files)
+# The parent archive data/EuroSAT_RGB.zip is tracked for team distribution
+data/eurosat/
+
+# IDE and OS metadata
 .vscode/
-.env
-.venv*/
+.DS_Store
+Thumbs.db

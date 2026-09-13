@@ -68,24 +68,32 @@ ML models
 ├── index.html                  # Mission dashboard and frontend logic
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
 ├── launch.py                   # System launcher with port manager and browser dispatch
-├── selftest.js                 # Node.js automated unit testing suite (26 assertions)
-├── selftest.ps1                # PowerShell mission verification suite (17 assertions)
 ├── requirements.txt            # Python dependencies
 ├── backend/
 │   ├── app.py                 # FastAPI ML inference backend
-│   ├── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)
-│   ├── start_server.ps1       # Backend startup script
-│   └── start_server.bat       # Windows batch launcher
+│   └── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)
 ├── ml/
-│   ├── train_models.py        # Training pipeline
+│   ├── download_dataset.py    # Automated EuroSAT aerial dataset downloader
+│   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
-│   └── saved_models/          # Trained artifacts
+│   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
+├── data/
+│   ├── EuroSAT_RGB.zip        # [Tracked] EuroSAT 89.9 MB aerial dataset archive
+│   └── eurosat/               # [Gitignored] 27,000 extracted Sentinel-2 images
+├── firmware/
+│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware
+│   └── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware
 ├── test_cases/                # Ten mission profile CSV datasets
-├── generate_test_cases.ps1    # Synthetic scenario generator
-├── project_log.txt            # Development and mission log
-├── powershell_command.txt     # Setup/run command notes
-├── explaination.txt           # Project architecture notes
-├── readme.md                  # Project documentation
+├── docs/
+│   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
+│   ├── project_log.txt        # Development and mission log
+│   └── python-ml_focused.text # Python & ML transformation master roadmap
+├── tests/
+│   ├── selftest.ps1           # PowerShell mission verification suite (17 assertions)
+│   ├── selftest.js            # Node.js automated unit testing suite (26 assertions)
+│   ├── test_sm.ps1            # Flight state machine transition checker
+│   ├── generate_test_cases.ps1# Synthetic scenario generator (PowerShell)
+│   └── generate_test_cases.js # Synthetic scenario generator (JavaScript)
 └── .gitignore
 ```
 
@@ -350,13 +358,13 @@ The project includes comprehensive test suites for unit and integration testing:
 
 ### JavaScript unit test suite (26 assertions)
 ```bash
-node selftest.js
+node tests/selftest.js
 ```
 Validates 13-field CSV parsing, invalid packet rejection, kinematic derivations, attitude math, battery clamping, RFC 4180 export compliance, Web Serial compatibility, and UI styling tokens.
 
 ### PowerShell mission verification suite (17 assertions)
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\selftest.ps1
+powershell -ExecutionPolicy Bypass -File tests/selftest.ps1
 ```
 Validates Mission Elapsed Time (MET) clock formatting, all 10 CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
 
