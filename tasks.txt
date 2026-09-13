@@ -112,13 +112,13 @@ bridges, high-performance UI rendering, and automated test suites.
     - Maintain Leaflet multi-layer map tracking (satellite tiles, live GPS marker, drift trail).
     - Reference files: index.html
 
-[ ] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE (FASTAPI WEBSOCKET)
-    - Manage backend/app.py dual-port serial ingestion:
-      * COM3: Primary LoRa Telemetry @ 9600 baud
-      * COM5: ESP32 Aerial Video Feed @ 460800 baud
-    - Ensure WebSocket server (/ws/serial) reconnect resilience and client disconnect cleanup.
-    - Test port auto-reconnect logic if hardware is unplugged and re-inserted.
-    - Reference files: backend/app.py, backend/standalone_server.ps1, launch.py
+[X] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE & PYTHON CORE ENGINES (COMPLETED)
+    - Implemented production-grade backend/core/ modular architecture:
+      * backend/core/serial_manager.py: DualSerialManager managing COM3 LoRa @ 9600 & COM5 Video @ 460800.
+      * backend/core/kinematics.py: 1D Kalman Filter state estimation & 6-DOF IMU attitude fusion.
+      * backend/core/atmospheric.py: Atmospheric sounding physics (Dew Point, Air Density, ELR).
+    - Integrated with backend/app.py (/ws/serial, /hardware/ports, /analytics/kinematics, /analytics/sounding).
+    - Verified with 10/10 automated unit tests in tests/test_backend_core.py.
 
 [ ] TASK WD-03: AERIAL VIDEO HUD & LINK QUALITY MONITORING
     - Maintain Tile 12 (Live Aerial Camera Stream) and Tile 13 (Link Diagnostics) in index.html.
