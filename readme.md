@@ -326,6 +326,41 @@ The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry
 | Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
 | Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
+| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | ~22k params, INT8 < 25 KB ROM, Latency < 150 ms |
+
+### Safe Landing Area Index (SLAI) & 3x3 Spatial Hazard Grid
+
+Tile 12 and the OpenCV viewer (`firmware/ground_cam_viewer.py`) evaluate aerial video frames for terminal touchdown safety:
+
+1. **Four-Tier SLAI Classification**:
+   - `0: SAFE_LZ` (Green): Open pasture, herbaceous fields, and clear ground.
+   - `1: OBSTACLE_CANOPY` (Yellow): Dense tree clusters and forest canopy.
+   - `2: CRITICAL_HAZARD` (Red): Asphalt highways, residential structures, and industrial buildings.
+   - `3: WATER_HAZARD` (Blue): Lakes, rivers, and standing water.
+
+2. **3x3 Sector Safety Scoring**:
+   Incoming frames are divided into 9 sectors ($3 \times 3$ grid). For each sector $k$, the net safety score $S_k$ is computed:
+
+   $$S_k = 1.0 \cdot p_{\text{safe}} - 0.5 \cdot p_{\text{canopy}} - 1.0 \cdot p_{\text{hazard}} - 1.0 \cdot p_{\text{water}}$$
+
+   The optimal touchdown sector is identified as $k_{\text{opt}} = \arg\max_k(S_k)$.
+
+3. **Directional Escape Vector & Evasion Heading**:
+   When the nadir center sector is obstructed ($S_{\text{center}} < 0.2$), a safety-weighted escape vector $\vec{v}_{\text{escape}} = [dx, dy]$ points toward clear terrain:
+
+   $$\vec{v}_{\text{escape}} = \sum_{k=0}^{8} \left(S_k - S_{\text{center}}\right) \cdot \left(\vec{c}_k - \vec{c}_{\text{center}}\right)$$
+
+   $$\theta_{\text{evade}} = \left(\arctan2(dx, -dy) \times \frac{180}{\pi} + 360\right) \pmod{360} \quad [^\circ]$$
+
+4. **Visible Atmospheric Resistant Index (VARI)**:
+   A remote sensing index estimating vegetative surface health while minimizing aerosol scattering:
+
+   $$\text{VARI} = \frac{G - R}{G + R - B}$$
+
+5. **Visual Time-To-Impact (TTI)**:
+   Derived from the optical feature scale divergence between consecutive frames:
+
+   $$\text{TTI} \approx \frac{\Delta t \cdot \sigma_1}{\sigma_2 - \sigma_1} \quad [\text{seconds}]$$
 
 ## Mission profile coverage
 
