@@ -1129,3 +1129,38 @@ SYSTEM VERIFICATION:
 
 STATUS: LOCAL CODEBASE & REMOTE REPOSITORY 100% SYNCHRONIZED AND OPERATIONAL
 
+--------------------------------------------------------------------------------
+MISSION CONTROL WEB DASHBOARD: CHART AXIS CLIPPING & VISUAL POLISH
+--------------------------------------------------------------------------------
+
+[2026-09-19T00:25:00Z] ACTION: Resolved chart axis label clipping, added explicit scale titles, fixed container heights, and polished dashboard layout.
+FILES MODIFIED:
+  - index.html (Dashboard presentation layout & Chart.js configuration)
+  - tasks.txt (Updated TASK WD-01 to COMPLETED)
+  - docs/project_log.txt (This entry)
+
+ROOT CAUSES IDENTIFIED & RESOLVED:
+  1. Bottom X-Axis Clipping:
+     - Fixed CSS overflow clipping where fixed height (260px) cut off the bottom 4-6px of chart canvases.
+     - Expanded .dashboard-panel height to 285px and .chart-container to calc(285px - 42px) with overflow: visible.
+  2. Canvas Boundary Deficit & Edge Truncation:
+     - Added global layout.padding: { top: 8, right: 14, bottom: 6, left: 8 } (and right: 18 for dual-axis chart).
+     - Provides dedicated clearance for tick marks, negative signs, and multi-digit values.
+  3. Diagonal Label Tilting & Collision:
+     - Constrained X-axis ticks to strict horizontal rendering (maxRotation: 0, minRotation: 0, autoSkip: true, padding: 5).
+     - Upgraded legend labels to circular point style (usePointStyle: true, pointStyle: 'circle', boxWidth: 6) to eliminate right-edge truncation.
+  4. Configuration Overwrite in Custom Charts:
+     - Replaced shallow Object.assign() with deepMerge() inside initLineChart(), preserving base scale styles, fonts, and paddings when per-chart overrides are passed.
+  5. Missing Scale Context & Duplicate DOM IDs:
+     - Added explicit scale titles: TIME (MET), ALTITUDE (m), V-SPEED (m/s), ACCEL (g), ANGLE (°), GYRO (°/s), HUMIDITY (%), PRESSURE (hPa), TEMP (°C).
+     - Renamed duplicate DOM element id="gmaps-nav-btn" in header toolbar to "gmaps-nav-btn-header".
+     - Restacked sidebar connection button and baud selector for clean alignment.
+
+AUTOMATED TEST VERIFICATION:
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - powershell tests/test_sm.ps1: 10/10 PASS
+  - python -m unittest tests/test_backend_core.py tests/test_firmware_protocol.py: 16/16 PASS
+  - Total automated assertions passing: 70/70.
+
+STATUS: ALL CHARTS & VISUAL ASSETS VERIFIED, POLISHED, AND COMMITTED

@@ -1,7 +1,7 @@
 ================================================================================
                     COGNITIVE CANSAT MISSION - TASK TRACKER
                              File: tasks.txt
-                    Last Updated: 2026-09-19T00:06:00+05:30
+                     Last Updated: 2026-09-19T00:25:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -112,11 +112,14 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
 Primary Responsibilities: Ground station web interface, WebSocket server, serial
 bridges, high-performance UI rendering, and automated test suites.
 
-[ ] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE
-    - Maintain and optimize index.html (aerospace dark-mode dashboard).
-    - Optimize Chart.js real-time rendering pipelines to avoid UI lagging under continuous streaming.
-    - Ensure Three.js 3D CanSat cylinder orientation renders smoothly with quaternion slerp.
-    - Maintain Leaflet multi-layer map tracking (satellite tiles, live GPS marker, drift trail).
+[X] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE & CHART RENDERING POLISH (COMPLETED)
+    - Maintained and optimized index.html (aerospace dark-mode dashboard).
+    - Fixed bottom and edge chart clipping by expanding panel container heights to 285px and adding explicit global layout padding (top: 8, right: 14/18, bottom: 6, left: 8).
+    - Implemented deepMerge() configuration pipeline in initLineChart() to preserve default scales, font tokens, and tick padding across chart overrides.
+    - Locked horizontal X-axis tick rotation (maxRotation: 0, minRotation: 0, autoSkip: true) and embedded explicit scale titles across all graphs (TIME MET, ALTITUDE, V-SPEED, ACCEL, ANGLE, GYRO, HUMIDITY, PRESSURE, TEMP).
+    - Upgraded Chart.js legend swatches to circular points (usePointStyle: true, boxWidth: 6) to eliminate right-edge collisions.
+    - Resolved duplicate DOM ID (gmaps-nav-btn -> gmaps-nav-btn-header) and stacked connection controls cleanly in sidebar.
+    - Verified 100% automated test compliance (70/70 assertions passing across 5 test suites).
     - Reference files: index.html
 
 [X] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE & PYTHON CORE ENGINES (COMPLETED)

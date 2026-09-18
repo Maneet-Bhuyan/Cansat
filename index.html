@@ -353,21 +353,21 @@
 
     /* Canvas Containers & Panel Height Bounds */
     main > .dashboard-panel:not(.tile-maximized) {
-      height: 260px !important;
-      max-height: 260px !important;
+      height: 285px !important;
+      max-height: 285px !important;
       position: relative !important;
       isolation: isolate !important;
       z-index: 1 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) .chart-container {
-      height: calc(260px - 40px) !important;
-      max-height: calc(260px - 40px) !important;
+      height: calc(285px - 42px) !important;
+      max-height: calc(285px - 42px) !important;
       min-height: 0 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) #canvas-3d,
     main > .dashboard-panel:not(.tile-maximized) #map {
-      height: calc(260px - 40px) !important;
-      max-height: calc(260px - 40px) !important;
+      height: calc(285px - 42px) !important;
+      max-height: calc(285px - 42px) !important;
       min-height: 0 !important;
     }
 
@@ -375,8 +375,9 @@
       position: relative;
       width: 100%;
       height: 100%;
-      min-height: 195px;
-      padding: 0.4rem 0.6rem;
+      min-height: 0;
+      padding: 0.2rem 0.4rem 0.25rem 0.4rem;
+      overflow: visible;
     }
     #canvas-3d {
       width: 100%;
@@ -526,13 +527,13 @@
             <span id="feed-counter" class="font-mono text-cyan-400 font-bold">(0)</span>
           </button>
 
-          <div class="flex items-center space-x-1.5">
-            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline flex-1">
-              CONNECT
+          <div class="space-y-1.5">
+            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center gap-1.5 font-bold">
+              <span>⚡</span> <span>CONNECT</span>
             </button>
-            <select id="baud-select" class="bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2 py-2 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer" title="Serial Connection Mode (Dual Bridge or Web Serial)">
-              <option value="bridge" selected>DUAL BRIDGE (COM4 LoRa + COM5 Cam)</option>
-              <option value="9600">DIRECT USB (COM4 LoRa @ 9600)</option>
+            <select id="baud-select" class="w-full bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2.5 py-1.5 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
+              <option value="bridge" selected>DUAL BRIDGE (COM4 + COM5)</option>
+              <option value="9600">DIRECT USB (COM4 @ 9600)</option>
               <option value="115200">DIRECT USB (115200 Baud)</option>
               <option value="57600">DIRECT USB (57600 Baud)</option>
             </select>
@@ -660,7 +661,7 @@
           </div>
 
           <!-- Google Maps Quick Recovery Action -->
-          <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Last Known GPS Fix in Google Maps">
+          <button type="button" id="gmaps-nav-btn-header" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Last Known GPS Fix in Google Maps">
             <span>📍</span> <span>MAPS</span>
           </button>
 
@@ -2091,10 +2092,30 @@
   };
   Chart.register(syncedCrosshairPlugin);
 
+  function deepMerge(target, source) {
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        if (!target[key]) target[key] = {};
+        deepMerge(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    layout: {
+      padding: {
+        top: 8,
+        right: 14,
+        bottom: 6,
+        left: 8
+      }
+    },
     interaction: {
       mode: 'index',
       intersect: false
@@ -2115,12 +2136,31 @@
     },
     scales: {
       x: {
-        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11, weight: '500' }, maxTicksLimit: 6 }
+        grid: { color: 'rgba(255, 255, 255, 0.04)', tickLength: 4 },
+        ticks: {
+          color: '#94A3B8',
+          font: { family: 'JetBrains Mono', size: 10, weight: '500' },
+          maxTicksLimit: 6,
+          maxRotation: 0,
+          minRotation: 0,
+          autoSkip: true,
+          padding: 5
+        },
+        title: {
+          display: true,
+          text: 'TIME (MET)',
+          color: '#64748B',
+          font: { family: 'JetBrains Mono', size: 9, weight: '600' },
+          padding: { top: 2, bottom: 0 }
+        }
       },
       y: {
-        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11, weight: '500' } }
+        grid: { color: 'rgba(255, 255, 255, 0.04)', tickLength: 4 },
+        ticks: {
+          color: '#94A3B8',
+          font: { family: 'JetBrains Mono', size: 10, weight: '500' },
+          padding: 6
+        }
       }
     },
     plugins: {
@@ -2128,7 +2168,15 @@
         display: true,
         position: 'top',
         align: 'end',
-        labels: { color: '#CBD5E1', boxWidth: 10, font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' } }
+        labels: {
+          color: '#CBD5E1',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 6,
+          boxHeight: 6,
+          padding: 8,
+          font: { family: 'Plus Jakarta Sans', size: 10.5, weight: '600' }
+        }
       },
       tooltip: {
         enabled: true,
@@ -2159,10 +2207,15 @@
       }
     });
     const ctx = el.getContext('2d');
+    const opts = deepMerge(JSON.parse(JSON.stringify(chartOptions)), extra || {});
+    opts.onHover = chartOptions.onHover;
+    if (opts.scales.yP && opts.scales.y) {
+      delete opts.scales.y;
+    }
     return new Chart(ctx, {
       type: 'line',
       data: { labels: [], datasets: datasets },
-      options: Object.assign({}, chartOptions, extra || {})
+      options: opts
     });
   }
 
@@ -2173,73 +2226,77 @@
 
   const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')], {
     scales: {
-      x: chartOptions.scales.x,
       y: {
-        grid: chartOptions.scales.y.grid,
-        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 2 }),
+        ticks: { precision: 2 },
+        title: { display: true, text: 'ACCEL (g)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: '5%'
       }
     }
   });
   const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')], {
     scales: {
-      x: chartOptions.scales.x,
       y: {
-        grid: chartOptions.scales.y.grid,
-        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        ticks: { precision: 1 },
+        title: { display: true, text: 'ANGLE (°)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: '5%'
       }
     }
   });
   const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')], {
     scales: {
-      x: chartOptions.scales.x,
       y: {
-        grid: chartOptions.scales.y.grid,
-        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        ticks: { precision: 1 },
+        title: { display: true, text: 'V-SPEED (m/s)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: 1
       }
     }
   });
   const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#38BDF8')], {
     scales: {
-      x: chartOptions.scales.x,
       y: {
-        grid: chartOptions.scales.y.grid,
-        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        ticks: { precision: 1 },
+        title: { display: true, text: 'ALTITUDE (m)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: 1
       }
     }
   });
   const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')], {
     scales: {
-      x: chartOptions.scales.x,
       y: {
-        grid: chartOptions.scales.y.grid,
-        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        ticks: { precision: 1 },
+        title: { display: true, text: 'GYRO (°/s)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: '5%'
       }
     }
   });
   const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#06B6D4')], {
     scales: {
-      x: chartOptions.scales.x,
-      y: { min: 0, max: 100, grid: chartOptions.scales.y.grid, ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 0 }) }
+      y: {
+        min: 0, max: 100,
+        ticks: { precision: 0 },
+        title: { display: true, text: 'HUMIDITY (%)', color: '#64748B', font: { family: 'JetBrains Mono', size: 9, weight: '600' } }
+      }
     }
   });
   const pressTempChart = initLineChart('chart-presstemp', [
     Object.assign(ds('Pressure (hPa)', '#EF4444'), { yAxisID: 'yP' }),
     Object.assign(ds('Temp (°C)', '#06B6D4'), { yAxisID: 'yT' })
   ], {
+    layout: {
+      padding: {
+        right: 18
+      }
+    },
     scales: {
-      x: chartOptions.scales.x,
       yP: {
         type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)' },
-        ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 11, weight: '500' }, precision: 1 }
+        ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 10, weight: '500' }, precision: 1, padding: 6 },
+        title: { display: true, text: 'PRESSURE (hPa)', color: '#EF4444', font: { family: 'JetBrains Mono', size: 9, weight: '600' } }
       },
       yT: {
         type: 'linear', position: 'right', grid: { drawOnChartArea: false },
-        ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 11, weight: '500' }, precision: 1 }
+        ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 10, weight: '500' }, precision: 1, padding: 6 },
+        title: { display: true, text: 'TEMP (°C)', color: '#06B6D4', font: { family: 'JetBrains Mono', size: 9, weight: '600' } }
       }
     }
   });
