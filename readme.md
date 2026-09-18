@@ -30,6 +30,8 @@ This project combines a browser-based mission control dashboard with a real-time
 - 3D CanSat attitude visualization using Three.js with complementary sensor fusion
 - Synchronized multi-chart crosshair inspection projected across all 7 telemetry plots
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
+- Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
+- CanSat sensor suite ablation & evaluation notebook (`test_cases/cansat_eval_ablation.ipynb`) benchmarking touchdown prognostics under sensor dropouts (Full Suite, No IMU, No Env, GPS-Only) using MetPy physics
 - Tactical GIS tracking and recovery tools with Leaflet mapping and direct navigation links
 - CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes
 - Direct hardware USB serial streaming via the native browser Web Serial API
@@ -78,6 +80,7 @@ Ground Station Web UI (index.html):
 ├── requirements.txt            # Python dependencies
 ├── backend/
 │   ├── app.py                 # FastAPI ML inference & telemetry backend
+│   ├── flight_analyzer.py     # Post-flight analyzer import alias / module
 │   ├── core/                  # Python core signal processing & ingestion engines
 │   │   ├── serial_manager.py  # DualSerialManager (COM4/COM3 LoRa @ 9600 & COM5 Video @ 460800)
 │   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
@@ -88,6 +91,8 @@ Ground Station Web UI (index.html):
 │   ├── train_tinyml_vision.py # TinyLandingNet depthwise separable CNN training pipeline
 │   ├── export_tinyml_header.py# INT8 post-training quantization & C++ header exporter
 │   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
+│   ├── train_touchdown_prognostics.py # Touchdown prognostics & descent aerodynamics pipeline
+│   ├── flight_analyzer.py     # Automated post-flight telemetry analyzer & publication PDF report generator
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
 │   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
@@ -100,6 +105,8 @@ Ground Station Web UI (index.html):
 │   ├── captures/              # Wireless video frame captures & test snapshots
 │   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
 ├── test_cases/                # Ten mission profile CSV datasets
+│   └── cansat_eval_ablation.ipynb # Sensor suite ablation study & touchdown localization benchmarking
+├── reports/                   # Generated publication PDF/PNG flight telemetry reports & summary CSV
 ├── docs/
 │   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
 │   ├── project_log.txt        # Development and mission log
@@ -326,6 +333,8 @@ The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry
 | Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
 | Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
+| Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
+| Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
 | TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | ~22k params, INT8 < 25 KB ROM, Latency < 150 ms |
 
 ### Safe Landing Area Index (SLAI) & 3x3 Spatial Hazard Grid
@@ -361,6 +370,64 @@ Tile 12 and the OpenCV viewer (`firmware/ground_cam_viewer.py`) evaluate aerial 
    Derived from the optical feature scale divergence between consecutive frames:
 
    $$\text{TTI} \approx \frac{\Delta t \cdot \sigma_1}{\sigma_2 - \sigma_1} \quad [\text{seconds}]$$
+
+### Automated Post-Flight Telemetry Analyzer (`ml/flight_analyzer.py`)
+
+The automated post-flight analysis pipeline ingests raw or replayed CanSat telemetry records to perform comprehensive kinematic reconstruction, atmospheric sounding profiling, and automated publication report generation:
+
+1. **Signal Conditioning & Savitzky-Golay Filtering**:
+   - **Temporal Normalization**: Automatically normalizes disparate timestamp schemas (ISO-8601 strings or numeric milliseconds) to mission-elapsed time ($T+0$).
+   - **Dropout Compensation**: Bidirectional forward- and backward-fill imputation handles intermittent sensor glitches and GNSS dropouts.
+   - **Savitzky-Golay Filtering**: Applies local polynomial filtering ($N=11$ frame window, 2nd-order polynomial) to barometric altitude to eliminate discrete quantization noise and sensor jitter while preserving physical inflection points:
+     $$z_{\text{smooth}}(t) = \sum_{i=-m}^{m} c_i \cdot z(t + i \cdot \Delta t)$$
+   - **Velocity Curve Derivation**: Computes smooth ascent and descent vertical velocity curves ($v_z = \frac{d(z_{\text{smooth}})}{dt}$) with zero phase lag and high numerical stability.
+
+2. **G-Shock & Transient Impact Profiling**:
+   - Computes total resultant instantaneous acceleration vector magnitude:
+     $$a_{\text{mag}} = \sqrt{a_x^2 + a_y^2 + a_z^2} \quad [G]$$
+   - Detects and tags critical mission dynamics: peak boost acceleration, pyrotechnic apogee separation shocks (> 14G transients), and terminal ground touchdown impact deceleration.
+
+3. **Publication-Grade 4-Panel Report Generation**:
+   Generates vector PDF reports and 300 DPI PNG figures saved to `reports/`:
+   - **Panel A (Altitude Trajectory)**: Raw barometric elevation vs. Savitzky-Golay filtered altitude with apogee inflection annotation.
+   - **Panel B (Vertical Velocity Curve)**: Ascent rate, zero-velocity apogee transition, and terminal parachute descent rate.
+   - **Panel C (G-Shock Dynamics)**: Full-mission dynamic acceleration profile highlighting peak deployment shock and touchdown impact.
+   - **Panel D (Atmospheric Sounding Profile)**: Dual-axis atmospheric sounding plotting barometric pressure ($P$) and ambient temperature ($T$) as a function of altitude.
+
+4. **CLI Usage & Batch Benchmarking**:
+   ```bash
+   # Analyze a single mission CSV and generate its PDF report
+   python ml/flight_analyzer.py --file test_cases/01_nominal_sounding_flight.csv
+
+   # Batch analyze all 10 mission profiles and generate the master benchmark matrix
+   python ml/flight_analyzer.py --all
+   ```
+   Generates individual mission reports in `reports/` and a consolidated comparison table at `reports/all_missions_summary.csv` summarizing Apogee ($m$), Time-to-Apogee ($s$), Max Descent Velocity ($m/s$), Peak G-Shock ($G$), Touchdown Shock ($G$), and Mission Duration ($s$).
+
+---
+
+### CanSat Evaluation & Sensor Suite Ablation Study (`test_cases/cansat_eval_ablation.ipynb`)
+
+To determine sensor redundancy, fault tolerance, and minimal viable instrumentation for autonomous recovery, the evaluation suite performs systematic feature ablation across all 10 CanSat flight profiles:
+
+1. **Ablation Feature Configurations**:
+   - **`Full_Suite`**: Comprehensive instrument package [`lat`, `lon`, `Altitude_m`, `Pressure_Pa`, `Temp_C`, `Accel_Z_m_s2`, `Potential_Temp_K`].
+   - **`No_IMU`**: Evaluates degradation if the inertial measurement unit (accelerometer/gyroscope) fails or saturates [`lat`, `lon`, `Altitude_m`, `Pressure_Pa`, `Temp_C`, `Potential_Temp_K`].
+   - **`No_Env_Sensors`**: Simulates barometric/temperature sensor port clogging or freeze [`lat`, `lon`, `Altitude_m`, `Accel_Z_m_s2`].
+   - **`GPS_Only`**: Minimal baseline configuration relying strictly on GPS coordinates [`lat`, `lon`, `Altitude_m`].
+
+2. **Physics-Informed Atmospheric Sounding via MetPy**:
+   Derives Poisson's adiabatic relation for potential temperature ($\theta$), capturing thermodynamic air mass changes independent of elevation pressure lapse:
+   $$\theta = T \cdot \left(\frac{P_0}{P}\right)^{\frac{R_d}{c_p}} \quad [\text{K}]$$
+   where $P_0 = 1000\text{ hPa}$ (reference surface pressure) and $\frac{R_d}{c_p} \approx 0.286$ for dry air.
+
+3. **Machine Learning Touchdown Localization**:
+   - Regresses terminal landing coordinates ($\text{Target\_Touchdown\_Lat}, \text{Target\_Touchdown\_Lon}$) from in-flight feature vectors using multi-output `RandomForestRegressor` models.
+   - Measures localization prediction error in terms of Mean Absolute Error (MAE in decimal degrees):
+     $$\text{MAE} = \frac{1}{n} \sum_{i=1}^n \left( |y_{\text{lat}, i} - \hat{y}_{\text{lat}, i}| + |y_{\text{lon}, i} - \hat{y}_{\text{lon}, i}| \right)$$
+   - Compares performance degradation across nominal sounding, high altitude burst, severe wind shear drift, sensor dropouts, and low-battery sag scenarios.
+
+---
 
 ## Mission profile coverage
 
@@ -458,6 +525,18 @@ Validates Mission Elapsed Time (MET) clock formatting, CSV flight profiles acros
 powershell -ExecutionPolicy Bypass -File tests/test_sm.ps1
 ```
 Validates end-to-end HMM and ML state transitions across all 10 mission profiles (`PAD_IDLE` -> `BALLOON_ASCENT` -> `APOGEE_BURST` -> `PARACHUTE_DESCENT` -> `TOUCHDOWN_RECOVERY`).
+
+### Automated post-flight telemetry analysis & PDF generation
+```bash
+python ml/flight_analyzer.py --all
+```
+Executes batch kinematics reconstruction, Savitzky-Golay smoothing, G-shock transient profiling, and generates publication-grade PDF/PNG reports in `reports/` alongside the consolidated benchmark summary table `reports/all_missions_summary.csv`.
+
+### Sensor suite ablation & touchdown evaluation
+```bash
+python -m jupyter nbconvert --to notebook --execute test_cases/cansat_eval_ablation.ipynb
+```
+Executes the sensor ablation pipeline across all 10 flight scenarios, validates MetPy atmospheric potential temperature calculations, trains touchdown regressors across 4 sensor configurations, and plots prediction error comparison charts.
 
 ## Project status
 
