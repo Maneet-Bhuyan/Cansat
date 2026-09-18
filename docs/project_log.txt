@@ -1164,3 +1164,55 @@ AUTOMATED TEST VERIFICATION:
   - Total automated assertions passing: 70/70.
 
 STATUS: ALL CHARTS & VISUAL ASSETS VERIFIED, POLISHED, AND COMMITTED
+
+--------------------------------------------------------------------------------
+MISSION CONTROL WEB DASHBOARD: 2-COLUMN WIDESCREEN GRID & TOTAL EMOJI ERADICATION
+--------------------------------------------------------------------------------
+
+[2026-09-19T00:35:00Z] ACTION: Overhauled dashboard layout from cramped 4-column grid to expansive 2-column widescreen grid, eliminated all emojis across the web application, and verified 100% test suite pass rate.
+FILES MODIFIED:
+  - index.html (Grid layout, panel sizing, SVG icons, and JS text updates)
+  - tasks.txt (Updated TASK WD-01 to reflect widescreen grid and emoji removal)
+  - docs/project_log.txt (This entry)
+
+ARCHITECTURAL & VISUAL ENHANCEMENTS:
+  1. 2-Column Widescreen Layout Transition:
+     - Replaced cramped 4-column grid (`grid-cols-1 md:grid-cols-2 xl:grid-cols-4`) with an expansive 2-column widescreen format (`grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4`).
+     - More than doubled horizontal tile canvas width from ~350px to ~750px on standard 1080p displays (~600px on laptop screens).
+     - Sized cards at 290px height (`calc(290px - 42px) = 248px` canvas area), establishing a classic ~3:1 widescreen aspect ratio for time-series charts, 3D model, tactical map, and live aerial camera video feed.
+     - Organized all 13 tiles into 6 thematic pairs:
+       * Row 1: Kinematics (XYZ Acceleration & Orientation Pitch/Roll)
+       * Row 2: Altimetry (Vertical Speed & Altitude AGL)
+       * Row 3: Propulsion & Atmospheric (XYZ Gyroscope & 3D CanSat Digital Twin)
+       * Row 4: Environmental & Navigation (GPS Tactical GIS Map & Humidity)
+       * Row 5: Thermodynamics & Mission Metrics (Pressure & Temperature Dual-Axis & General Info Table)
+       * Row 6: Video Reconnaissance & Telemetry Link (Live Aerial Camera Stream & Wireless RF Link Quality)
+       * Row 7: Avionics Master Bus Console (Raw Telemetry 13-Field Serial Grid spanning full width `lg:col-span-2`)
+     - Eliminated orphan tiles and awkward column wrapping.
+  2. Complete Emoji Eradication:
+     - Scanned entire application codebase for Unicode emoji glyphs across all ranges.
+     - Replaced 100% of emojis with clean, lightweight inline aerospace SVG icons (Lucide / Heroicons style) or standardized technical text:
+       * Connect: ⚡ -> inline electric SVG
+       * Tare/Calibrate: ⚖️ -> inline crosshair calibration SVG
+       * AI Diagnostics: ✦ -> inline AI circuit SVG
+       * Mission Report / PFR: 📊 -> inline report SVG
+       * Reset: ↺ -> inline refresh SVG
+       * Audio Voice: 🔊 / 🔇 -> inline audio soundwave / muted SVGs
+       * Google Maps / Pins: 📍 -> inline map pin SVG
+       * Safety Warning: ⚠️ -> inline warning SVG
+       * Replay Controls: ▶ / ⏸ / ⏭ -> inline vector playback SVGs
+       * Camera Standby: 📹 -> inline camera aperture SVG
+       * Raw Serial Feed: 📡 -> inline radio dish SVG
+       * Help Guide: ℹ️ -> inline info SVG
+       * Copy / Print: 📋 / 🖨️ -> inline clipboard / printer SVGs
+       * Status Tags: ⚠️ -> `[ALERT]`, ℹ️ -> `[INFO]`, ✅ -> `[CONFIRMED]`, ⚡ -> `[ONLINE]`
+       * Button Feedback: `✓ CALIBRATED` -> `CALIBRATED`, `✓ ZEROED` -> `ZEROED`, `✓ COPIED!` -> `COPIED!`
+
+AUTOMATED TEST VERIFICATION:
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - powershell tests/test_sm.ps1: 10/10 PASS
+  - python -m unittest tests/test_backend_core.py tests/test_firmware_protocol.py: 16/16 PASS
+  - Total automated assertions passing: 70/70.
+
+STATUS: WIDESCREEN DASHBOARD & EMOJI-FREE UI VERIFIED AND READY FOR DEPLOYMENT

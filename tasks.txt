@@ -112,13 +112,12 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
 Primary Responsibilities: Ground station web interface, WebSocket server, serial
 bridges, high-performance UI rendering, and automated test suites.
 
-[X] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE & CHART RENDERING POLISH (COMPLETED)
+[X] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE & WIDESCREEN GRID POLISH (COMPLETED)
     - Maintained and optimized index.html (aerospace dark-mode dashboard).
-    - Fixed bottom and edge chart clipping by expanding panel container heights to 285px and adding explicit global layout padding (top: 8, right: 14/18, bottom: 6, left: 8).
-    - Implemented deepMerge() configuration pipeline in initLineChart() to preserve default scales, font tokens, and tick padding across chart overrides.
-    - Locked horizontal X-axis tick rotation (maxRotation: 0, minRotation: 0, autoSkip: true) and embedded explicit scale titles across all graphs (TIME MET, ALTITUDE, V-SPEED, ACCEL, ANGLE, GYRO, HUMIDITY, PRESSURE, TEMP).
-    - Upgraded Chart.js legend swatches to circular points (usePointStyle: true, boxWidth: 6) to eliminate right-edge collisions.
-    - Resolved duplicate DOM ID (gmaps-nav-btn -> gmaps-nav-btn-header) and stacked connection controls cleanly in sidebar.
+    - Upgraded dashboard grid from cramped 4-column layout to expansive 2-column widescreen format (grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4), doubling horizontal tile canvas width (~750px on 1080p, ~600px on laptop) for effortless visual tracking.
+    - Sized card panels at 290px height with 3:1 widescreen aspect ratio for time series charts, 3D model, tactical GIS map, and live aerial camera feed.
+    - Arranged all 13 tiles into 6 thematic pairs (Kinematics, Altimetry, Dynamics/Sounding, Spatial/3D, GIS/Telemetry, Camera/RF Link) with the 13-field raw serial telemetry matrix spanning full width (lg:col-span-2) across the bottom.
+    - Completely eradicated all emojis across the application, replacing every occurrence with clean, high-precision SVG aerospace icons (Lucide/Heroicons standard) and standardized engineering tags.
     - Verified 100% automated test compliance (70/70 assertions passing across 5 test suites).
     - Reference files: index.html
 

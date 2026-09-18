@@ -353,21 +353,21 @@
 
     /* Canvas Containers & Panel Height Bounds */
     main > .dashboard-panel:not(.tile-maximized) {
-      height: 285px !important;
-      max-height: 285px !important;
+      height: 290px !important;
+      max-height: 290px !important;
       position: relative !important;
       isolation: isolate !important;
       z-index: 1 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) .chart-container {
-      height: calc(285px - 42px) !important;
-      max-height: calc(285px - 42px) !important;
+      height: calc(290px - 42px) !important;
+      max-height: calc(290px - 42px) !important;
       min-height: 0 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) #canvas-3d,
     main > .dashboard-panel:not(.tile-maximized) #map {
-      height: calc(285px - 42px) !important;
-      max-height: calc(285px - 42px) !important;
+      height: calc(290px - 42px) !important;
+      max-height: calc(290px - 42px) !important;
       min-height: 0 !important;
     }
 
@@ -529,7 +529,7 @@
 
           <div class="space-y-1.5">
             <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center gap-1.5 font-bold">
-              <span>⚡</span> <span>CONNECT</span>
+              <svg class="w-3.5 h-3.5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> <span>CONNECT</span>
             </button>
             <select id="baud-select" class="w-full bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2.5 py-1.5 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
               <option value="bridge" selected>DUAL BRIDGE (COM4 + COM5)</option>
@@ -544,7 +544,7 @@
           </button>
 
           <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
-            <span>⚖️</span>
+            <svg class="w-3.5 h-3.5 text-amber-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4m16 0a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
             <span id="tare-btn-text">TARE / CALIBRATE</span>
           </button>
 
@@ -557,17 +557,17 @@
           </button>
 
           <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center gap-1.5 text-cyan-200 border-sky-800/40 bg-sky-950/20 hover:bg-sky-900/30">
-            <span class="text-cyan-400">✦</span>
+            <svg class="w-3.5 h-3.5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
             <span>COGNITIVE AI</span>
           </button>
 
           <button type="button" onclick="openModal('pfrModal')" class="btn-action-outline flex items-center justify-center gap-1.5 text-sky-200 border-sky-700/50 bg-sky-950/30 hover:bg-sky-900/40" title="Generate Post-Flight Review (PFR) Audit & Compliance Report">
-            <span>📊</span>
+            <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <span>MISSION REPORT</span>
           </button>
 
           <button type="button" onclick="resetNewFlight()" class="btn-action-outline flex items-center justify-center gap-1.5 text-rose-300 border-rose-900/40 hover:bg-rose-950/40 hover:border-rose-700/60 transition-all text-xs" title="Reset all buffers and re-arm for a new flight">
-            <span>↺</span>
+            <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             <span>NEW FLIGHT RESET</span>
           </button>
         </div>
@@ -619,7 +619,7 @@
             <span id="phase-elapsed-time" class="text-cyan-300 font-extrabold text-sm bg-[#111624] px-2.5 py-1 rounded border border-cyan-800/40 tracking-wider">T+ 00:00.0</span>
           </div>
           <button type="button" id="audio-toggle-btn" onclick="toggleAudioSpeech()" class="px-2.5 py-1 rounded text-xs bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-white hover:border-cyan-500 flex items-center gap-1.5 transition-all" title="Toggle Web Speech Voice Synthesizer">
-            <span id="audio-icon">🔊</span> <span id="audio-status-text" class="font-mono font-bold">VOICE ON</span>
+            <span id="audio-icon" class="inline-flex items-center"><svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg></span> <span id="audio-status-text" class="font-mono font-bold">VOICE ON</span>
           </button>
         </div>
 
@@ -662,12 +662,12 @@
 
           <!-- Google Maps Quick Recovery Action -->
           <button type="button" id="gmaps-nav-btn-header" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Last Known GPS Fix in Google Maps">
-            <span>📍</span> <span>MAPS</span>
+            <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>MAPS</span>
           </button>
 
           <!-- Post-Flight Review Report Action -->
           <button type="button" onclick="openModal('pfrModal')" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Generate Post-Flight Review (PFR) Report">
-            <span>📊</span> <span>PFR REPORT</span>
+            <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> <span>PFR REPORT</span>
           </button>
         </div>
       </header>
@@ -675,7 +675,7 @@
       <!-- DYNAMIC SAFETY ALARM BANNER (EXISTS IN DOM, HIDDEN BY DEFAULT) -->
       <div id="safety-alarm-banner" class="hidden rounded-lg p-2.5 border alert-glow text-sm text-rose-100 flex items-center justify-between shadow-lg shadow-red-950/40">
         <div class="flex items-center gap-2">
-          <span class="text-sm">⚠️</span>
+          <svg class="w-4 h-4 text-rose-400 flex-shrink-0 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           <div>
             <span class="font-bold uppercase tracking-wider text-xs" id="safety-alarm-title">SAFETY ALARM TRIGGERED</span>
             <span class="text-xs text-rose-300 ml-2" id="safety-alarm-desc">Telemetry metrics exceed safe flight envelope.</span>
@@ -693,7 +693,7 @@
           </div>
           <div class="flex items-center space-x-2">
             <span id="replay-status-pill" class="text-xs px-2.5 py-1 rounded bg-sky-950/60 border border-sky-800/40 text-sky-300 font-mono font-semibold">IDLE</span>
-            <button type="button" onclick="toggleReplayDrawer()" class="text-slate-400 hover:text-white text-xs px-1.5">✕</button>
+            <button type="button" onclick="toggleReplayDrawer()" class="text-slate-400 hover:text-white text-xs px-1.5 flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
         </div>
 
@@ -730,10 +730,10 @@
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-1.5">
               <button type="button" id="replay-play-btn" onclick="toggleReplayPlay()" class="px-3.5 py-1.5 rounded text-xs font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white flex items-center gap-1 transition-all">
-                <span id="replay-play-icon">▶</span> <span id="replay-play-label">PLAY</span>
+                <span id="replay-play-icon" class="inline-flex items-center"><svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span> <span id="replay-play-label">PLAY</span>
               </button>
-              <button type="button" onclick="replayStepForward()" class="px-2.5 py-1.5 rounded text-xs bg-[#0e1320] border border-slate-700/60 hover:border-cyan-500 font-mono text-slate-300" title="Step Forward (+1)">⏭</button>
-              <button type="button" onclick="resetReplay()" class="px-2.5 py-1.5 rounded text-xs bg-[#0e1320] border border-slate-700/60 hover:border-cyan-500 font-mono text-slate-300" title="Reset Timeline">↺ RESET</button>
+              <button type="button" onclick="replayStepForward()" class="px-2.5 py-1.5 rounded text-xs bg-[#0e1320] border border-slate-700/60 hover:border-cyan-500 font-mono text-slate-300" title="Step Forward (+1)"><svg class="w-3 h-3 fill-current inline-block" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+              <button type="button" onclick="resetReplay()" class="px-2.5 py-1.5 rounded text-xs bg-[#0e1320] border border-slate-700/60 hover:border-cyan-500 font-mono text-slate-300 flex items-center gap-1" title="Reset Timeline"><svg class="w-3 h-3 fill-none stroke-current" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>RESET</span></button>
             </div>
             <div class="flex items-center gap-1 text-xs">
               <span class="text-slate-400 font-medium mr-1">SPEED:</span>
@@ -764,7 +764,7 @@
           <div>Dist: <b id="rec-dist" class="text-emerald-400 font-mono">0 m</b></div>
           <div>Drift: <b id="rec-drift" class="text-cyan-300 font-mono">--°</b></div>
           <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Coordinates in Google Maps">
-            <span>📍</span> <span>OPEN COORDINATES IN GOOGLE MAPS</span>
+            <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>OPEN COORDINATES IN GOOGLE MAPS</span>
           </button>
         </div>
       </section>
@@ -772,13 +772,13 @@
       <!-- ============================================================== -->
       <!-- 4-COLUMN HIGH-DENSITY MISSION CONTROL GRID                      -->
       <!-- ============================================================== -->
-      <main class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5 flex-1">
+      <main class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 flex-1">
 
         <!-- ROW 1 / TILE 1: XYZ ACCELERATION CHART -->
         <div id="tile-accel" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">XYZ Acceleration Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-accel')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-accel')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-accel"></canvas>
@@ -789,7 +789,7 @@
         <div id="tile-orient" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Orientation Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-orient')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-orient')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-orient"></canvas>
@@ -800,7 +800,7 @@
         <div id="tile-vspd" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Vertical Speed Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-vspd')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-vspd')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-vspd"></canvas>
@@ -811,7 +811,7 @@
         <div id="tile-alt" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Altitude Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-alt')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-alt')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-alt"></canvas>
@@ -822,7 +822,7 @@
         <div id="tile-gyro" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">XYZ Gyroscope Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-gyro')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-gyro')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-gyro"></canvas>
@@ -840,7 +840,7 @@
               <span class="text-xs font-mono text-slate-300 hidden sm:inline">
                 P: <b id="model-pitch" class="text-rose-400">0.0°</b> R: <b id="model-roll" class="text-cyan-400">0.0°</b> Y: <b id="model-yaw" class="text-emerald-400">0.0°</b>
               </span>
-              <button type="button" onclick="toggleTileMaximize('tile-model')" class="panel-expand-btn" title="Expand View">⤢</button>
+              <button type="button" onclick="toggleTileMaximize('tile-model')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
             </div>
           </div>
           <div class="relative flex-1 min-h-[195px]">
@@ -861,7 +861,7 @@
                 <span id="gps-status-text">ACQUIRING</span>
               </span>
             </div>
-            <button type="button" onclick="toggleTileMaximize('tile-gps')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-gps')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="relative flex-1 min-h-[195px] overflow-hidden">
             <div id="map"></div>
@@ -895,7 +895,7 @@
         <div id="tile-hum" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Humidity Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-hum')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-hum')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-hum"></canvas>
@@ -906,15 +906,139 @@
         <div id="tile-press-temp" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Pressure &amp; Temperature Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-press-temp')" class="panel-expand-btn" title="Expand View">⤢</button>
+            <button type="button" onclick="toggleTileMaximize('tile-press-temp')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
           </div>
           <div class="chart-container flex-1">
             <canvas id="chart-presstemp"></canvas>
           </div>
         </div>
 
-        <!-- ROW 3 / TILE 10: RAW TELEMETRY DATA GRID (13 INBOUND SERIAL FIELDS) -->
-        <div id="tile-raw-telem" class="dashboard-panel xl:col-span-2">
+        <!-- ROW 3 / TILE 11: GENERAL INFORMATION TABLE -->
+        <div id="tile-info" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">General Information Table</span>
+            <button type="button" onclick="toggleTileMaximize('tile-info')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
+          </div>
+          <div class="p-2.5 flex-1 overflow-y-auto custom-scroll text-xs space-y-1.5 font-mono">
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Mission</span><span class="text-white font-bold">CANSAT-1</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Link Status</span><span id="info-status" class="text-rose-400 font-bold">Disconnected</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">GPS Fix</span><span id="info-gpsfix" class="text-slate-300">No Lock</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Latitude</span><span id="info-lat" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Longitude</span><span id="info-lon" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Altitude</span><span id="info-alt" class="text-white font-bold">-- m</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Vert. Speed</span><span id="info-vspd" class="text-emerald-400 font-bold">-- m/s</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pitch</span><span id="info-pitch" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Roll</span><span id="info-roll" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pressure</span><span id="info-presstemp" class="text-slate-200">-- hPa</span></div>
+
+            <!-- Extended Analytics -->
+            <div class="pt-2 mt-2 border-t border-slate-800/60 space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Flight Phase</span><span id="info-phase" class="text-emerald-400 font-bold">PAD_IDLE</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Apogee Peak</span><span id="info-apogee" class="text-sky-300 font-bold">-- m</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400">NOMINAL</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Relative Humidity</span><span id="info-hum">-- %</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">DewPt / Air Dens</span><span id="info-dewdensity">-- °C · -- kg/m³</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Total Accel Mag</span><span id="info-accelmag">-- g</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">LiPo Battery</span><span id="info-bat">-- V (0%)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Packets Ingested</span><span id="info-samples">0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 4 / TILE 12: LIVE AERIAL CAMERA SCREEN & VIDEO HUD -->
+        <div id="tile-camera" class="dashboard-panel">
+          <div class="panel-header">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="panel-title">Live Aerial Camera Stream</span>
+              <span id="cam-status-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-semibold text-slate-300">
+                <span id="cam-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                <span id="cam-status-text">STANDBY</span>
+              </span>
+              <!-- Safe Landing Area Index (SLAI) Badge -->
+              <span id="cam-slai-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300">
+                <span id="cam-slai-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span id="cam-slai-text">SLAI: SAFE_LZ</span>
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button type="button" id="btn-toggle-grid" onclick="toggleTacticalCamGrid()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-cyan-300 border border-slate-700 transition flex items-center gap-1" title="Toggle 3x3 Spatial Hazard Grid"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM4 10h16M4 16h16M10 4v16M16 4v16"/></svg><span>3x3 GRID</span></button>
+              <span class="text-xs font-mono text-cyan-300 hidden sm:inline" id="cam-metric-fps">0.0 FPS</span>
+              <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[240px] flex items-center justify-center bg-[#07090e] overflow-hidden rounded-b-md">
+            <img id="live-cam-img" class="w-full h-full object-contain" alt="Aerial Camera Stream" style="display: none;" />
+            <canvas id="cam-grid-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            
+            <div id="cam-placeholder" class="text-center p-4 space-y-2">
+              <div class="w-10 h-10 mx-auto rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </div>
+              <div class="text-xs font-tech tracking-wider text-slate-300 uppercase font-bold">AERIAL CAMERA FEED STANDBY</div>
+              <div class="text-[11px] font-mono text-slate-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
+            </div>
+            
+            <!-- Tactical Camera HUD Overlay -->
+            <div id="cam-hud" class="absolute top-2 left-2 bg-[#090d16]/90 border border-sky-900/40 p-2 rounded text-[10.5px] text-slate-300 font-mono shadow-md backdrop-blur-sm space-y-0.5 pointer-events-none tabular-nums hidden">
+              <div class="text-[9.5px] text-sky-300 font-bold uppercase tracking-wider border-b border-sky-900/40 pb-0.5 flex justify-between gap-3">
+                <span>OV3660 DESCENT VIEW</span>
+                <span id="cam-hud-res" class="text-white">320x240</span>
+              </div>
+              <div class="flex justify-between gap-3"><span>Frame:</span><span id="cam-hud-frame" class="text-cyan-300 font-bold">#0000</span></div>
+              <div class="flex justify-between gap-3"><span>Size:</span><span id="cam-hud-size" class="text-white">0.0 KB</span></div>
+              <div class="flex justify-between gap-3"><span>Airtime:</span><span id="cam-hud-airtime" class="text-emerald-400">0 ms</span></div>
+              <div class="flex justify-between gap-3"><span>Radio:</span><span class="text-sky-400">ESP-NOW Ch1</span></div>
+            </div>
+
+            <!-- Directional Escape Vector HUD -->
+            <div id="cam-evade-hud" class="absolute top-2 right-2 bg-[#090d16]/90 border border-emerald-500/40 p-1.5 px-2.5 rounded text-[10.5px] text-emerald-300 font-mono shadow-md backdrop-blur-sm hidden flex items-center gap-1.5 pointer-events-none">
+              <span id="cam-evade-arrow" class="text-base text-emerald-400">↗</span>
+              <span id="cam-evade-text" class="font-bold tracking-wide">EVADE 042°</span>
+            </div>
+
+            <!-- Remote Sensing & TTI Telemetry Strip -->
+            <div id="cam-vari-hud" class="absolute bottom-2 left-2 right-2 bg-[#090d16]/90 border border-slate-800/80 p-1.5 px-3 rounded text-[10.5px] font-mono flex flex-wrap justify-between items-center backdrop-blur-sm pointer-events-none hidden gap-2">
+              <span class="text-slate-400">REMOTE SENSING: <b id="cam-vari-val" class="text-emerald-400">VARI +0.28 (VEG)</b></span>
+              <span class="text-slate-400">OPTICAL TTI: <b id="cam-tti-val" class="text-cyan-300">14.2s</b></span>
+              <span class="text-slate-400">DESCENT HAZARD: <b id="cam-risk-val" class="text-emerald-300">LOW RISK (SAFE)</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 4 / TILE 13: CAMERA LINK TELEMETRY & STATS -->
+        <div id="tile-cam-stats" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Camera Wireless Link Quality</span>
+            <span class="text-[11px] font-mono text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">2.4 GHz Radio Diagnostics</span>
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-center space-y-2.5 font-mono text-xs">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">FRAMES RX</div>
+                <div id="cam-stat-rx" class="text-base font-bold text-cyan-300">0</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">DATA RATE</div>
+                <div id="cam-stat-kbps" class="text-base font-bold text-emerald-400">0.0 KB/s</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">LAST AIRTIME</div>
+                <div id="cam-stat-ms" class="text-base font-bold text-sky-400">-- ms</div>
+              </div>
+              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
+                <div class="text-[10px] text-slate-400 font-sans uppercase">AVG PACKET</div>
+                <div id="cam-stat-chunks" class="text-base font-bold text-amber-300">~20 chunks</div>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 flex justify-between">
+              <span>Sensor: <b class="text-white">OmniVision OV3660 (3MP)</b></span>
+              <span>Ground Ant: <b class="text-cyan-300">External IPEX/SMA</b></span>
+            </div>
+          </div>
+        </div>
+
+      <!-- ROW 7 / TILE 13: RAW TELEMETRY DATA GRID (FULL-WIDTH 13 INBOUND FIELDS) -->
+        <div id="tile-raw-telem" class="dashboard-panel lg:col-span-2">
           <div class="panel-header">
             <span class="panel-title">Raw Telemetry</span>
             <span class="text-[11px] font-mono text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">13 Inbound Fields</span>
@@ -957,130 +1081,7 @@
           </div>
         </div>
 
-        <!-- ROW 3 / TILE 11: GENERAL INFORMATION TABLE -->
-        <div id="tile-info" class="dashboard-panel">
-          <div class="panel-header">
-            <span class="panel-title">General Information Table</span>
-            <button type="button" onclick="toggleTileMaximize('tile-info')" class="panel-expand-btn" title="Expand View">⤢</button>
-          </div>
-          <div class="p-2.5 flex-1 overflow-y-auto custom-scroll text-xs space-y-1.5 font-mono">
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Mission</span><span class="text-white font-bold">CANSAT-1</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Link Status</span><span id="info-status" class="text-rose-400 font-bold">Disconnected</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">GPS Fix</span><span id="info-gpsfix" class="text-slate-300">No Lock</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Latitude</span><span id="info-lat" class="text-slate-200">--</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Longitude</span><span id="info-lon" class="text-slate-200">--</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Altitude</span><span id="info-alt" class="text-white font-bold">-- m</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Vert. Speed</span><span id="info-vspd" class="text-emerald-400 font-bold">-- m/s</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pitch</span><span id="info-pitch" class="text-slate-200">--°</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Roll</span><span id="info-roll" class="text-slate-200">--°</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pressure</span><span id="info-presstemp" class="text-slate-200">-- hPa</span></div>
-
-            <!-- Extended Analytics -->
-            <div class="pt-2 mt-2 border-t border-slate-800/60 space-y-1.5 text-[11px]">
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Flight Phase</span><span id="info-phase" class="text-emerald-400 font-bold">PAD_IDLE</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Apogee Peak</span><span id="info-apogee" class="text-sky-300 font-bold">-- m</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400">NOMINAL</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Relative Humidity</span><span id="info-hum">-- %</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">DewPt / Air Dens</span><span id="info-dewdensity">-- °C · -- kg/m³</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Total Accel Mag</span><span id="info-accelmag">-- g</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">LiPo Battery</span><span id="info-bat">-- V (0%)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Packets Ingested</span><span id="info-samples">0</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ROW 4 / TILE 12: LIVE AERIAL CAMERA SCREEN & VIDEO HUD -->
-        <div id="tile-camera" class="dashboard-panel xl:col-span-2">
-          <div class="panel-header">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="panel-title">Live Aerial Camera Stream</span>
-              <span id="cam-status-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-semibold text-slate-300">
-                <span id="cam-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                <span id="cam-status-text">STANDBY</span>
-              </span>
-              <!-- Safe Landing Area Index (SLAI) Badge -->
-              <span id="cam-slai-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300">
-                <span id="cam-slai-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span id="cam-slai-text">SLAI: SAFE_LZ</span>
-              </span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <button type="button" id="btn-toggle-grid" onclick="toggleTacticalCamGrid()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-cyan-300 border border-slate-700 transition" title="Toggle 3x3 Spatial Hazard Grid">⊞ 3x3 GRID</button>
-              <span class="text-xs font-mono text-cyan-300 hidden sm:inline" id="cam-metric-fps">0.0 FPS</span>
-              <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View">⤢</button>
-            </div>
-          </div>
-          <div class="relative flex-1 min-h-[240px] flex items-center justify-center bg-[#07090e] overflow-hidden rounded-b-md">
-            <img id="live-cam-img" class="w-full h-full object-contain" alt="Aerial Camera Stream" style="display: none;" />
-            <canvas id="cam-grid-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
-            
-            <div id="cam-placeholder" class="text-center p-4 space-y-2">
-              <div class="w-10 h-10 mx-auto rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400 text-lg">
-                📹
-              </div>
-              <div class="text-xs font-tech tracking-wider text-slate-300 uppercase font-bold">AERIAL CAMERA FEED STANDBY</div>
-              <div class="text-[11px] font-mono text-slate-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
-            </div>
-            
-            <!-- Tactical Camera HUD Overlay -->
-            <div id="cam-hud" class="absolute top-2 left-2 bg-[#090d16]/90 border border-sky-900/40 p-2 rounded text-[10.5px] text-slate-300 font-mono shadow-md backdrop-blur-sm space-y-0.5 pointer-events-none tabular-nums hidden">
-              <div class="text-[9.5px] text-sky-300 font-bold uppercase tracking-wider border-b border-sky-900/40 pb-0.5 flex justify-between gap-3">
-                <span>OV3660 DESCENT VIEW</span>
-                <span id="cam-hud-res" class="text-white">320x240</span>
-              </div>
-              <div class="flex justify-between gap-3"><span>Frame:</span><span id="cam-hud-frame" class="text-cyan-300 font-bold">#0000</span></div>
-              <div class="flex justify-between gap-3"><span>Size:</span><span id="cam-hud-size" class="text-white">0.0 KB</span></div>
-              <div class="flex justify-between gap-3"><span>Airtime:</span><span id="cam-hud-airtime" class="text-emerald-400">0 ms</span></div>
-              <div class="flex justify-between gap-3"><span>Radio:</span><span class="text-sky-400">ESP-NOW Ch1</span></div>
-            </div>
-
-            <!-- Directional Escape Vector HUD -->
-            <div id="cam-evade-hud" class="absolute top-2 right-2 bg-[#090d16]/90 border border-emerald-500/40 p-1.5 px-2.5 rounded text-[10.5px] text-emerald-300 font-mono shadow-md backdrop-blur-sm hidden flex items-center gap-1.5 pointer-events-none">
-              <span id="cam-evade-arrow" class="text-base text-emerald-400">↗</span>
-              <span id="cam-evade-text" class="font-bold tracking-wide">EVADE 042°</span>
-            </div>
-
-            <!-- Remote Sensing & TTI Telemetry Strip -->
-            <div id="cam-vari-hud" class="absolute bottom-2 left-2 right-2 bg-[#090d16]/90 border border-slate-800/80 p-1.5 px-3 rounded text-[10.5px] font-mono flex flex-wrap justify-between items-center backdrop-blur-sm pointer-events-none hidden gap-2">
-              <span class="text-slate-400">REMOTE SENSING: <b id="cam-vari-val" class="text-emerald-400">VARI +0.28 (VEG)</b></span>
-              <span class="text-slate-400">OPTICAL TTI: <b id="cam-tti-val" class="text-cyan-300">14.2s</b></span>
-              <span class="text-slate-400">DESCENT HAZARD: <b id="cam-risk-val" class="text-emerald-300">LOW RISK (SAFE)</b></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ROW 4 / TILE 13: CAMERA LINK TELEMETRY & STATS -->
-        <div id="tile-cam-stats" class="dashboard-panel xl:col-span-2">
-          <div class="panel-header">
-            <span class="panel-title">Camera Wireless Link Quality</span>
-            <span class="text-[11px] font-mono text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">2.4 GHz Radio Diagnostics</span>
-          </div>
-          <div class="p-3 flex-1 flex flex-col justify-center space-y-2.5 font-mono text-xs">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
-                <div class="text-[10px] text-slate-400 font-sans uppercase">FRAMES RX</div>
-                <div id="cam-stat-rx" class="text-base font-bold text-cyan-300">0</div>
-              </div>
-              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
-                <div class="text-[10px] text-slate-400 font-sans uppercase">DATA RATE</div>
-                <div id="cam-stat-kbps" class="text-base font-bold text-emerald-400">0.0 KB/s</div>
-              </div>
-              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
-                <div class="text-[10px] text-slate-400 font-sans uppercase">LAST AIRTIME</div>
-                <div id="cam-stat-ms" class="text-base font-bold text-sky-400">-- ms</div>
-              </div>
-              <div class="p-2 rounded bg-[#090d16] border border-slate-800">
-                <div class="text-[10px] text-slate-400 font-sans uppercase">AVG PACKET</div>
-                <div id="cam-stat-chunks" class="text-base font-bold text-amber-300">~20 chunks</div>
-              </div>
-            </div>
-            <div class="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 flex justify-between">
-              <span>Sensor: <b class="text-white">OmniVision OV3660 (3MP)</b></span>
-              <span>Ground Ant: <b class="text-cyan-300">External IPEX/SMA</b></span>
-            </div>
-          </div>
-        </div>
-
+        
       </main>
     </div>
 
@@ -1094,9 +1095,9 @@
     <!-- RAW SERIAL FEED STREAM MODAL -->
     <div id="rawFeedModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
       <div class="w-full max-w-xl h-[530px] p-5 flex flex-col relative rounded-xl border border-sky-900/40 shadow-2xl bg-[#0d1017]">
-        <button type="button" onclick="closeModal('rawFeedModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white text-base">✕</button>
+        <button type="button" onclick="closeModal('rawFeedModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         <h3 class="text-base font-bold text-white mb-2 flex items-center gap-2 font-tech uppercase tracking-wide">
-          <span>📡</span> Raw Serial Feed &amp; Packet Ingestion Stream
+          <svg class="w-4 h-4 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg> Raw Serial Feed &amp; Packet Ingestion Stream
         </h3>
         <div class="text-xs text-slate-300 flex space-x-5 mb-2.5 pb-2 border-b border-slate-800/60 font-mono">
           <span>Lines: <b id="rf-received" class="text-white font-bold">0</b></span>
@@ -1110,9 +1111,9 @@
     <!-- MISSION ASSISTANT AI MODAL -->
     <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
       <div class="w-full max-w-lg h-[500px] p-5 flex flex-col relative rounded-xl border border-sky-900/40 shadow-2xl bg-[#0d1017]">
-        <button type="button" onclick="closeModal('aiModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white text-base">✕</button>
+        <button type="button" onclick="closeModal('aiModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         <h3 class="text-base font-bold text-white mb-2.5 flex items-center gap-2 font-tech uppercase tracking-wide">
-          <span class="text-cyan-400">✦</span> Cognitive CanSat AI Diagnostics
+          <svg class="w-4 h-4 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Cognitive CanSat AI Diagnostics
         </h3>
         <div class="flex-1 overflow-y-auto space-y-3.5 text-xs text-slate-300 custom-scroll pr-1">
           <div class="bg-[#111624] p-3.5 rounded-lg border border-slate-800/70">
@@ -1131,15 +1132,15 @@
     <!-- HELP & DOCUMENTATION MODAL -->
     <div id="helpModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
       <div class="w-full max-w-lg p-5 flex flex-col relative rounded-xl border border-sky-900/40 shadow-2xl bg-[#0d1017]">
-        <button type="button" onclick="closeModal('helpModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white text-base">✕</button>
+        <button type="button" onclick="closeModal('helpModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2 font-tech uppercase tracking-wide">
-          <span>ℹ️</span> Ground Station Operational Guide
+          <svg class="w-4 h-4 text-sky-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Ground Station Operational Guide
         </h3>
         <div class="space-y-3 text-slate-300 leading-relaxed font-sans text-xs sm:text-[13px]">
           <p><b class="text-cyan-300">1. USB Serial Connection:</b> Click <code>CONNECT</code> to stream live telemetry from USB UART (ESP32/STM32/LoRa) at 115200 baud via Web Serial API.</p>
           <p><b class="text-cyan-300">2. Flight Replay &amp; Tests:</b> Click <code>REPLAY SUITE</code> in the sidebar to open the 10 flight profile test suite or upload your own CSV file.</p>
           <p><b class="text-cyan-300">3. Interactive 3D Model:</b> Click and drag the CanSat in its tile to orbit and inspect orientation. Mouse wheel zooms.</p>
-          <p><b class="text-cyan-300">4. Tile Maximization:</b> Click the <code>⤢</code> icon in the header of any card to zoom that visualization to full screen.</p>
+          <p><b class="text-cyan-300">4. Tile Maximization:</b> Click the expand icon in the header of any card to zoom that visualization to full screen.</p>
           <p><b class="text-cyan-300">5. CSV Data Export:</b> Click <code>DOWNLOAD DATA</code> anytime to download an RFC 4180 compliant CSV recording.</p>
         </div>
       </div>
@@ -1148,11 +1149,11 @@
     <!-- POST-FLIGHT REVIEW (PFR) AUDIT & MISSION REPORT MODAL -->
     <div id="pfrModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
       <div class="w-full max-w-3xl max-h-[90vh] p-6 flex flex-col relative rounded-xl border border-sky-900/50 shadow-2xl bg-[#0d1017] text-slate-200">
-        <button type="button" onclick="closeModal('pfrModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg pfr-screen-only">✕</button>
+        <button type="button" onclick="closeModal('pfrModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition pfr-screen-only"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         
         <div class="flex items-center justify-between border-b border-slate-800/70 pb-3 mb-4">
           <div class="flex items-center gap-2.5">
-            <span class="text-xl">📊</span>
+            <svg class="w-5 h-5 text-sky-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <div>
               <h3 class="text-base font-bold text-white font-tech uppercase tracking-wide">Post-Flight Review (PFR) &amp; Mission Audit Report</h3>
               <p class="text-xs text-slate-400">Autonomous CanSat Kinematic Analysis &amp; Regulatory Compliance Verification</p>
@@ -1160,10 +1161,10 @@
           </div>
           <div class="flex items-center gap-2 pfr-screen-only mr-8">
             <button type="button" id="pfr-copy-btn" onclick="copyPfrMarkdown()" class="px-3 py-1.5 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/50 text-sky-200 flex items-center gap-1.5 transition-all">
-              <span>📋</span> <span id="pfr-copy-label">COPY MARKDOWN</span>
+              <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg> <span id="pfr-copy-label">COPY MARKDOWN</span>
             </button>
             <button type="button" onclick="printPfrReport()" class="px-3 py-1.5 rounded text-xs font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white flex items-center gap-1.5 transition-all">
-              <span>🖨️</span> <span>PRINT / PDF</span>
+              <svg class="w-3.5 h-3.5 text-white inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> <span>PRINT / PDF</span>
             </button>
           </div>
         </div>
@@ -1402,7 +1403,7 @@
 
     const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
     btns.forEach(b => {
-      b.innerText = '✓ CALIBRATED';
+      b.innerText = 'CALIBRATED';
       b.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-md';
       setTimeout(() => {
         b.innerText = b.id === 'tare-btn' ? 'TARE UPRIGHT' : 'TARE / CALIBRATE';
@@ -1440,7 +1441,7 @@
     // Instant tactile feedback on button
     const btn = document.getElementById('tare-btn');
     if (btn) {
-      btn.innerText = '✓ ZEROED';
+      btn.innerText = 'ZEROED';
       btn.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-sm';
       setTimeout(function () {
         btn.innerText = 'TARE UPRIGHT';
@@ -1963,17 +1964,20 @@
     }
   }
 
+  const SVG_VOICE_ON = '<svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>';
+  const SVG_VOICE_OFF = '<svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l4-4m0 0l-4-4m4 4l-4 4"/></svg>';
+
   function toggleAudioSpeech() {
     speechAllowed = !speechAllowed;
     const icon = document.getElementById('audio-icon');
     const text = document.getElementById('audio-status-text');
     if (speechAllowed) {
-      icon.innerText = '🔊';
-      text.innerText = 'VOICE ON';
+      if (icon) icon.innerHTML = SVG_VOICE_ON;
+      if (text) text.innerText = 'VOICE ON';
       speakAlert('Voice callouts active.');
     } else {
-      icon.innerText = '🔇';
-      text.innerText = 'VOICE MUTED';
+      if (icon) icon.innerHTML = SVG_VOICE_OFF;
+      if (text) text.innerText = 'VOICE MUTED';
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     }
   }
@@ -3488,6 +3492,8 @@
     if (isDemo) toggleDemo();
     if (serialPort) disconnectSerial();
 
+    const SVG_PLAY = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    const SVG_PAUSE = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
     const playIcon = document.getElementById('replay-play-icon');
     const playLabel = document.getElementById('replay-play-label');
 
@@ -3495,14 +3501,14 @@
       clearInterval(replayInterval);
       replayInterval = null;
       replayPlaying = false;
-      playIcon.innerText = '▶';
+      playIcon.innerHTML = SVG_PLAY;
       playLabel.innerText = 'PLAY';
       setConnectionState(true, 'REPLAY PAUSED');
       return;
     }
 
     replayPlaying = true;
-    playIcon.innerText = '⏸';
+    playIcon.innerHTML = SVG_PAUSE;
     playLabel.innerText = 'PAUSE';
     setConnectionState(true, 'REPLAYING (' + replaySpeed + 'X)');
 
@@ -3512,7 +3518,7 @@
         clearInterval(replayInterval);
         replayInterval = null;
         replayPlaying = false;
-        playIcon.innerText = '▶';
+        playIcon.innerHTML = SVG_PLAY;
         playLabel.innerText = 'PLAY';
         setConnectionState(true, 'REPLAY COMPLETED');
         return;
@@ -3540,7 +3546,7 @@
       replayInterval = null;
     }
     replayPlaying = false;
-    document.getElementById('replay-play-icon').innerText = '▶';
+    document.getElementById('replay-play-icon').innerHTML = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
     document.getElementById('replay-play-label').innerText = 'PLAY';
     replayIndex = 0;
     document.getElementById('replay-scrubber').value = 0;
@@ -3627,7 +3633,7 @@
           clearInterval(replayInterval);
           replayInterval = null;
           replayPlaying = false;
-          document.getElementById('replay-play-icon').innerText = '▶';
+          document.getElementById('replay-play-icon').innerHTML = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
           document.getElementById('replay-play-label').innerText = 'PLAY';
           setConnectionState(true, 'REPLAY COMPLETED');
           return;
@@ -3666,7 +3672,9 @@
     tile.classList.toggle('tile-maximized');
     const isMax = tile.classList.contains('tile-maximized');
     const btn = tile.querySelector('.panel-expand-btn');
-    if (btn) btn.innerText = isMax ? '✕' : '⤢';
+    const SVG_EXPAND = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg>';
+    const SVG_COLLAPSE = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+    if (btn) btn.innerHTML = isMax ? SVG_COLLAPSE : SVG_EXPAND;
 
     // When closing, strip Chart.js / Three.js inline height overrides to prevent dashboard stretching
     if (!isMax) {
@@ -3694,7 +3702,7 @@
     if (telemetryHistory.length === 0) {
       container.innerHTML =
         '<div class="p-8 text-center bg-[#111624] rounded-lg border border-slate-800">' +
-        '<div class="text-3xl mb-2">📡</div>' +
+        '<div class="text-slate-500 mb-2 flex justify-center"><svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg></div>' +
         '<div class="text-sm font-bold text-slate-200 mb-1 font-tech uppercase tracking-wide">No Telemetry Recorded Yet</div>' +
         '<p class="text-slate-400 max-w-md mx-auto text-xs leading-relaxed">Connect live hardware via USB serial, select a flight profile in the Replay Suite, or activate Demo Data to stream mission packets before generating an automated Post-Flight Review report.</p>' +
         '</div>';
@@ -3898,7 +3906,7 @@
     navigator.clipboard.writeText(md).then(function () {
       const label = document.getElementById('pfr-copy-label');
       if (label) {
-        label.innerText = '✓ COPIED!';
+        label.innerText = 'COPIED!';
         setTimeout(function () { label.innerText = 'COPY MARKDOWN'; }, 1800);
       }
     }).catch(function (err) {
@@ -3917,9 +3925,11 @@
     if (replayPlaying) {
       clearInterval(replayInterval);
       replayPlaying = false;
-      const playIcon = document.getElementById('replay-play-icon');
+      const SVG_PLAY = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    const SVG_PAUSE = '<svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+    const playIcon = document.getElementById('replay-play-icon');
       const playLabel = document.getElementById('replay-play-label');
-      if (playIcon) playIcon.innerText = '▶';
+      if (playIcon) playIcon.innerHTML = SVG_PLAY;
       if (playLabel) playLabel.innerText = 'PLAY';
     }
     if (isDemo) toggleDemo();
@@ -4033,11 +4043,11 @@
     const first = telemetryHistory[0];
     const notes = [];
 
-    if (last.batteryVoltage < 3.55) notes.push('⚠️ Battery voltage sag: ' + last.batteryVoltage.toFixed(2) + 'V');
-    if (Math.abs(last.vSpd) > 12.0) notes.push('⚠️ Elevated vertical velocity: ' + last.vSpd.toFixed(2) + ' m/s');
-    if (!gpsLocked(last.lat, last.lon)) notes.push('ℹ️ GPS lock pending.');
-    if (apogee > 500) notes.push('✅ Sounding apogee confirmed: ' + apogee.toFixed(1) + ' m');
-    if (currentAnomalyScore > 0) notes.push('⚠️ Outlier detected: ' + currentAnomalyCode);
+    if (last.batteryVoltage < 3.55) notes.push('[ALERT] Battery voltage sag: ' + last.batteryVoltage.toFixed(2) + 'V');
+    if (Math.abs(last.vSpd) > 12.0) notes.push('[ALERT] Elevated vertical velocity: ' + last.vSpd.toFixed(2) + ' m/s');
+    if (!gpsLocked(last.lat, last.lon)) notes.push('[INFO] GPS lock pending.');
+    if (apogee > 500) notes.push('[CONFIRMED] Sounding apogee confirmed: ' + apogee.toFixed(1) + ' m');
+    if (currentAnomalyScore > 0) notes.push('[ALERT] Outlier detected: ' + currentAnomalyCode);
 
     let mlBlock = '';
     if (mlLastPrediction) {
@@ -4045,7 +4055,7 @@
       const probEntries = pred.phase_probabilities ? Object.entries(pred.phase_probabilities).map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`).join(' | ') : '';
       mlBlock =
         '<div class="mt-2.5 pt-2.5 border-t border-slate-800/80 text-xs space-y-1.5 leading-relaxed">' +
-        '<b class="text-emerald-400">⚡ Python Machine Learning Server (FastAPI / scikit-learn / PyOD):</b><br>' +
+        '<b class="text-emerald-400">[ONLINE] Python Machine Learning Server (FastAPI / scikit-learn / PyOD):</b><br>' +
         '• <span class="text-cyan-300">RandomForestClassifier:</span> <span class="text-white font-bold">' + pred.predicted_phase + '</span> (' + (pred.phase_confidence * 100).toFixed(1) + '% confidence)<br>' +
         '• <span class="text-cyan-300">PyOD Isolation Forest Anomaly Score:</span> ' + pred.anomaly_score.toFixed(3) + ' [' + pred.anomaly_type + ']<br>' +
         (pred.predicted_apogee_m ? '• <span class="text-cyan-300">GradientBoosting Predicted Apogee:</span> ' + pred.predicted_apogee_m.toFixed(1) + ' m<br>' : '') +
