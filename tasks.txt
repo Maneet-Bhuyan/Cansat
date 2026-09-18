@@ -1,7 +1,7 @@
 ================================================================================
                     COGNITIVE CANSAT MISSION - TASK TRACKER
                              File: tasks.txt
-                    Last Updated: 2026-09-18T20:15:00+05:30
+                    Last Updated: 2026-09-19T00:06:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -127,27 +127,30 @@ bridges, high-performance UI rendering, and automated test suites.
     - Integrated with backend/app.py (/ws/serial, /hardware/ports, /analytics/kinematics, /analytics/sounding).
     - Verified with 10/10 automated unit tests in tests/test_backend_core.py.
 
-[ ] TASK WD-03: AERIAL VIDEO HUD & LINK QUALITY MONITORING
-    - Maintain Tile 12 (Live Aerial Camera Stream) and Tile 13 (Link Diagnostics) in index.html.
-    - Maintain standalone OpenCV HUD viewer (firmware/ground_cam_viewer.py) for fallback/headless inspection.
-    - Track live video metrics: Received frames, dropped frames, data throughput (KB/s), live FPS.
+[X] TASK WD-03: AERIAL VIDEO HUD & LINK QUALITY MONITORING (COMPLETED)
+    - Fully engineered Tile 12 (Live Aerial Camera Stream) in index.html:
+      * Live 3x3 Spatial Hazard Grid canvas overlay with real-time sector classification.
+      * Directional Escape Vector HUD & compass evasion heading (θ_evade).
+      * Remote Sensing strip: Visible Atmospheric Resistant Index (VARI) & optical Time-To-Impact (TTI).
+      * SLAI hazard status pill & optimal LZ quadrant highlighting.
+    - Upgraded standalone OpenCV HUD viewer (firmware/ground_cam_viewer.py) with 'g' hotkey toggle.
+    - Verified link diagnostics: packet counter, FPS, and throughput.
 
-[ ] TASK WD-04: COMPREHENSIVE BATCH TESTING SUITE
-    - Expand and execute automated test suites:
-      * node tests/selftest.js (telemetry math, parser, UI probe assertions)
-      * powershell -File tests/selftest.ps1 (full regression)
-      * python tests/test_firmware_protocol.py (ESP-NOW packet slicing & CRC verification)
-    - Run batch validation against all 10 standard test profiles in test_cases/:
-      01_nominal_sounding_flight.csv, 02_high_altitude_burst_1200m.csv,
-      03_severe_wind_shear_drift.csv, 04_apogee_ejection_shock_tumble.csv,
-      05_parachute_pendulum_resonance.csv, 06_delayed_chute_deployment.csv,
-      07_thermal_inversion_sounding.csv, 08_sensor_glitch_gps_recovery.csv,
-      09_low_battery_voltage_sag.csv, 10_ground_pad_static_test.csv.
+[X] TASK WD-04: COMPREHENSIVE BATCH TESTING SUITE (COMPLETED)
+    - Full 5-suite automated testing infrastructure established and passing 100% (70/70 assertions):
+      * node tests/selftest.js (27/27 assertions: telemetry math, parser, UI tokens)
+      * powershell tests/selftest.ps1 (17/17 assertions: MET clock, 5-phase flight sequence, UI)
+      * powershell tests/test_sm.ps1 (10/10 mission profiles: HMM & ML state machine progression)
+      * python tests/test_backend_core.py (12/12 assertions: 1D EKF, IMU attitude, tare, sounding)
+      * python tests/test_firmware_protocol.py (4/4 assertions: ESP-NOW 200B chunking & SHA-256)
+    - All 10 synthetic flight test profiles in test_cases/ verified and validated.
 
-[ ] TASK WD-05: PRODUCTION BUILD & PACKAGING
-    - Verify one-click launch scripts work seamlessly on any Windows machine:
-      * launch.py (activates .venv, launches Uvicorn backend, opens browser)
-      * backend/standalone_server.ps1
+[X] TASK WD-05: PRODUCTION BUILD & PACKAGING (COMPLETED)
+    - Verified one-click launch scripts across Windows environments:
+      * START_MISSION_CONTROL.bat (smart bootstrap launcher with automatic .venv & dependency resolution)
+      * SETUP_GPU_WORKSTATION.bat & setup_gpu_workstation.ps1 (zero-to-hero GPU PyTorch installer)
+      * launch.py (process orchestration, port discovery, and browser dispatch)
+      * backend/standalone_server.ps1 (native Windows .NET HttpListener)
 
 [X] TASK WD-06: GITHUB LINGUIST REPOSITORY CONFIGURATION (COMPLETED)
     - Created .gitattributes with accurate Linguist classifications:
@@ -251,9 +254,9 @@ AI TinyML vision model (TinyLandingNet) for autonomous Safe Landing Area Index (
 ================================================================================
 CROSS-TEAM MILESTONES & LAUNCH READINESS CHECKLIST
 ================================================================================
-Milestone M1: Subsystem Standalone Verification (Hardware, Analytics, Web, ML)
-Milestone M2: Dual-Port Ingestion Integration (COM3 LoRa Telemetry + COM5 Video Feed)
+[X] Milestone M1: Subsystem Standalone Verification (Hardware, Analytics, Web, ML) (COMPLETED)
+[X] Milestone M2: Dual-Port Ingestion Integration (COM3 LoRa Telemetry + COM5 Video Feed) (COMPLETED)
 [X] Milestone M3: TinyML Vision Model Validation & Embedded Quantization (COMPLETED)
-Milestone M4: Full 300m Outdoor Field Range Sounding Test
-Milestone M5: Complete Research Paper Draft & Submission
+[ ] Milestone M4: Full 300m Outdoor Field Range Sounding Test (NEXT PRIMARY GOAL)
+[ ] Milestone M5: Complete Research Paper Draft & Submission (ACTIVE DRAFTING)
 ================================================================================
