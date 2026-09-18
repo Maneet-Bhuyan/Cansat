@@ -13,6 +13,7 @@ __pycache__/
 # Extracted heavy dataset directories (27,000 files)
 # The parent archive data/EuroSAT_RGB.zip is tracked for team distribution
 data/eurosat/
+data/EuroSAT_RGB/
 
 # IDE and OS metadata
 .vscode/
