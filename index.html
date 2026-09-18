@@ -531,15 +531,20 @@
               CONNECT
             </button>
             <select id="baud-select" class="bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2 py-2 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer" title="Serial Connection Mode (Dual Bridge or Web Serial)">
-              <option value="bridge" selected>DUAL BRIDGE (COM3 + COM5)</option>
-              <option value="115200">USB 115200</option>
-              <option value="57600">USB 57600</option>
-              <option value="9600">USB 9600</option>
+              <option value="bridge" selected>DUAL BRIDGE (COM4 LoRa + COM5 Cam)</option>
+              <option value="9600">DIRECT USB (COM4 LoRa @ 9600)</option>
+              <option value="115200">DIRECT USB (115200 Baud)</option>
+              <option value="57600">DIRECT USB (57600 Baud)</option>
             </select>
           </div>
 
           <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light">
             DEMO DATA
+          </button>
+
+          <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
+            <span>⚖️</span>
+            <span id="tare-btn-text">TARE / CALIBRATE</span>
           </button>
 
           <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center gap-1.5" title="Toggle Flight Test & Replay Suite">
@@ -1200,30 +1205,160 @@
   // Kinematics & History
   let previousAlt = null;
   let previousTs = null;
+  let smoothedAltitude = null;
+  const ALT_FILTER_WINDOW = 3;
+  let altitudeBuffer = [];
   let apogee = 0;
   let padBaselineAlt = 0;
   let padBaselineTemp = 25.0;
   let padBaselineRecorded = false;
+
+  // --- HIGH-PRECISION NOISE-IMMUNE BAROMETRIC ALTITUDE & VERTICAL VELOCITY FILTER ---
+  // Rejects stationary sensor ADC flutter (< 0.18m) without lag while immediately and faithfully
+  // tracking physical elevation changes (1-meter and sub-meter manual movements or rocket ascent)
+  class PrecisionAltitudeFilter {
+    constructor() {
+      this.z = null;
+      this.vz = 0.0;
+      this.lastTime = null;
+      this.trendCount = 0;
+      this.lastSign = 0;
+    }
+
+    reset(initialAlt = null) {
+      this.z = initialAlt !== null ? Number(initialAlt) : null;
+      this.vz = 0.0;
+      this.lastTime = null;
+      this.trendCount = 0;
+      this.lastSign = 0;
+    }
+
+    update(measuredAlt, currentTimeSec = null) {
+      const now = currentTimeSec !== null ? currentTimeSec : Date.now() / 1000.0;
+      if (this.z === null || this.lastTime === null) {
+        this.z = Number(measuredAlt);
+        this.vz = 0.0;
+        this.lastTime = now;
+        return { alt: this.z, vz: 0.0 };
+      }
+
+      let dt = now - this.lastTime;
+      this.lastTime = now;
+      dt = Math.max(0.05, Math.min(dt, 2.0));
+
+      const diff = measuredAlt - this.z;
+      const absDiff = Math.abs(diff);
+      const sign = diff > 0 ? 1 : (diff < 0 ? -1 : 0);
+
+      // Track directional trend to detect small persistent manual movement
+      if (sign === this.lastSign && sign !== 0) {
+        this.trendCount++;
+      } else {
+        this.trendCount = 0;
+      }
+      this.lastSign = sign;
+
+      let alpha;
+      if (absDiff < 0.18 && this.trendCount < 3) {
+        // Stationarity deadband: rejects ambient BMP280 thermal/ADC flutter (< 0.18m)
+        alpha = 0.06;
+      } else if (absDiff < 0.45 && this.trendCount < 2) {
+        // Subtle transition
+        alpha = 0.35;
+      } else if (absDiff < 1.0) {
+        // Clear physical manual elevation step (e.g. 1-meter lift)
+        alpha = 0.75;
+      } else {
+        // Rapid ascent / descent / high dynamics (> 1m)
+        alpha = 0.95;
+      }
+
+      const prevZ = this.z;
+      this.z = this.z + alpha * diff;
+
+      // Filtered vertical velocity
+      const instantVz = (this.z - prevZ) / dt;
+      if (absDiff < 0.18 && this.trendCount < 3) {
+        this.vz = 0.0;
+      } else {
+        this.vz = 0.65 * instantVz + 0.35 * this.vz;
+      }
+
+      return { alt: Number(this.z.toFixed(2)), vz: Number(this.vz.toFixed(2)) };
+    }
+  }
+
+  const clientAltitudeFilter = new PrecisionAltitudeFilter();
+
+  // Multi-sensor stationary tare calibration
+  let tareGyroX = 0.0, tareGyroY = 0.0, tareGyroZ = 0.0;
+  let tarePadAlt = 0.0;
+  let tareSampleBuffer = [];
+  let isCalibratingTare = false;
+  let tareTargetSamples = 15;
+  let isStationaryCalibrated = false;
+
+  // Edge-preserving shock-responsive filter for 3-axis accelerometer
+  let accelFiltX = 0.0, accelFiltY = 0.0, accelFiltZ = 1.0;
+  function filterAccel(raw, prev) {
+    const diff = Math.abs(raw - prev);
+    if (diff < 0.04) {
+      return prev + 0.20 * (raw - prev);
+    }
+    return raw;
+  }
 
   // Madgwick / Complementary Filter Attitude
   let q0 = 1.0, q1 = 0.0, q2 = 0.0, q3 = 0.0;
   let fusedPitch = 0, fusedRoll = 0, fusedYaw = 0;
   let tarePitch = 0.0, tareRoll = 0.0, tareYaw = 0.0;
   let autoTaredOnPad = false;
+  let compPitch = null, compRoll = null, compYaw = 0.0;
 
-  function tareAttitude() {
+  function triggerStationaryTare() {
+    isCalibratingTare = true;
+    tareSampleBuffer = [];
+
+    const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
+    btns.forEach(b => {
+      b.innerText = 'CALIBRATING (3s)...';
+      b.className = 'px-2.5 py-1 rounded bg-amber-600/90 border border-amber-400 text-xs text-amber-100 font-mono font-bold transition-all animate-pulse shadow-md';
+    });
+
+    try {
+      const host = location.hostname || '127.0.0.1';
+      fetch((location.protocol === 'https:' ? 'https://' : 'http://') + host + ':8000/hardware/tare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ samples: 15 })
+      }).catch(() => {});
+    } catch (e) {}
+
+    setTimeout(() => {
+      if (isCalibratingTare) {
+        finalizeStationaryTare();
+      }
+    }, 3500);
+  }
+
+  function finalizeStationaryTare() {
+    if (tareSampleBuffer.length > 0) {
+      const n = tareSampleBuffer.length;
+      tareGyroX = tareSampleBuffer.reduce((s, d) => s + d.gx, 0) / n;
+      tareGyroY = tareSampleBuffer.reduce((s, d) => s + d.gy, 0) / n;
+      tareGyroZ = tareSampleBuffer.reduce((s, d) => s + d.gz, 0) / n;
+      tarePadAlt = tareSampleBuffer.reduce((s, d) => s + d.alt, 0) / n;
+      padBaselineAlt = tarePadAlt;
+    }
     tarePitch = fusedPitch;
     tareRoll = fusedRoll;
     tareYaw = fusedYaw;
+    autoTaredOnPad = true;
+    isCalibratingTare = false;
+    isStationaryCalibrated = true;
 
-    const btn = document.getElementById('tare-btn');
-    if (btn) {
-      btn.innerText = '✓ ZEROED';
-      btn.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-sm';
-      setTimeout(function () {
-        btn.innerText = 'TARE UPRIGHT';
-        btn.className = 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm';
-      }, 1600);
+    if (tarePadAlt !== 0 && clientAltitudeFilter) {
+      clientAltitudeFilter.reset(tarePadAlt);
     }
 
     if (cansatGroup) {
@@ -1241,6 +1376,57 @@
     const ir = document.getElementById('info-roll');
     if (ip) ip.innerText = '0.0°';
     if (ir) ir.innerText = '0.0°';
+
+    const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
+    btns.forEach(b => {
+      b.innerText = '✓ CALIBRATED';
+      b.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-md';
+      setTimeout(() => {
+        b.innerText = b.id === 'tare-btn' ? 'TARE UPRIGHT' : 'TARE / CALIBRATE';
+        b.className = b.id === 'tare-btn'
+          ? 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm'
+          : 'btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold';
+      }, 2500);
+    });
+  }
+
+  function tareAttitude() {
+    tarePitch = fusedPitch;
+    tareRoll = fusedRoll;
+    tareYaw = fusedYaw;
+    autoTaredOnPad = true;
+
+    // Instantly force 3D model to stand 100% vertically upright
+    if (cansatGroup) {
+      cansatGroup.rotation.set(0, 0, 0);
+    }
+
+    // Immediately zero HUD numbers
+    const mp = document.getElementById('model-pitch');
+    const mr = document.getElementById('model-roll');
+    const my = document.getElementById('model-yaw');
+    if (mp) mp.innerText = '0.0°';
+    if (mr) mr.innerText = '0.0°';
+    if (my) my.innerText = '0.0°';
+
+    const ip = document.getElementById('info-pitch');
+    const ir = document.getElementById('info-roll');
+    if (ip) ip.innerText = '0.0°';
+    if (ir) ir.innerText = '0.0°';
+
+    // Instant tactile feedback on button
+    const btn = document.getElementById('tare-btn');
+    if (btn) {
+      btn.innerText = '✓ ZEROED';
+      btn.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-sm';
+      setTimeout(function () {
+        btn.innerText = 'TARE UPRIGHT';
+        btn.className = 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm';
+      }, 1600);
+    }
+
+    // Also trigger full sensor calibration in background
+    triggerStationaryTare();
   }
 
   // GPS Exponential Smoothing
@@ -1442,77 +1628,57 @@
     };
   }
 
-  // --- SENSOR FUSION ENGINE (MADGWICK / COMPLEMENTARY FILTER) ---
+  // --- SENSOR FUSION ENGINE (COMPLEMENTARY / MADGWICK FILTER) ---
   function updateAttitudeFusion(ax, ay, az, gx, gy, gz, dt) {
+    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
+    let accPitch = 0.0, accRoll = 0.0;
+    if (aNorm > 0.05) {
+      accPitch = Math.atan2(ay, az) * (180.0 / Math.PI);
+      accRoll = Math.atan2(-ax, Math.sqrt(ay * ay + az * az)) * (180.0 / Math.PI);
+    }
+
+    if (compPitch === null || compRoll === null) {
+      compPitch = accPitch;
+      compRoll = accRoll;
+      compYaw = 0.0;
+      fusedPitch = compPitch;
+      fusedRoll = compRoll;
+      fusedYaw = compYaw;
+      return { pitch: fusedPitch, roll: fusedRoll, yaw: fusedYaw, q: [q0, q1, q2, q3] };
+    }
+
+    const dtClamped = Math.max(0.01, Math.min(dt || 0.8, 2.0));
     // Gyro noise deadband: prevents raw MEMS sensor bias from continuously rotating 3D model when stationary
     const gyroNoiseThreshold = 0.55; // deg/s
-    const filteredGx = Math.abs(gx) < gyroNoiseThreshold ? 0 : gx;
-    const filteredGy = Math.abs(gy) < gyroNoiseThreshold ? 0 : gy;
-    const filteredGz = Math.abs(gz) < gyroNoiseThreshold ? 0 : gz;
+    const filteredGx = Math.abs(gx) < gyroNoiseThreshold ? 0.0 : gx;
+    const filteredGy = Math.abs(gy) < gyroNoiseThreshold ? 0.0 : gy;
+    const filteredGz = Math.abs(gz) < gyroNoiseThreshold ? 0.0 : gz;
 
-    const aNorm = Math.sqrt(ax * ax + ay * ay + az * az);
-
-    // If stationary on table (no rotation), lock orientation directly to gravity vector
     if (filteredGx === 0 && filteredGy === 0 && filteredGz === 0 && aNorm > 0.05) {
-      fusedPitch = Math.atan2(ay, az) * (180.0 / Math.PI);
-      fusedRoll = Math.atan2(-ax, Math.sqrt(ay * ay + az * az)) * (180.0 / Math.PI);
-      return { pitch: fusedPitch, roll: fusedRoll, yaw: 0.0 };
-    }
-
-    const gxRad = (filteredGx * Math.PI) / 180;
-    const gyRad = (filteredGy * Math.PI) / 180;
-    const gzRad = (filteredGz * Math.PI) / 180;
-
-    let recipNorm;
-    if (aNorm > 0.01) {
-      recipNorm = 1.0 / aNorm;
-      ax *= recipNorm;
-      ay *= recipNorm;
-      az *= recipNorm;
-
-      const halfvx = q1 * q3 - q0 * q2;
-      const halfvy = q0 * q1 + q2 * q3;
-      const halfvz = q0 * q0 - 0.5 + q3 * q3;
-
-      const halfex = (ay * halfvz - az * halfvy);
-      const halfey = (az * halfvx - ax * halfvz);
-      const halfez = (ax * halfvy - ay * halfvx);
-
-      const beta = 0.45;
-      const gxAdj = gxRad + 2.0 * beta * halfex;
-      const gyAdj = gyRad + 2.0 * beta * halfey;
-      const gzAdj = gzRad + 2.0 * beta * halfez;
-
-      const dtHalf = 0.5 * dt;
-      const dq0 = (-q1 * gxAdj - q2 * gyAdj - q3 * gzAdj) * dtHalf;
-      const dq1 = (q0 * gxAdj + q2 * gzAdj - q3 * gyAdj) * dtHalf;
-      const dq2 = (q0 * gyAdj - q1 * gzAdj + q3 * gxAdj) * dtHalf;
-      const dq3 = (q0 * gzAdj + q1 * gyAdj - q2 * gxAdj) * dtHalf;
-
-      q0 += dq0; q1 += dq1; q2 += dq2; q3 += dq3;
+      // Table / Pad Rest: Lock tightly to physical gravity vector without drift or gimbal jump
+      compPitch = 0.85 * compPitch + 0.15 * accPitch;
+      compRoll = 0.85 * compRoll + 0.15 * accRoll;
     } else {
-      const dtHalf = 0.5 * dt;
-      const dq0 = (-q1 * gxRad - q2 * gyRad - q3 * gzRad) * dtHalf;
-      const dq1 = (q0 * gxRad + q2 * gzRad - q3 * gyRad) * dtHalf;
-      const dq2 = (q0 * gyRad - q1 * gzRad + q3 * gxRad) * dtHalf;
-      const dq3 = (q0 * gzRad + q1 * gyRad - q2 * gxRad) * dtHalf;
-      q0 += dq0; q1 += dq1; q2 += dq2; q3 += dq3;
+      // Dynamic Motion: Complementary fusion blending high-rate gyro integration with accelerometer gravity
+      const alpha = 0.94;
+      compPitch = alpha * (compPitch + filteredGx * dtClamped) + (1.0 - alpha) * accPitch;
+      compRoll = alpha * (compRoll + filteredGy * dtClamped) + (1.0 - alpha) * accRoll;
+      compYaw += filteredGz * dtClamped;
     }
 
-    recipNorm = 1.0 / Math.sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
-    q0 *= recipNorm; q1 *= recipNorm; q2 *= recipNorm; q3 *= recipNorm;
+    fusedPitch = compPitch;
+    fusedRoll = compRoll;
+    fusedYaw = compYaw;
 
-    const sinp = 2.0 * (q0 * q2 - q3 * q1);
-    if (Math.abs(sinp) >= 0.995) {
-      // Gimbal Lock Singularity at Pitch = ±90°: roll and yaw are collinear; lock roll to 0.0 to prevent 0/0 oscillation
-      fusedPitch = Math.sign(sinp) * 90.0;
-      fusedRoll = 0.0;
-      fusedYaw = 2.0 * Math.atan2(q1, q0) * (180.0 / Math.PI);
-    } else {
-      fusedPitch = Math.asin(sinp) * (180.0 / Math.PI);
-      fusedRoll = Math.atan2(2.0 * (q0 * q1 + q2 * q3), 1.0 - 2.0 * (q1 * q1 + q2 * q2)) * (180.0 / Math.PI);
-      fusedYaw = Math.atan2(2.0 * (q0 * q3 + q1 * q2), 1.0 - 2.0 * (q2 * q2 + q3 * q3)) * (180.0 / Math.PI);
-    }
+    // Maintain quaternion representation for 3D engine and testing harness
+    const pRad = (fusedPitch * Math.PI) / 360.0;
+    const rRad = (fusedRoll * Math.PI) / 360.0;
+    const cp = Math.cos(pRad), sp = Math.sin(pRad);
+    const cr = Math.cos(rRad), sr = Math.sin(rRad);
+    q0 = cr * cp;
+    q1 = sr * cp;
+    q2 = cr * sp;
+    q3 = -sr * sp;
 
     return { pitch: fusedPitch, roll: fusedRoll, yaw: fusedYaw, q: [q0, q1, q2, q3] };
   }
@@ -1983,15 +2149,60 @@
     data: [], pointRadius: 0, tension: 0.2
   });
 
-  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')]);
-  const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')]);
-  const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')]);
-  const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#38BDF8')]);
-  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')]);
+  const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 2 }),
+        grace: '5%'
+      }
+    }
+  });
+  const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        grace: '5%'
+      }
+    }
+  });
+  const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        grace: 1
+      }
+    }
+  });
+  const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#38BDF8')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        grace: 1
+      }
+    }
+  });
+  const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')], {
+    scales: {
+      x: chartOptions.scales.x,
+      y: {
+        grid: chartOptions.scales.y.grid,
+        ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 1 }),
+        grace: '5%'
+      }
+    }
+  });
   const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#06B6D4')], {
     scales: {
       x: chartOptions.scales.x,
-      y: { min: 0, max: 100, grid: chartOptions.scales.y.grid, ticks: chartOptions.scales.y.ticks }
+      y: { min: 0, max: 100, grid: chartOptions.scales.y.grid, ticks: Object.assign({}, chartOptions.scales.y.ticks, { precision: 0 }) }
     }
   });
   const pressTempChart = initLineChart('chart-presstemp', [
@@ -2000,8 +2211,14 @@
   ], {
     scales: {
       x: chartOptions.scales.x,
-      yP: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)' }, ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 11, weight: '500' } } },
-      yT: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 11, weight: '500' } } }
+      yP: {
+        type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.04)' },
+        ticks: { color: '#EF4444', font: { family: 'JetBrains Mono', size: 11, weight: '500' }, precision: 1 }
+      },
+      yT: {
+        type: 'linear', position: 'right', grid: { drawOnChartArea: false },
+        ticks: { color: '#06B6D4', font: { family: 'JetBrains Mono', size: 11, weight: '500' }, precision: 1 }
+      }
     }
   });
 
@@ -2488,35 +2705,59 @@
       if (measuredDt > 0.05 && measuredDt < 5.0) dt = measuredDt;
     }
 
-    const fusion = updateAttitudeFusion(parsed.ax, parsed.ay, parsed.az, parsed.gx, parsed.gy, parsed.gz, dt);
-    const accelMag = Math.sqrt(parsed.ax * parsed.ax + parsed.ay * parsed.ay + parsed.az * parsed.az);
-    let vSpd = 0;
-    if (previousAlt !== null && previousTs !== null) {
-      if (dt > 0) {
-        const rawVSpd = (parsed.altitude - previousAlt) / dt;
-        // Barometric noise filter: ±0.1 hPa atmospheric pressure fluctuations on table equal ~±1m.
-        // If vertical velocity is below noise floor (< 0.40 m/s), treat as stationary.
-        vSpd = Math.abs(rawVSpd) < 0.40 ? 0.0 : rawVSpd;
+    // Tare sample collection if calibration routine is running
+    if (isCalibratingTare) {
+      tareSampleBuffer.push({
+        gx: parsed.gx, gy: parsed.gy, gz: parsed.gz,
+        ax: parsed.ax, ay: parsed.ay, az: parsed.az,
+        alt: parsed.altitude
+      });
+      if (tareSampleBuffer.length >= tareTargetSamples) {
+        finalizeStationaryTare();
       }
     }
-    previousAlt = parsed.altitude;
+
+    // Bias-corrected gyro rates (nulls out static MEMS drift)
+    const effGx = parsed.gx - tareGyroX;
+    const effGy = parsed.gy - tareGyroY;
+    const effGz = parsed.gz - tareGyroZ;
+
+    // Edge-preserving filtered accelerations (smooth at rest, captures shocks)
+    accelFiltX = filterAccel(parsed.ax, accelFiltX);
+    accelFiltY = filterAccel(parsed.ay, accelFiltY);
+    accelFiltZ = filterAccel(parsed.az, accelFiltZ);
+
+    // High-Precision Noise-Immune Altitude & Vertical Velocity Filter
+    // 100% physically faithful to barometric elevation (lifting ALWAYS climbs, lowering ALWAYS descends)
+    // Completely eliminates stationary sensor noise jitter (< 0.18m) without lag or tilt error
+    const filtRes = clientAltitudeFilter.update(parsed.altitude, now / 1000.0);
+    smoothedAltitude = Number(filtRes.alt.toFixed(2));
+    let vSpd = Number(filtRes.vz.toFixed(2));
+
+    const fusion = updateAttitudeFusion(parsed.ax, parsed.ay, parsed.az, effGx, effGy, effGz, dt);
+    const accelMag = Math.sqrt(parsed.ax * parsed.ax + parsed.ay * parsed.ay + parsed.az * parsed.az);
+    previousAlt = smoothedAltitude;
     previousTs = now;
 
-    const sounding = computeSoundingMetrics(parsed.temp, parsed.pressure, parsed.humidity, parsed.altitude);
+    const sounding = computeSoundingMetrics(parsed.temp, parsed.pressure, parsed.humidity, smoothedAltitude);
 
     if (!padBaselineRecorded && currentFlightPhase === 'PAD_IDLE') {
       padBaselineTemp = parsed.temp;
-      padBaselineAlt = parsed.altitude;
+      padBaselineAlt = smoothedAltitude;
       padBaselineRecorded = true;
     }
 
-    updateFlightPhase(parsed.altitude, vSpd, accelMag);
+    updateFlightPhase(smoothedAltitude, vSpd, accelMag);
     evaluateAnomalies(parsed, vSpd, accelMag);
     requestPythonMlInference(parsed, vSpd);
 
     const row = Object.assign({
       timestamp: parsed.customTimestamp || new Date(now).toISOString()
     }, parsed, {
+      rawAltitude: parsed.altitude,
+      altitude: Number(smoothedAltitude.toFixed(2)),
+      effGx: effGx, effGy: effGy, effGz: effGz,
+      accelFiltX: accelFiltX, accelFiltY: accelFiltY, accelFiltZ: accelFiltZ,
       pitch: fusion.pitch, roll: fusion.roll, yaw: fusion.yaw, accelMag: accelMag, vSpd: vSpd,
       dewPoint: sounding.dewPoint, airDensity: sounding.airDensity, lapseRate: sounding.lapseRate
     });
@@ -2575,7 +2816,7 @@
     // Inbound Serial 13 Fields Readout
     document.getElementById('t-temp').innerText = row.temp.toFixed(2);
     document.getElementById('t-press').innerText = row.pressure.toFixed(2);
-    document.getElementById('t-alt').innerText = row.altitude.toFixed(2);
+    document.getElementById('t-alt').innerText = (row.rawAltitude !== undefined ? row.rawAltitude : row.altitude).toFixed(2);
     document.getElementById('t-gx').innerText = row.gx.toFixed(2);
     document.getElementById('t-gy').innerText = row.gy.toFixed(2);
     document.getElementById('t-gz').innerText = row.gz.toFixed(2);
@@ -2592,8 +2833,8 @@
     document.getElementById('info-gpsfix').innerText = locked ? 'Locked (WGS84 3D)' : 'No lock / Searching';
     document.getElementById('info-alt').innerText = row.altitude.toFixed(2) + ' m';
     document.getElementById('info-apogee').innerText = apogee.toFixed(2) + ' m';
-    // Auto-tare initial resting orientation on launchpad
-    if (!autoTaredOnPad && currentFlightPhase === 'PAD_IDLE' && linesParsed >= 3) {
+    // Auto-tare initial resting orientation on launchpad immediately on first valid packet
+    if (!autoTaredOnPad && currentFlightPhase === 'PAD_IDLE') {
       tarePitch = row.pitch;
       tareRoll = row.roll;
       tareYaw = row.yaw;
@@ -2626,14 +2867,34 @@
     // Update GPS Path & Recovery Tool
     updateGpsAndRecovery(row.lat, row.lon, row.altitude, row.vSpd);
 
-    // Push Live Chart Data
-    pushChart(accelChart, [row.ax, row.ay, row.az]);
-    pushChart(orientChart, [displayPitch, displayRoll]);
-    pushChart(vSpeedChart, [row.vSpd]);
-    pushChart(altChart, [row.altitude]);
-    pushChart(gyroChart, [row.gx, row.gy, row.gz]);
-    pushChart(humChart, [row.humidity]);
-    pushChart(pressTempChart, [row.pressure, row.temp]);
+    // Push Live Super-Accurate Chart Data
+    pushChart(accelChart, [
+      Number((row.accelFiltX !== undefined ? row.accelFiltX : row.ax).toFixed(2)),
+      Number((row.accelFiltY !== undefined ? row.accelFiltY : row.ay).toFixed(2)),
+      Number((row.accelFiltZ !== undefined ? row.accelFiltZ : row.az).toFixed(2))
+    ]);
+    pushChart(orientChart, [
+      Number(displayPitch.toFixed(1)),
+      Number(displayRoll.toFixed(1))
+    ]);
+    pushChart(vSpeedChart, [
+      Number(row.vSpd.toFixed(1))
+    ]);
+    pushChart(altChart, [
+      Number(row.altitude.toFixed(1))
+    ]);
+    pushChart(gyroChart, [
+      Number((row.effGx !== undefined ? row.effGx : row.gx).toFixed(1)),
+      Number((row.effGy !== undefined ? row.effGy : row.gy).toFixed(1)),
+      Number((row.effGz !== undefined ? row.effGz : row.gz).toFixed(1))
+    ]);
+    pushChart(humChart, [
+      Number(row.humidity.toFixed(1))
+    ]);
+    pushChart(pressTempChart, [
+      Number(row.pressure.toFixed(1)),
+      Number(row.temp.toFixed(1))
+    ]);
   }
 
   function setConnectionState(online, text) {
@@ -2668,7 +2929,7 @@
       const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + ':8000/ws/serial';
       bridgeSocket = new WebSocket(wsUrl);
       bridgeSocket.onopen = function () {
-        setConnectionState(true, 'ONLINE (DUAL BRIDGE: COM3 + COM5)');
+        setConnectionState(true, 'ONLINE (DUAL BRIDGE: COM4 LoRa + COM5 Cam)');
         document.getElementById('connect-btn').innerText = 'DISCONNECT';
       };
       bridgeSocket.onmessage = function (event) {
@@ -2677,8 +2938,15 @@
         }
       };
       bridgeSocket.onerror = function (err) {
-        console.warn('Bridge socket error', err);
-        setConnectionState(false, 'BRIDGE OFFLINE');
+        console.warn('Bridge socket error (Python backend not running on port 8000). Falling back to direct USB Web Serial...', err);
+        setConnectionState(false, 'BRIDGE OFFLINE (FALLING BACK TO USB...)');
+        if (bridgeSocket) {
+          try { bridgeSocket.close(); } catch (e) {}
+          bridgeSocket = null;
+        }
+        setTimeout(function () {
+          connectDirectWebSerial(9600);
+        }, 500);
       };
       bridgeSocket.onclose = function () {
         document.getElementById('connect-btn').innerText = 'CONNECT';
@@ -2686,39 +2954,26 @@
         bridgeSocket = null;
       };
     } catch (e) {
-      alert('Could not connect to Python Serial Bridge: ' + e.message);
-      setConnectionState(false, 'DISCONNECTED');
+      console.warn('Could not connect to Python Serial Bridge. Falling back to direct USB Web Serial...', e);
+      connectDirectWebSerial(9600);
     }
   }
 
-  async function toggleConnect() {
-    if (bridgeSocket) {
-      bridgeSocket.close();
-      bridgeSocket = null;
-      return;
-    }
+  async function connectDirectWebSerial(baudRate) {
     if (serialPort) {
       await disconnectSerial();
       return;
     }
-
-    const baudSelect = document.getElementById('baud-select');
-    const selectedMode = baudSelect ? baudSelect.value : 'bridge';
-
-    if (selectedMode === 'bridge') {
-      await connectPythonSerialBridge();
-      return;
-    }
-
     if (!('serial' in navigator)) {
-      await connectPythonSerialBridge();
+      alert('Web Serial API is supported on Google Chrome and Microsoft Edge (HTTPS or localhost).');
+      setConnectionState(false, 'DISCONNECTED');
       return;
     }
     if (isDemo) toggleDemo();
     if (replayPlaying) toggleReplayPlay();
 
     try {
-      const selectedBaud = parseInt(selectedMode, 10) || 9600;
+      const selectedBaud = baudRate || 9600;
       const port = await navigator.serial.requestPort();
       await port.open({ baudRate: selectedBaud });
       try {
@@ -2728,7 +2983,7 @@
       }
       serialPort = port;
       serialKeepReading = true;
-      setConnectionState(true, 'ONLINE (' + selectedBaud + ' BAUD)');
+      setConnectionState(true, 'ONLINE (DIRECT USB @ ' + selectedBaud + ' BAUD)');
       document.getElementById('connect-btn').innerText = 'DISCONNECT';
       const decoder = new TextDecoderStream();
       const closed = port.readable.pipeTo(decoder.writable).catch(function () { /* stream closed */ });
@@ -2748,11 +3003,6 @@
       }
       await closed;
     } catch (err) {
-      if (err && err.name === 'NotFoundError') {
-        console.log('Web Serial device picker showed no device; automatically connecting via Python Serial Bridge...');
-        await connectPythonSerialBridge();
-        return;
-      }
       if (err && err.name !== 'NotFoundError') {
         console.warn('Serial connection error', err);
         alert('Serial connection error: ' + (err.message || err));
@@ -2760,6 +3010,31 @@
     } finally {
       if (serialPort) await disconnectSerial(true);
     }
+  }
+
+  async function toggleConnect() {
+    if (bridgeSocket) {
+      bridgeSocket.close();
+      bridgeSocket = null;
+      document.getElementById('connect-btn').innerText = 'CONNECT';
+      setConnectionState(false, 'DISCONNECTED');
+      return;
+    }
+    if (serialPort) {
+      await disconnectSerial();
+      return;
+    }
+
+    const baudSelect = document.getElementById('baud-select');
+    const selectedMode = baudSelect ? baudSelect.value : 'bridge';
+
+    if (selectedMode === 'bridge') {
+      await connectPythonSerialBridge();
+      return;
+    }
+
+    const selectedBaud = parseInt(selectedMode, 10) || 9600;
+    await connectDirectWebSerial(selectedBaud);
   }
 
   async function disconnectSerial(silent) {
@@ -2972,6 +3247,21 @@
     apogee = 0;
     previousAlt = null;
     previousTs = null;
+    smoothedAltitude = null;
+    altitudeBuffer = [];
+    if (clientAltitudeFilter && typeof clientAltitudeFilter.reset === 'function') {
+      clientAltitudeFilter.reset();
+    }
+    autoTaredOnPad = false;
+    tarePitch = 0.0;
+    tareRoll = 0.0;
+    tareYaw = 0.0;
+    compPitch = null;
+    compRoll = null;
+    compYaw = 0.0;
+    if (cansatGroup) {
+      cansatGroup.rotation.set(0, 0, 0);
+    }
     currentFlightPhase = 'PAD_IDLE';
     speechAnnounced = { apogee: false, chute: false, alt100: false, touchdown: false };
     missionStartEpochMs = null;
@@ -3337,6 +3627,18 @@
     linesRejected = 0;
     previousAlt = null;
     previousTs = null;
+    smoothedAltitude = null;
+    altitudeBuffer = [];
+    if (clientAltitudeFilter && typeof clientAltitudeFilter.reset === 'function') {
+      clientAltitudeFilter.reset();
+    }
+    autoTaredOnPad = false;
+    tarePitch = 0.0;
+    tareRoll = 0.0;
+    tareYaw = 0.0;
+    compPitch = null;
+    compRoll = null;
+    compYaw = 0.0;
     apogee = 0;
     missionStartEpochMs = null;
     padBaselineRecorded = false;

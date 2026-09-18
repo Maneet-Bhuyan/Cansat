@@ -1,7 +1,7 @@
 ================================================================================
                     COGNITIVE CANSAT MISSION - TASK TRACKER
                              File: tasks.txt
-                    Last Updated: 2026-09-13T21:18:00+05:30
+                    Last Updated: 2026-09-14T03:55:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -60,6 +60,12 @@ flashing microcontrollers, antenna RF matching, and mechanical recovery systems.
     - Verify ESP-NOW video reception on COM5 and LoRa telemetry on COM3 simultaneously.
     - Verify RSSI levels and frame completion rates in open ground.
 
+[ ] TASK HW-07: TELEMETRY TRANSMISSION RATE & ONBOARD PRE-FILTERING (LOW PRIORITY)
+    - Evaluate increasing LoRa telemetry transmission rate from 0.5 Hz (2.0s interval) to 1.0 Hz (1.0s interval) or 2.0 Hz (500ms interval).
+    - Analyze LoRa time-on-air (ToA) at SF7/BW 125kHz (~100-140ms per 70-byte packet) to ensure duty cycle margin (> 80% free airtime channel headroom).
+    - Implement airborne high-rate sensor polling (MPU6050 6-DOF IMU and BMP280 baro at 20-50 Hz) with sliding-window moving average or exponential pre-filtering on the flight controller before LoRa packet dispatch.
+    - Validate reduction in ground station attitude numerical integration error (theta = omega * delta_t), elimination of filter phase lag, and heightened state machine sensitivity during rapid rocket boost (< 3s) and apogee transitions.
+
 ================================================================================
 2. RISHI — DATA ANALYTICS, TELEMETRY ANALYSIS & FLIGHT DYNAMICS
 ================================================================================
@@ -112,13 +118,13 @@ bridges, high-performance UI rendering, and automated test suites.
     - Maintain Leaflet multi-layer map tracking (satellite tiles, live GPS marker, drift trail).
     - Reference files: index.html
 
-[ ] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE (FASTAPI WEBSOCKET)
-    - Manage backend/app.py dual-port serial ingestion:
-      * COM3: Primary LoRa Telemetry @ 9600 baud
-      * COM5: ESP32 Aerial Video Feed @ 460800 baud
-    - Ensure WebSocket server (/ws/serial) reconnect resilience and client disconnect cleanup.
-    - Test port auto-reconnect logic if hardware is unplugged and re-inserted.
-    - Reference files: backend/app.py, backend/standalone_server.ps1, launch.py
+[X] TASK WD-02: DUAL-PORT SERIAL HARDWARE BRIDGE & PYTHON CORE ENGINES (COMPLETED)
+    - Implemented production-grade backend/core/ modular architecture:
+      * backend/core/serial_manager.py: DualSerialManager managing COM3 LoRa @ 9600 & COM5 Video @ 460800.
+      * backend/core/kinematics.py: 1D Kalman Filter state estimation & 6-DOF IMU attitude fusion.
+      * backend/core/atmospheric.py: Atmospheric sounding physics (Dew Point, Air Density, ELR).
+    - Integrated with backend/app.py (/ws/serial, /hardware/ports, /analytics/kinematics, /analytics/sounding).
+    - Verified with 10/10 automated unit tests in tests/test_backend_core.py.
 
 [ ] TASK WD-03: AERIAL VIDEO HUD & LINK QUALITY MONITORING
     - Maintain Tile 12 (Live Aerial Camera Stream) and Tile 13 (Link Diagnostics) in index.html.
@@ -141,6 +147,14 @@ bridges, high-performance UI rendering, and automated test suites.
     - Verify one-click launch scripts work seamlessly on any Windows machine:
       * launch.py (activates .venv, launches Uvicorn backend, opens browser)
       * backend/standalone_server.ps1
+
+[X] TASK WD-06: GITHUB LINGUIST REPOSITORY CONFIGURATION (COMPLETED)
+    - Created .gitattributes with accurate Linguist classifications:
+      * Mark test_cases/*.csv as data fixtures (linguist-vendored)
+      * Mark index.html as single-page presentation viewport (linguist-vendored)
+      * Explicitly map *.ino and *.h firmware to C++ (linguist-language=C++)
+      * Mark docs/* and markdown logs as documentation (linguist-documentation)
+    - Guarantees repository language distribution accurately reflects core Python & C++ logic.
 
 ================================================================================
 4. GANESH — DOCUMENTATION, TECHNICAL ARCHITECTURE & RESEARCH PAPER

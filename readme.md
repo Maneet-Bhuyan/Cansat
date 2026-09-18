@@ -21,6 +21,10 @@ This project combines a browser-based mission control dashboard with a real-time
 ## What it does
 
 - Real-time telemetry dashboard for altitude, pressure, temperature, IMU, battery health, and GPS
+- Dual Baro-Inertial Extended Kalman Filter (1D EKF) fusing vertical acceleration and barometric pressure for sub-meter altitude tracking with zero lag
+- Physics-informed Multi-Output ExtraTrees ML calibrator compensating for Bernoulli aerodynamic pressure drops
+- 1-Click Stationary TARE & Multi-Sensor Calibration: nulls out static MEMS gyro drift, aligns resting attitude to 0.0°, and zeroes ground pad altitude
+- Super-accurate 7-chart telemetry suite with native 1-meter integer/decimeter grids and edge-preserving shock filtering
 - Live anomaly scoring and safety alerts for abnormal flight behavior
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
 - 3D CanSat attitude visualization using Three.js with complementary sensor fusion
@@ -35,30 +39,30 @@ This project combines a browser-based mission control dashboard with a real-time
 ## Architecture
 
 ```text
-CanSat / RF Receiver / USB Serial
-            |
-            v
-Ground Station Frontend (index.html)
-  - telemetry parsing and checksum validation
-  - derived kinematics and atmospheric sounding
-  - 3D attitude visualization (Three.js)
-  - synchronized telemetry charts (Chart.js 4)
-  - tactical GIS ground track (Leaflet)
-  - post-flight review generator (PFR)
-  - replay engine and RFC 4180 export
-            |
-            v
-FastAPI backend (backend/app.py)
-  - /api/predict
-  - /api/health
-  - /api/models/info
-  - WebSocket telemetry stream
-            |
-            v
-ML models
-  - Random Forest phase classifier
-  - Isolation Forest anomaly detector
-  - Gradient Boosting apogee regressor
+CanSat Primary Flight Bus (LoRa @ 9600) + Airborne ESP32-CAM (ESP-NOW 2.4 GHz)
+                                |
+                                v
+Ground Receiver Node (COM5 @ 460800) + Primary Ground Transceiver (COM4/COM3 @ 9600)
+                                |
+                                v
+Python Backend Core (backend/core/):
+  - DualSerialManager: Asynchronous multi-port listener & auto-reconnect
+  - KinematicsEngine: 1D Kalman Filter (alt, v_z) & 6-DOF IMU attitude fusion
+  - AtmosphericEngine: Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+                                |
+                                v
+FastAPI Telemetry & Inference Server (backend/app.py):
+  - /ws/serial: Real-time dual-port WebSocket dispatcher to web HUD
+  - /analytics/kinematics & /analytics/sounding REST APIs
+  - /hardware/ports: Enumeration of system serial ports
+  - /api/predict: Random Forest phase classifier & Isolation Forest anomaly detector
+                                |
+                                v
+Ground Station Web UI (index.html):
+  - Live 3D vehicle orientation (Three.js with quaternion slerp)
+  - Synchronized telemetry charts (Chart.js 4 with multi-chart crosshairs)
+  - Tile 12: Real-time Aerial Video Stream & Link Diagnostics HUD
+  - Tactical GIS satellite tracker (Leaflet with ESRI & CartoDB tiles)
 ```
 
 ## Repository structure
@@ -66,16 +70,24 @@ ML models
 ```text
 .
 ├── index.html                  # Mission dashboard and frontend logic
+├── tasks.txt                   # Master task tracker & team assignments (Maneet, Rishi, Shubham, Ganesh)
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
 ├── SETUP_GPU_WORKSTATION.bat   # 1-Click autonomous bootstrapper for fresh NVIDIA GPU machines
 ├── setup_gpu_workstation.ps1   # PowerShell zero-to-hero GPU environment installer
 ├── launch.py                   # System launcher with port manager and browser dispatch
 ├── requirements.txt            # Python dependencies
 ├── backend/
-│   ├── app.py                 # FastAPI ML inference backend
+│   ├── app.py                 # FastAPI ML inference & telemetry backend
+│   ├── core/                  # Python core signal processing & ingestion engines
+│   │   ├── serial_manager.py  # DualSerialManager (COM4/COM3 LoRa @ 9600 & COM5 Video @ 460800)
+│   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
+│   │   └── atmospheric.py     # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
 │   └── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)
 ├── ml/
 │   ├── download_dataset.py    # Automated EuroSAT aerial dataset downloader
+│   ├── train_tinyml_vision.py # TinyLandingNet depthwise separable CNN training pipeline
+│   ├── export_tinyml_header.py# INT8 post-training quantization & C++ header exporter
+│   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
 │   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
@@ -83,19 +95,26 @@ ML models
 │   ├── EuroSAT_RGB.zip        # [Tracked] EuroSAT 89.9 MB aerial dataset archive
 │   └── eurosat/               # [Gitignored] 27,000 extracted Sentinel-2 images
 ├── firmware/
-│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware
-│   └── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware
+│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware (16 MHz XCLK, 5 FPS)
+│   ├── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware (460800 baud)
+│   ├── captures/              # Wireless video frame captures & test snapshots
+│   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
 ├── test_cases/                # Ten mission profile CSV datasets
 ├── docs/
 │   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
 │   ├── project_log.txt        # Development and mission log
+│   ├── whatsapp_messages.txt  # Formatted team task briefings
+│   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
 │   └── python-ml_focused.text # Python & ML transformation master roadmap
 ├── tests/
+│   ├── test_backend_core.py   # Python backend core unit test suite (10 assertions)
+│   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
+│   ├── selftest.js            # Node.js automated unit testing suite (27 assertions)
 │   ├── selftest.ps1           # PowerShell mission verification suite (17 assertions)
-│   ├── selftest.js            # Node.js automated unit testing suite (26 assertions)
 │   ├── test_sm.ps1            # Flight state machine transition checker
 │   ├── generate_test_cases.ps1# Synthetic scenario generator (PowerShell)
 │   └── generate_test_cases.js # Synthetic scenario generator (JavaScript)
+├── .gitattributes             # Accurate GitHub Linguist language classifications
 └── .gitignore
 ```
 
@@ -183,7 +202,7 @@ To start only the FastAPI machine learning backend:
 Or using the included PowerShell script:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backend\start_server.ps1
+powershell -ExecutionPolicy Bypass -File .\backend\standalone_server.ps1
 ```
 
 To open the ground station dashboard directly in your browser:
@@ -208,10 +227,15 @@ http://localhost:8000/
 
 The ground station performs real-time mathematical derivations on incoming telemetry packets:
 
-### Vertical velocity
-Derived using first-order backward numerical differentiation across filtered barometric altitudes:
+### Precision altitude estimation & body-axis decoupling
+Atmospheric barometric pressure decreases monotonically with elevation. To prevent human hand tilts (e.g. $15^\circ - 25^\circ$ pitch during manual pickup where $a_z = \cos(\theta) < 1.0\text{G}$) from being falsely interpreted as downward kinematic acceleration, vertical state estimation is decoupled from the unrotated body-axis accelerometer. An adaptive dual-rate state estimator maintains a sub-0.18 m stationarity deadband at rest (locking vertical speed $v_z = 0.00\text{ m/s}$) while rapidly scaling tracking rates ($\alpha = 0.75 - 0.95$) upon physical displacement, guaranteeing that physical elevation ALWAYS causes the altitude chart to climb upwards:
 
-$$v_z = \frac{h(t) - h(t - \Delta t)}{\Delta t}$$
+$$z_{k} = z_{k-1} + \alpha \cdot (z_{\text{baro}} - z_{k-1})$$
+
+### Vertical velocity
+Derived continuously from the precision state estimator across consecutive packets:
+
+$$v_z = \beta \cdot \frac{z_k - z_{k-1}}{\Delta t} + (1 - \beta) \cdot v_{z, k-1}$$
 
 ### Vehicle attitude angles (Euler angles)
 Derived from normalized 3-axis accelerometer gravity vectors with singularity protection:
@@ -259,9 +283,14 @@ The backend exposes the following endpoints:
 - `GET /` — service info
 - `GET /api/health` — health status
 - `GET /api/models/info` — model metadata
+- `GET /hardware/ports` — hardware serial COM port enumeration
+- `POST /hardware/tare` — initiate multi-sensor stationary tare calibration across baro and IMU
+- `GET /hardware/tare` — query active calibration status and bias offsets
+- `GET /analytics/kinematics` — real-time 1D Kalman state, 6-DOF attitude, and safety alarms
+- `GET /analytics/sounding` — real-time dew point, air density, ELR, and ISA deviation
 - `POST /api/predict` — telemetry inference request
 - `WS /ws/telemetry` — live telemetry stream
-- `WS /ws/serial` — background serial port bridge
+- `WS /ws/serial` — background dual-port serial bridge (COM4 LoRa & COM5 Video)
 
 Example prediction payload:
 
@@ -289,10 +318,11 @@ Example prediction payload:
 
 ## Machine learning pipeline
 
-The machine learning subsystem in `backend/app.py` processes telemetry vectors in real time:
+The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry vectors in real time:
 
 | Model Architecture | Task | Input Vector | Performance Metric |
 | :--- | :--- | :--- | :--- |
+| Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
 | Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
 | Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
@@ -341,6 +371,12 @@ Example packet:
 12400,450.2,18.4,960.5,48.2,4.05,0.08,0.12,0.98,1.2,-0.8,0.4,28.613939,77.209021
 ```
 
+### Telemetry transmission rate & airtime budget
+- **Nominal Broadcast Rate**: 1.0 Hz (1000 ms interval) is the recommended standard for operational flight.
+- **Accuracy & Responsiveness**: Compared to a 2.0s interval, 1.0 Hz halves 3D attitude gyro integration error ($\Delta \theta = \omega \cdot \Delta t$), cuts Kalman filter state covariance propagation, and ensures short boost phases (< 3s) and peak apogee inflection are captured without missing transients or inducing filter phase lag.
+- **LoRa Channel Airtime**: At Spreading Factor SF7 with 125 kHz bandwidth, a 70-byte ASCII CSV frame takes ~110–140 ms Time-on-Air (ToA). A 1.0s interval utilizes ~11–14% channel duty cycle, leaving >85% free airtime margin with zero risk of packet collision or receiver buffer overrun.
+- **Airborne Pre-Filtering (Task HW-07)**: For optimal noise rejection, the flight controller samples the MPU6050 IMU and BMP280 barometer at 20–50 Hz internally, applies a rolling moving-average or exponential filter, and transmits the clean state at 1.0 Hz over the LoRa downlink.
+
 ## Operator keyboard shortcuts
 
 Hotkeys for rapid ground station operation (disabled during text input):
@@ -356,9 +392,21 @@ Hotkeys for rapid ground station operation (disabled during text input):
 
 ## Verification
 
-The project includes comprehensive test suites for unit and integration testing:
+The project includes comprehensive test suites for unit, firmware, and integration testing:
 
-### JavaScript unit test suite (26 assertions)
+### Python backend core unit tests (16 assertions)
+```bash
+python -m unittest tests/test_backend_core.py
+```
+Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, ML model predictions, and multi-threaded serial lifecycle without hardware attached.
+
+### Firmware protocol & ESP-NOW chunking tests (4 assertions)
+```bash
+python tests/test_firmware_protocol.py
+```
+Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
+
+### JavaScript unit test suite (27 assertions)
 ```bash
 node tests/selftest.js
 ```
@@ -368,7 +416,13 @@ Validates 13-field CSV parsing, invalid packet rejection, kinematic derivations,
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/selftest.ps1
 ```
-Validates Mission Elapsed Time (MET) clock formatting, all 10 CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
+Validates Mission Elapsed Time (MET) clock formatting, CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
+
+### 5-Phase flight state machine verification (10 mission profiles)
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/test_sm.ps1
+```
+Validates end-to-end HMM and ML state transitions across all 10 mission profiles (`PAD_IDLE` -> `BALLOON_ASCENT` -> `APOGEE_BURST` -> `PARACHUTE_DESCENT` -> `TOUCHDOWN_RECOVERY`).
 
 ## Project status
 

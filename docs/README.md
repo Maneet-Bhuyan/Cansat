@@ -8,3 +8,5 @@ This directory contains the engineering manuals, technical architecture formulat
 * **[`python-ml_focused.text`](file:///e:/Cansat/docs/python-ml_focused.text)**: The master architectural roadmap and tracking document detailing the transition to a Python-dominated backend and TinyML edge vision pipeline.
 * **[`GPU_TRAINING_INSTRUCTIONS.md`](file:///e:/Cansat/docs/GPU_TRAINING_INSTRUCTIONS.md)**: Standalone instructions and automated setup guide for the Antigravity agent running on the secondary NVIDIA GPU workstation.
 * **[`project_log.txt`](file:///e:/Cansat/docs/project_log.txt)**: Chronological mission and development journal recording all implemented milestones, bugs resolved, and verification results.
+* **[`whatsapp_messages.txt`](file:///e:/Cansat/docs/whatsapp_messages.txt)**: Formatted role-specific task briefings for team members (Maneet, Rishi, Shubham, Ganesh).
+* **[`tasks.txt`](file:///e:/Cansat/tasks.txt)**: Master task tracker with assigned deliverables, status badges, and milestone checklists.

@@ -75,9 +75,9 @@ T06  | Ten Flight Scenario Replay Datasets     | Simulation       | DONE       |
 T07  | Autonomous Windows Launcher             | DevOps           | DONE       | START_MISSION_CONTROL.bat, launch.py
 T08  | 4th-Year CSE Technical Documentation   | Documentation    | DONE       | explaination.txt, readme.md
 -----+-----------------------------------------+------------------+------------+-----------------------------------
-P01  | Python Dual-Port Serial Manager         | Backend (Core)   | PENDING(Maneet as I have the module on me)    | backend/core/serial_manager.py
-P02  | Python Kinematics & EKF Fusion Engine   | Backend (Core)   | PENDING    | backend/core/kinematics.py
-P03  | MetPy Atmospheric Sounding Engine       | Backend (Core)   | PENDING    | backend/core/atmospheric.py
+P01  | Python Dual-Port Serial Manager         | Backend (Core)   | DONE       | backend/core/serial_manager.py
+P02  | Python Kinematics & EKF Fusion Engine   | Backend (Core)   | DONE       | backend/core/kinematics.py
+P03  | MetPy Atmospheric Sounding Engine       | Backend (Core)   | DONE       | backend/core/atmospheric.py
 P04  | TinyML Vision Dataset Loader & Script   | TinyML / Vision  | DONE       | ml/download_dataset.py (27,000 verified)
 P05  | MobileNet Aerial Model Training Script  | TinyML / Vision  | DONE       | ml/train_tinyml_vision.py
 P06  | INT8 Quantization & C++ Header Export   | TinyML / Vision  | DONE       | ml/export_tinyml_header.py
@@ -86,7 +86,7 @@ P08  | ESP32 Ground Receiver Firmware          | Firmware (GCS)   | DONE       |
 P09  | Multimodal Landing Safety Index (MLSI)  | ML (Fusion)      | PENDING    | backend/ml/multimodal_fusion.py
 P10  | Camera HUD & Video Tile on Web UI       | Frontend HUD     | DONE       | index.html (tile-camera)
 P11  | Research Notebooks (MetPy & Ablation)   | Science / Eval(Rishi - Data analytics)   | PENDING    | analysis/*.ipynb
-P12  | GitHub Linguist Vendoring Override      | Repository       | PENDING    | .gitattributes
+P12  | GitHub Linguist Vendoring Override      | Repository       | DONE       | .gitattributes
 
 --------------------------------------------------------------------------------
 4. MODEL SPECIFICATIONS & HARDWARE BUDGET

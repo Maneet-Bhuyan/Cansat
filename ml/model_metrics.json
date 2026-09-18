@@ -86,5 +86,33 @@
     "algorithm": "GradientBoostingRegressor",
     "r2_score": 0.9951052761940025,
     "rmse_meters": 24.167643268856494
+  },
+  "sensor_calibrator": {
+    "model_type": "ExtraTreesRegressor",
+    "features": [
+      "raw_altitude",
+      "pressure",
+      "temp",
+      "humidity",
+      "ax",
+      "ay",
+      "az",
+      "accelMag",
+      "gx",
+      "gy",
+      "gz",
+      "gyroMag",
+      "vSpd_raw"
+    ],
+    "targets": [
+      "calibrated_altitude",
+      "calibrated_vspd"
+    ],
+    "altitude_r2": 1.0,
+    "altitude_rmse_m": 0.804,
+    "altitude_mae_m": 0.499,
+    "vspd_r2": 0.9516,
+    "vspd_rmse_mps": 1.109,
+    "vspd_mae_mps": 0.513
   }
 }
