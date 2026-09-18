@@ -985,3 +985,37 @@ FILES MODIFIED / CREATED:
    - Zero test regressions; clean Git workspace ready for push.
 
 STATUS: TINYLANDINGNET SPATIAL GRID & REMOTE SENSING PIPELINE OPERATIONAL
+
+--------------------------------------------------------------------------------
+RISHI (ANALYTICS) BRANCH AUDIT, VERIFICATION & MERGE
+--------------------------------------------------------------------------------
+
+[2026-09-18T21:30:00Z] ACTION: Audited, tested, fast-forward merged, and verified Rishi's analytics branch (origin/rishi/analytics) into main.
+BRANCH MERGED: origin/rishi/analytics -> main (commit e10a13e2)
+FILES ADDED / MODIFIED:
+  - ml/flight_analyzer.py (NEW: automated post-flight telemetry analysis, Savitzky-Golay filtering, publication 4-panel generation, and PDF reports)
+  - backend/flight_analyzer.py (NEW: import alias and CLI wrapper)
+  - ml/train_touchdown_prognostics.py (NEW: GradientBoostingRegressor quantile loss TTD predictor and aerodynamic descent regime classifier)
+  - ml/saved_models/touchdown_prognostics.joblib (NEW: serialized touchdown prognostics model artifact)
+  - analysis/Touchdown_Prognostics_and_Descent_Analytics.ipynb (NEW: flight dynamics and descent analytics Jupyter notebook)
+  - analysis/figures/ (NEW: 5 analytical figures including correlation matrix, aerodynamic drag profile, model benchmark, feature importance, and regime confusion matrix)
+  - test_cases/cansat_eval_ablation.ipynb (NEW: sensor suite ablation study and touchdown localization notebook)
+  - reports/ (NEW: generated individual 4-panel PNGs, sounding plots, G-shock curves, and publication PDF reports for all 10 missions, plus all_missions_summary.csv)
+  - .gitignore (MODIFIED: added data/EuroSAT_RGB/ extraction ignore rule)
+  - readme.md (MODIFIED: documented flight analyzer CLI, touchdown prognostics, and ablation study)
+  - tasks.txt (MODIFIED: marked tasks DA-01, DA-02, and DA-05 completed)
+  - docs/project_log.txt (MODIFIED)
+
+1. CODE INTEGRITY AUDIT:
+   - Zero modifications to core ground station files: index.html, backend/app.py, backend/core/, and firmware/ were untouched.
+   - Fast-forward merge verified: rishi/analytics was based directly on main (commit 98eea53e). Zero conflicts.
+   - Rigorous automated tests executed post-merge:
+     * node tests/selftest.js (27/27 PASS)
+     * powershell tests/selftest.ps1 (17/17 PASS)
+     * powershell tests/test_sm.ps1 (10/10 PASS)
+     * python -m unittest tests/test_backend_core.py tests/test_firmware_protocol.py (16/16 PASS)
+     * python ml/flight_analyzer.py (verified report generation)
+     * python -c "import ml.train_touchdown_prognostics" (verified clean import)
+   - Total automated assertions passing: 70/70.
+
+STATUS: RISHI ANALYTICS PIPELINE MERGED & VERIFIED SUCCESSFULLY ON MAIN

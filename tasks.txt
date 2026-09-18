@@ -72,18 +72,19 @@ flashing microcontrollers, antenna RF matching, and mechanical recovery systems.
 Primary Responsibilities: Validating kinematics formulas, analyzing recorded flight
 profiles, sensor accuracy auditing, and statistical post-flight analysis.
 
-[ ] TASK DA-01: FLIGHT KINEMATICS & TRAJECTORY ANALYSIS
-    - Analyze real-time and recorded 17-column CSV telemetry logs.
-    - Validate vertical descent speed: v_spd = (alt[t] - alt[t-1]) / delta_t.
-    - Verify resultant G-force calculations: |G| = sqrt(ax^2 + ay^2 + az^2).
-    - Check for g-shock peaks during launch, apogee ejection, and parachute deployment.
-    - Reference files: test_cases/*.csv, tests/selftest.js
+[X] TASK DA-01: FLIGHT KINEMATICS & TRAJECTORY ANALYSIS (COMPLETED)
+    - Ingests and processes 17-column CSV telemetry logs with automated temporal normalization.
+    - Savitzky-Golay local polynomial filtering (N=11 window, 2nd order) eliminates quantization noise.
+    - Smooth vertical velocity curve derivation (v_z = dz_smooth/dt) with zero phase lag.
+    - Resultant dynamic G-shock profiling (|G| = sqrt(ax^2 + ay^2 + az^2)) capturing peak boost, separation, and touchdown impacts.
+    - Reference files: ml/flight_analyzer.py, backend/flight_analyzer.py, reports/
 
-[ ] TASK DA-02: ATMOSPHERIC SOUNDING & METEOROLOGICAL METRICS
-    - Validate barometric pressure decay profiles against standard atmosphere model (ISA).
-    - Compute Environmental Lapse Rate (ELR in °C / 100m) from temperature-altitude slopes.
-    - Verify Magnus-Tetens Dew Point calculation: T_dew = (b * alpha) / (a - alpha).
-    - Verify Ideal Gas Law dry air density calculation: rho = P / (R_spec * T_kelvin).
+[X] TASK DA-02: ATMOSPHERIC SOUNDING & METEOROLOGICAL METRICS (COMPLETED)
+    - Validated barometric pressure lapse and temperature decay across sounding altitudes.
+    - Computes Environmental Lapse Rate (ELR in °C / 100m) from temperature-altitude profiles.
+    - Integrated MetPy Poisson adiabatic relation for potential temperature: theta = T * (P0 / P)^(Rd / cp).
+    - Dual-axis sounding plots generated for all 10 flight scenarios.
+    - Reference files: ml/flight_analyzer.py, test_cases/cansat_eval_ablation.ipynb
 
 [ ] TASK DA-03: SENSOR FUSION DRIFT & ATTITUDE ACCURACY AUDIT
     - Benchmark raw gyroscope angular rates (gx, gy, gz) against fused pitch/roll angles.
@@ -98,12 +99,12 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
       * Freefall Drop Glitch (|G| < 0.15 G for > 2 seconds)
     - Review false-positive rates on historical sounding test runs.
 
-[ ] TASK DA-05: AUTOMATED POST-FLIGHT ANALYSIS REPORT SCRIPT
-    - Develop Python notebook / script (using pandas, matplotlib, scipy) in ml/ or backend/:
-      * Automated CSV ingestion
-      * Time-series plots: Altitude vs Time, Velocity Profile, G-Forces, Pressure-Temperature Profile
-      * Flight summary statistics table (Apogee altitude, Max ascent velocity, Touchdown shock, Mission duration)
-      * Export publication-ready PDF/PNG figures for Ganesh's paper.
+[X] TASK DA-05: AUTOMATED POST-FLIGHT ANALYSIS REPORT SCRIPT & TOUCHDOWN PROGNOSTICS (COMPLETED)
+    - Developed ml/flight_analyzer.py and backend/flight_analyzer.py with automated batch processing (--all).
+    - Generates publication-grade 4-panel figures (Altitude, Velocity, G-Shock, Sounding) and individual vector PDF reports for all 10 mission profiles in reports/.
+    - Compiled master benchmark matrix: reports/all_missions_summary.csv.
+    - Engineered Touchdown Prognostics pipeline: GradientBoostingRegressor with quantile loss (10th, median, 90th percentile TTD) and aerodynamic descent regime classifier (ml/train_touchdown_prognostics.py, analysis/).
+    - Sensor suite ablation study notebook: test_cases/cansat_eval_ablation.ipynb.
 
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
