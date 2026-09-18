@@ -1216,3 +1216,57 @@ AUTOMATED TEST VERIFICATION:
   - Total automated assertions passing: 70/70.
 
 STATUS: WIDESCREEN DASHBOARD & EMOJI-FREE UI VERIFIED AND READY FOR DEPLOYMENT
+
+--------------------------------------------------------------------------------
+MISSION CONTROL WEB DASHBOARD: 3D RADIAL SPHERICAL ZOOM, TYPOGRAPHIC UNIFORMITY,
+3-COLUMN BALANCED TILES & COGNITIVE AI RECONTEXTUALIZATION
+--------------------------------------------------------------------------------
+
+[2026-09-19T01:25:00Z] ACTION: Implemented true radial spherical 3D zoom for the CanSat digital twin, standardized button typography across all 45 UI elements and dynamic states, balanced chart tiles into a 3-column responsive grid, repositioned the 3D model tile adjacent to the gyroscope, and overhauled the Cognitive AI modal for plain-English human comprehension and balloon-release mission operations.
+FILES MODIFIED:
+  - index.html (3D zoom controls & radial math, button CSS/JS, 3-col grid, tile ordering, AI modal)
+  - tasks.txt (Updated TASK WD-01 to document 3D zoom overhaul, button uniformity, and AI hub)
+  - readme.md (Updated feature list with 3D radial zoom, 3-col layout, and Cognitive AI hub)
+  - docs/architecture_and_ml.txt (Updated Table 5 to document dual-mode rocket/balloon forecasting)
+  - docs/project_log.txt (This entry)
+
+ARCHITECTURAL & VISUAL ENHANCEMENTS:
+  1. True Radial Spherical 3D Zoom Overhaul:
+     - Diagnosed single-axis Z drift bug: previous handler simply executed `camera.position.z += deltaY * 0.004`, which caused an asymmetric diagonal shearing drift rather than optical magnification because the camera is placed at isometric studio coordinates (3.8, 2.8, 5.0).
+     - Replaced with true spherical radial zoom: calculates the Euclidean norm vector r = sqrt(x^2 + y^2 + z^2) and uniformly scales all 3 coordinate axes via `camera.position.setLength(newDist)` with `camera.lookAt(0, 0, 0)`.
+     - Clamped zoom distance safely between 2.8 and 10.5 units to prevent camera clipping inside the CanSat mesh or drifting out of field of view.
+     - Added an interactive on-canvas glassmorphic control pill (`+`, `−`, `RESET`) in the bottom-right corner of the 3D tile.
+     - Added double-click on 3D canvas to immediately restore the default isometric studio perspective.
+     - Exposed `window.zoom3D(factor)` and `window.reset3DView()` globally.
+  2. Complete Button Typography & Font Size Uniformity:
+     - Standardized all sidebar action buttons (`.btn-action-primary`, `.btn-action-outline`, `.btn-action-light`) to uniform 13px Inter bold uppercase (`font-size: 13px !important; font-family: 'Inter', sans-serif !important; font-weight: 700 !important;`).
+     - Standardized Baud Rate dropdown (`#baud-select`) to 13px Inter font-semibold (`font-size: 13px !important; font-weight: 600 !important;`) matching the CONNECT button above it.
+     - Standardized header utility buttons (`VOICE ON`, `MAPS`, `PFR REPORT`) to uniform `text-xs font-bold` (12px).
+     - Standardized field recovery button (`OPEN COORDINATES IN GOOGLE MAPS`) from former 11px micro-text to uniform `text-xs font-bold`.
+     - Standardized camera tile `3x3 GRID` button from former 10px to matching `text-xs font-bold`.
+     - Fixed dynamic JS handlers (`triggerStationaryTare()`, `tareAttitude()`, `toggleTacticalCamGrid()`) so clicking them no longer overwrites typography with discordant monospace classes.
+     - Maintained zero emojis across the entire UI.
+  3. 3-Column Balanced Tile Grid & 3D Model Repositioning:
+     - Transitioned telemetry chart tiles to an ergonomically balanced 3-column layout (`grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5`), eliminating excessive vertical page scrolling while providing generous chart canvas space.
+     - Placed the CanSat 3D Model tile (`tile-model`) on Row 2 directly next to the XYZ Gyroscope (`tile-gyro`) on its right, shifting environmental (pressure/temp, humidity) and GPS navigation tiles smoothly into Row 3.
+     - Retained full-width (`lg:col-span-2` / `xl:col-span-2`) formatting for the live camera stream and raw serial telemetry bus console.
+  4. Human-Centered Cognitive AI Intelligence Hub:
+     - Removed `(PLAIN ENGLISH)` text from modal badge for clean aerospace styling.
+     - Implemented automatic inference evaluation upon modal open, providing immediate flight status feedback without requiring additional clicks.
+     - Added executive flight summary with color-coded operational health/safety badges.
+     - Structured 4 transparent machine learning architecture attribution cards:
+       * Flight Phase Brain: Random Forest Classifier (98.56% test accuracy, 3,602 flight samples).
+       * Flight Safety Guard: Isolation Forest (PyOD) unsupervised multi-sensor anomaly detector.
+       * Balloon Ascent & Drop Forecast: Gradient Boosting Regressor adapted for balloon release missions (tracks vertical climb rate, tether wind catenary drift angle, countdown ETA to target release altitude, and emergency auto-drop failsafe trigger).
+       * Landing Safety Vision: TinyLandingNet depthwise separable CNN scoring terrain safety (4-tier SLAI).
+     - Added 1-click fallback guidance (`Start Demo Flight Now`) if opened before telemetry connection.
+
+AUTOMATED TEST VERIFICATION:
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - powershell tests/test_sm.ps1: 10/10 PASS
+  - python -m unittest tests/test_backend_core.py tests/test_firmware_protocol.py: 16/16 PASS
+  - Total automated assertions passing: 70/70.
+
+STATUS: 3D RADIAL ZOOM, TYPOGRAPHY, BALANCED GRID & AI HUB COMPLETE AND VERIFIED
+

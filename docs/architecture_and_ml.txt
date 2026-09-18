@@ -151,10 +151,13 @@ Evaluated using the full Python ML pipeline (Random Forest + PyOD Isolation Fore
 
 
 ================================================================================
-TABLE 5: APOGEE & TRAJECTORY REGRESSOR EVALUATION METRICS
+TABLE 5: APOGEE & BALLOON ASCENT/DROP REGRESSOR EVALUATION METRICS
 ================================================================================
 Model: GradientBoostingRegressor (n_estimators=80, max_depth=4, learning_rate=0.1)
-Task: Predicts peak apogee altitude (meters) from early ascent kinematics.
+Task: Dual-mode trajectory forecasting:
+  1) Rocket Sounding Missions: Predicts peak apogee altitude (meters) from early boost kinematics.
+  2) Balloon Release Missions: Computes vertical climb rate, wind tether catenary drift angle,
+     time-to-drop countdown ETA to target release altitude, and emergency auto-drop failsafe triggers.
 
 +---------------------------------------+---------------------+---------------------+
 | Measuring Factor / Metric             | Value               | Quality Standard    |

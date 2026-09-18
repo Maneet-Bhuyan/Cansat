@@ -1,7 +1,7 @@
 ================================================================================
-                    COGNITIVE CANSAT MISSION - TASK TRACKER
-                             File: tasks.txt
-                     Last Updated: 2026-09-19T00:25:00+05:30
+                     COGNITIVE CANSAT MISSION - TASK TRACKER
+                              File: tasks.txt
+                      Last Updated: 2026-09-19T01:30:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -66,9 +66,9 @@ flashing microcontrollers, antenna RF matching, and mechanical recovery systems.
     - Implement airborne high-rate sensor polling (MPU6050 6-DOF IMU and BMP280 baro at 20-50 Hz) with sliding-window moving average or exponential pre-filtering on the flight controller before LoRa packet dispatch.
     - Validate reduction in ground station attitude numerical integration error (theta = omega * delta_t), elimination of filter phase lag, and heightened state machine sensitivity during rapid rocket boost (< 3s) and apogee transitions.
 
-================================================================================
+===============================================================================
 2. RISHI — DATA ANALYTICS, TELEMETRY ANALYSIS & FLIGHT DYNAMICS
-================================================================================
+===============================================================================
 Primary Responsibilities: Validating kinematics formulas, analyzing recorded flight
 profiles, sensor accuracy auditing, and statistical post-flight analysis.
 
@@ -112,12 +112,24 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
 Primary Responsibilities: Ground station web interface, WebSocket server, serial
 bridges, high-performance UI rendering, and automated test suites.
 
-[X] TASK WD-01: MISSION CONTROL WEB DASHBOARD MAINTENANCE & WIDESCREEN GRID POLISH (COMPLETED)
+[X] TASK WD-01: MISSION CONTROL WEB DASHBOARD: 3-COL BALANCED GRID, 3D RADIAL ZOOM & COGNITIVE AI (COMPLETED)
     - Maintained and optimized index.html (aerospace dark-mode dashboard).
-    - Upgraded dashboard grid from cramped 4-column layout to expansive 2-column widescreen format (grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4), doubling horizontal tile canvas width (~750px on 1080p, ~600px on laptop) for effortless visual tracking.
-    - Sized card panels at 290px height with 3:1 widescreen aspect ratio for time series charts, 3D model, tactical GIS map, and live aerial camera feed.
-    - Arranged all 13 tiles into 6 thematic pairs (Kinematics, Altimetry, Dynamics/Sounding, Spatial/3D, GIS/Telemetry, Camera/RF Link) with the 13-field raw serial telemetry matrix spanning full width (lg:col-span-2) across the bottom.
-    - Completely eradicated all emojis across the application, replacing every occurrence with clean, high-precision SVG aerospace icons (Lucide/Heroicons standard) and standardized engineering tags.
+    - Upgraded dashboard grid to an ergonomically balanced 3-column layout (`grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5`), eliminating excessive vertical scrolling while retaining generous widescreen tile canvas space.
+    - Reordered tiles logically: placed CanSat 3D Model (`tile-model`) on Row 2 directly next to the XYZ Gyroscope (`tile-gyro`) on its right, shifting environmental and GPS navigation tiles smoothly.
+    - Overhauled 3D CanSat Model Zoom Functionality:
+      * Diagnosed single-axis Z drift bug (`camera.position.z += deltaY`) which sheared viewing perspective diagonally.
+      * Implemented true 3D spherical radial zoom that scales the full Euclidean distance vector ($X, Y, Z$) simultaneously via `camera.position.setLength(newDist)` and `camera.lookAt(0, 0, 0)`, keeping the CanSat centered.
+      * Added distance clamping ($2.8 \le r \le 10.5$) to prevent mesh clipping or losing the model.
+      * Added on-canvas glassmorphic control pill (`+`, `−`, `RESET`), trackpad/mousewheel radial zoom, and double-click canvas reset.
+    - Forensic Button Typography & Font Size Uniformity:
+      * Standardized all 45 buttons and dropdowns to uniform typography: 13px Inter bold uppercase for sidebar action controls, 12px font-bold for utility/header/modal buttons.
+      * Fixed dynamic JS handlers (`triggerStationaryTare()`, `tareAttitude()`, `toggleTacticalCamGrid()`) to preserve font size and styling upon click.
+      * Completely eradicated all emojis across the entire web application, replacing them with clean SVG aerospace icons and technical text.
+    - Human-Centered Cognitive AI Intelligence Hub:
+      * Removed `(PLAIN ENGLISH)` text from header badge.
+      * Built clear executive flight summary with color-coded health/safety badges and automatic inference on modal open.
+      * Clearly mapped all 4 underlying ML models: Random Forest (Flight Phase), PyOD Isolation Forest (Anomaly Guard), Gradient Boosting (Balloon Ascent & Drop Forecast / Rocket Apogee), and TinyLandingNet CNN (Landing Safety Vision).
+      * Recontextualized apogee prediction for balloon release missions: tracks vertical climb rate, catenary wind drift angle, drop timer countdown ETA, and failsafe auto-drop triggers.
     - Verified 100% automated test compliance (70/70 assertions passing across 5 test suites).
     - Reference files: index.html
 

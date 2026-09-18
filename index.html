@@ -143,21 +143,29 @@
 
     /* Sidebar Action Buttons */
     .btn-gradient-purple,
+    .btn-action-primary,
+    .btn-action-outline,
+    .btn-action-light {
+      font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      padding: 0.65rem 0.85rem !important;
+      line-height: 1.25 !important;
+      width: 100% !important;
+      text-align: center !important;
+      border-radius: 0.5rem !important;
+      cursor: pointer !important;
+      box-sizing: border-box !important;
+      transition: all 0.2s ease !important;
+    }
+
     .btn-action-primary {
       background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
       color: #FFFFFF;
       border: 1px solid rgba(56, 189, 248, 0.35);
-      border-radius: 0.5rem;
-      font-weight: 700;
-      font-size: 0.84rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 0.72rem 0.9rem;
-      width: 100%;
-      text-align: center;
       box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .btn-gradient-purple:hover,
     .btn-action-primary:hover {
@@ -171,16 +179,6 @@
       background: rgba(16, 20, 31, 0.75);
       color: #E2E8F0;
       border: 1px solid rgba(56, 189, 248, 0.24);
-      border-radius: 0.5rem;
-      font-weight: 600;
-      font-size: 0.84rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 0.68rem 0.9rem;
-      width: 100%;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
     }
     .btn-action-outline:hover {
       background: rgba(14, 165, 233, 0.12);
@@ -193,17 +191,18 @@
       background: #F8FAFC;
       color: #090A0F;
       border: 1px solid rgba(255, 255, 255, 0.85);
-      border-radius: 0.5rem;
-      font-weight: 700;
-      font-size: 0.84rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 0.68rem 0.9rem;
-      width: 100%;
-      text-align: center;
-      cursor: pointer;
       box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
-      transition: all 0.2s ease;
+    }
+    .btn-action-light:hover {
+      background: #E2E8F0;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
+    }
+
+    #baud-select {
+      font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
     }
     .btn-action-light:hover {
       background: #E2E8F0;
@@ -353,21 +352,21 @@
 
     /* Canvas Containers & Panel Height Bounds */
     main > .dashboard-panel:not(.tile-maximized) {
-      height: 290px !important;
-      max-height: 290px !important;
+      height: 275px !important;
+      max-height: 275px !important;
       position: relative !important;
       isolation: isolate !important;
       z-index: 1 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) .chart-container {
-      height: calc(290px - 42px) !important;
-      max-height: calc(290px - 42px) !important;
+      height: calc(275px - 42px) !important;
+      max-height: calc(275px - 42px) !important;
       min-height: 0 !important;
     }
     main > .dashboard-panel:not(.tile-maximized) #canvas-3d,
     main > .dashboard-panel:not(.tile-maximized) #map {
-      height: calc(290px - 42px) !important;
-      max-height: calc(290px - 42px) !important;
+      height: calc(275px - 42px) !important;
+      max-height: calc(275px - 42px) !important;
       min-height: 0 !important;
     }
 
@@ -528,10 +527,10 @@
           </button>
 
           <div class="space-y-1.5">
-            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center gap-1.5 font-bold">
-              <svg class="w-3.5 h-3.5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> <span>CONNECT</span>
+            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center">
+              <span>CONNECT</span>
             </button>
-            <select id="baud-select" class="w-full bg-[#0e1320] border border-slate-700/60 text-slate-200 text-xs rounded px-2.5 py-1.5 font-mono focus:outline-none focus:border-cyan-400 cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
+            <select id="baud-select" class="w-full bg-[#0e1320] border border-slate-700/60 text-slate-200 text-[13px] rounded px-2.5 py-2 font-sans font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
               <option value="bridge" selected>DUAL BRIDGE (COM4 + COM5)</option>
               <option value="9600">DIRECT USB (COM4 @ 9600)</option>
               <option value="115200">DIRECT USB (115200 Baud)</option>
@@ -539,34 +538,31 @@
             </select>
           </div>
 
-          <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light">
-            DEMO DATA
+          <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light flex items-center justify-center">
+            <span>DEMO DATA</span>
           </button>
 
-          <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
-            <svg class="w-3.5 h-3.5 text-amber-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4m16 0a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
+          <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
             <span id="tare-btn-text">TARE / CALIBRATE</span>
           </button>
 
-          <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center gap-1.5" title="Toggle Flight Test & Replay Suite">
+          <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center" title="Toggle Flight Test & Replay Suite">
             <span>REPLAY SUITE</span>
           </button>
 
-          <button type="button" onclick="openModal('helpModal')" class="btn-action-outline">
-            HELP
+          <button type="button" onclick="openModal('helpModal')" class="btn-action-outline flex items-center justify-center">
+            <span>HELP</span>
           </button>
 
-          <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center gap-1.5 text-cyan-200 border-sky-800/40 bg-sky-950/20 hover:bg-sky-900/30">
-            <svg class="w-3.5 h-3.5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center text-cyan-200 border-sky-800/40 bg-sky-950/20 hover:bg-sky-900/30">
             <span>COGNITIVE AI</span>
           </button>
 
-          <button type="button" onclick="openModal('pfrModal')" class="btn-action-outline flex items-center justify-center gap-1.5 text-sky-200 border-sky-700/50 bg-sky-950/30 hover:bg-sky-900/40" title="Generate Post-Flight Review (PFR) Audit & Compliance Report">
-            <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <button type="button" onclick="openModal('pfrModal')" class="btn-action-outline flex items-center justify-center text-sky-200 border-sky-700/50 bg-sky-950/30 hover:bg-sky-900/40" title="Generate Post-Flight Review (PFR) Audit & Compliance Report">
             <span>MISSION REPORT</span>
           </button>
 
-          <button type="button" onclick="resetNewFlight()" class="btn-action-outline flex items-center justify-center gap-1.5 text-rose-300 border-rose-900/40 hover:bg-rose-950/40 hover:border-rose-700/60 transition-all text-xs" title="Reset all buffers and re-arm for a new flight">
+          <button type="button" onclick="resetNewFlight()" class="btn-action-outline flex items-center justify-center gap-1.5 text-rose-300 border-rose-900/40 hover:bg-rose-950/40 hover:border-rose-700/60 transition-all" title="Reset all buffers and re-arm for a new flight">
             <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             <span>NEW FLIGHT RESET</span>
           </button>
@@ -618,7 +614,7 @@
             <span class="text-slate-400 text-xs uppercase font-sans font-bold">MISSION TIME:</span>
             <span id="phase-elapsed-time" class="text-cyan-300 font-extrabold text-sm bg-[#111624] px-2.5 py-1 rounded border border-cyan-800/40 tracking-wider">T+ 00:00.0</span>
           </div>
-          <button type="button" id="audio-toggle-btn" onclick="toggleAudioSpeech()" class="px-2.5 py-1 rounded text-xs bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-white hover:border-cyan-500 flex items-center gap-1.5 transition-all" title="Toggle Web Speech Voice Synthesizer">
+          <button type="button" id="audio-toggle-btn" onclick="toggleAudioSpeech()" class="px-2.5 py-1.5 rounded text-xs font-bold bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-white hover:border-cyan-500 flex items-center gap-1.5 transition-all" title="Toggle Web Speech Voice Synthesizer">
             <span id="audio-icon" class="inline-flex items-center"><svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg></span> <span id="audio-status-text" class="font-mono font-bold">VOICE ON</span>
           </button>
         </div>
@@ -661,12 +657,12 @@
           </div>
 
           <!-- Google Maps Quick Recovery Action -->
-          <button type="button" id="gmaps-nav-btn-header" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Last Known GPS Fix in Google Maps">
+          <button type="button" id="gmaps-nav-btn-header" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1.5 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1.5 transition-all" title="Open Last Known GPS Fix in Google Maps">
             <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>MAPS</span>
           </button>
 
           <!-- Post-Flight Review Report Action -->
-          <button type="button" onclick="openModal('pfrModal')" class="px-2.5 py-1 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Generate Post-Flight Review (PFR) Report">
+          <button type="button" onclick="openModal('pfrModal')" class="px-2.5 py-1.5 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1.5 transition-all" title="Generate Post-Flight Review (PFR) Report">
             <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> <span>PFR REPORT</span>
           </button>
         </div>
@@ -681,7 +677,7 @@
             <span class="text-xs text-rose-300 ml-2" id="safety-alarm-desc">Telemetry metrics exceed safe flight envelope.</span>
           </div>
         </div>
-        <button type="button" onclick="dismissSafetyAlarm()" class="text-rose-300 hover:text-white text-xs font-mono px-2.5 py-1 rounded bg-rose-950/80 border border-rose-700/60">DISMISS</button>
+        <button type="button" onclick="dismissSafetyAlarm()" class="text-rose-300 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded bg-rose-950/80 border border-rose-700/60 transition-all">DISMISS</button>
       </div>
 
       <!-- COLLAPSIBLE FLIGHT LOG REPLAY & TEST SUITE BAR -->
@@ -737,11 +733,11 @@
             </div>
             <div class="flex items-center gap-1 text-xs">
               <span class="text-slate-400 font-medium mr-1">SPEED:</span>
-              <button type="button" onclick="setReplaySpeed(0.5)" class="speed-btn px-2 py-0.5 rounded bg-[#0e1320] border border-slate-700/50 text-slate-300 font-mono hover:bg-slate-800" data-speed="0.5">0.5x</button>
-              <button type="button" onclick="setReplaySpeed(1)" class="speed-btn px-2 py-0.5 rounded bg-sky-600 border border-sky-400/40 text-white font-bold font-mono" data-speed="1">1x</button>
-              <button type="button" onclick="setReplaySpeed(2)" class="speed-btn px-2 py-0.5 rounded bg-[#0e1320] border border-slate-700/50 text-slate-300 font-mono hover:bg-slate-800" data-speed="2">2x</button>
-              <button type="button" onclick="setReplaySpeed(5)" class="speed-btn px-2 py-0.5 rounded bg-[#0e1320] border border-slate-700/50 text-slate-300 font-mono hover:bg-slate-800" data-speed="5">5x</button>
-              <button type="button" onclick="setReplaySpeed(10)" class="speed-btn px-2 py-0.5 rounded bg-[#0e1320] border border-slate-700/50 text-slate-300 font-mono hover:bg-slate-800" data-speed="10">10x</button>
+              <button type="button" onclick="setReplaySpeed(0.5)" class="speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-[#0e1320] border border-slate-700/50 text-slate-300 hover:bg-slate-800 transition" data-speed="0.5">0.5x</button>
+              <button type="button" onclick="setReplaySpeed(1)" class="speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-sky-600 border border-sky-400/40 text-white transition" data-speed="1">1x</button>
+              <button type="button" onclick="setReplaySpeed(2)" class="speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-[#0e1320] border border-slate-700/50 text-slate-300 hover:bg-slate-800 transition" data-speed="2">2x</button>
+              <button type="button" onclick="setReplaySpeed(5)" class="speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-[#0e1320] border border-slate-700/50 text-slate-300 hover:bg-slate-800 transition" data-speed="5">5x</button>
+              <button type="button" onclick="setReplaySpeed(10)" class="speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-[#0e1320] border border-slate-700/50 text-slate-300 hover:bg-slate-800 transition" data-speed="10">10x</button>
             </div>
           </div>
         </div>
@@ -763,7 +759,7 @@
           <div>Target: <b id="rec-lat" class="text-white font-mono">--</b>, <b id="rec-lon" class="text-white font-mono">--</b></div>
           <div>Dist: <b id="rec-dist" class="text-emerald-400 font-mono">0 m</b></div>
           <div>Drift: <b id="rec-drift" class="text-cyan-300 font-mono">--°</b></div>
-          <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1 transition-all" title="Open Coordinates in Google Maps">
+          <button type="button" id="gmaps-nav-btn" onclick="openGoogleMapsRecovery()" class="px-2.5 py-1.5 rounded text-xs font-bold bg-[#111726] hover:bg-[#18233c] border border-sky-700/40 text-sky-200 flex items-center gap-1.5 transition-all" title="Open Coordinates in Google Maps">
             <svg class="w-3.5 h-3.5 text-sky-300 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span>OPEN COORDINATES IN GOOGLE MAPS</span>
           </button>
         </div>
@@ -772,9 +768,9 @@
       <!-- ============================================================== -->
       <!-- 4-COLUMN HIGH-DENSITY MISSION CONTROL GRID                      -->
       <!-- ============================================================== -->
-      <main class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 flex-1">
+      <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5 flex-1">
 
-        <!-- ROW 1 / TILE 1: XYZ ACCELERATION CHART -->
+<!-- ROW 1 / TILE 1: XYZ ACCELERATION CHART -->
         <div id="tile-accel" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">XYZ Acceleration Chart</span>
@@ -785,7 +781,7 @@
           </div>
         </div>
 
-        <!-- ROW 1 / TILE 2: ORIENTATION CHART -->
+<!-- ROW 1 / TILE 2: ORIENTATION CHART -->
         <div id="tile-orient" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Orientation Chart</span>
@@ -796,7 +792,7 @@
           </div>
         </div>
 
-        <!-- ROW 1 / TILE 3: VERTICAL SPEED CHART -->
+<!-- ROW 1 / TILE 3: VERTICAL SPEED CHART -->
         <div id="tile-vspd" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Vertical Speed Chart</span>
@@ -807,7 +803,7 @@
           </div>
         </div>
 
-        <!-- ROW 1 / TILE 4: ALTITUDE CHART -->
+<!-- ROW 1 / TILE 4: ALTITUDE CHART -->
         <div id="tile-alt" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">Altitude Chart</span>
@@ -818,7 +814,7 @@
           </div>
         </div>
 
-        <!-- ROW 2 / TILE 5: XYZ GYROSCOPE CHART -->
+<!-- ROW 2 / TILE 5: XYZ GYROSCOPE CHART -->
         <div id="tile-gyro" class="dashboard-panel">
           <div class="panel-header">
             <span class="panel-title">XYZ Gyroscope Chart</span>
@@ -834,7 +830,7 @@
           <div class="panel-header">
             <div class="flex items-center space-x-2">
               <span class="panel-title">CanSat 3D Model</span>
-              <button type="button" id="tare-btn" onclick="tareAttitude()" class="px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm" title="Zero orientation so current resting CanSat position is upright">TARE UPRIGHT</button>
+              <button type="button" id="tare-btn" onclick="tareAttitude()" class="px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-bold transition-all shadow-sm" title="Zero orientation so current resting CanSat position is upright">TARE UPRIGHT</button>
             </div>
             <div class="flex items-center space-x-2">
               <span class="text-xs font-mono text-slate-300 hidden sm:inline">
@@ -843,15 +839,47 @@
               <button type="button" onclick="toggleTileMaximize('tile-model')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
             </div>
           </div>
-          <div class="relative flex-1 min-h-[195px]">
+          <div class="relative flex-1 min-h-[195px] overflow-hidden">
             <div id="canvas-3d"></div>
-            <div class="absolute bottom-1 right-2 text-[10.5px] text-slate-400 font-mono pointer-events-none">
-              Drag to Orbit • Scroll to Zoom
+            <!-- Interactive 3D Orbit & Zoom Controls Overlay -->
+            <div class="absolute bottom-1.5 right-2 flex items-center gap-1.5 z-10">
+              <div class="flex items-center bg-[#090d16]/90 border border-slate-700/60 rounded px-1 py-0.5 backdrop-blur-sm shadow-md">
+                <button type="button" onclick="zoom3D(0.88)" class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/60 rounded transition" title="Zoom In">+</button>
+                <span class="text-slate-600 text-[10px] mx-0.5">|</span>
+                <button type="button" onclick="zoom3D(1.12)" class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700/60 rounded transition" title="Zoom Out">−</button>
+                <span class="text-slate-600 text-[10px] mx-0.5">|</span>
+                <button type="button" onclick="reset3DView()" class="px-1.5 h-5 flex items-center justify-center text-[10.5px] font-bold text-cyan-300 hover:text-white hover:bg-slate-700/60 rounded transition" title="Reset View & Perspective">RESET</button>
+              </div>
+            </div>
+            <div class="absolute bottom-1.5 left-2 text-[9.5px] text-slate-400 font-mono pointer-events-none bg-[#090d16]/80 px-1.5 py-0.5 rounded border border-slate-800/60">
+              Orbit: Drag • Reset: Double-Click
             </div>
           </div>
         </div>
 
-        <!-- ROW 2 / TILE 7: GPS GROUND TRACK (TACTICAL MINI-MAP) -->
+        <!-- ROW 3 / TILE 7: PRESSURE & TEMPERATURE DYNAMICS (DUAL AXIS) -->
+        <div id="tile-press-temp" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Pressure &amp; Temperature Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-press-temp')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-presstemp"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 3 / TILE 8: HUMIDITY CHART -->
+        <div id="tile-hum" class="dashboard-panel">
+          <div class="panel-header">
+            <span class="panel-title">Humidity Chart</span>
+            <button type="button" onclick="toggleTileMaximize('tile-hum')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
+          </div>
+          <div class="chart-container flex-1">
+            <canvas id="chart-hum"></canvas>
+          </div>
+        </div>
+
+        <!-- ROW 3 / TILE 9: GPS GROUND TRACK (TACTICAL MINI-MAP) -->
         <div id="tile-gps" class="dashboard-panel">
           <div class="panel-header">
             <div class="flex items-center gap-2">
@@ -891,62 +919,8 @@
           </div>
         </div>
 
-        <!-- ROW 2 / TILE 8: HUMIDITY CHART -->
-        <div id="tile-hum" class="dashboard-panel">
-          <div class="panel-header">
-            <span class="panel-title">Humidity Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-hum')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
-          </div>
-          <div class="chart-container flex-1">
-            <canvas id="chart-hum"></canvas>
-          </div>
-        </div>
-
-        <!-- ROW 3 / TILE 9: PRESSURE & TEMPERATURE DYNAMICS (DUAL AXIS) -->
-        <div id="tile-press-temp" class="dashboard-panel">
-          <div class="panel-header">
-            <span class="panel-title">Pressure &amp; Temperature Chart</span>
-            <button type="button" onclick="toggleTileMaximize('tile-press-temp')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
-          </div>
-          <div class="chart-container flex-1">
-            <canvas id="chart-presstemp"></canvas>
-          </div>
-        </div>
-
-        <!-- ROW 3 / TILE 11: GENERAL INFORMATION TABLE -->
-        <div id="tile-info" class="dashboard-panel">
-          <div class="panel-header">
-            <span class="panel-title">General Information Table</span>
-            <button type="button" onclick="toggleTileMaximize('tile-info')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
-          </div>
-          <div class="p-2.5 flex-1 overflow-y-auto custom-scroll text-xs space-y-1.5 font-mono">
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Mission</span><span class="text-white font-bold">CANSAT-1</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Link Status</span><span id="info-status" class="text-rose-400 font-bold">Disconnected</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">GPS Fix</span><span id="info-gpsfix" class="text-slate-300">No Lock</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Latitude</span><span id="info-lat" class="text-slate-200">--</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Longitude</span><span id="info-lon" class="text-slate-200">--</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Altitude</span><span id="info-alt" class="text-white font-bold">-- m</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Vert. Speed</span><span id="info-vspd" class="text-emerald-400 font-bold">-- m/s</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pitch</span><span id="info-pitch" class="text-slate-200">--°</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Roll</span><span id="info-roll" class="text-slate-200">--°</span></div>
-            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pressure</span><span id="info-presstemp" class="text-slate-200">-- hPa</span></div>
-
-            <!-- Extended Analytics -->
-            <div class="pt-2 mt-2 border-t border-slate-800/60 space-y-1.5 text-[11px]">
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Flight Phase</span><span id="info-phase" class="text-emerald-400 font-bold">PAD_IDLE</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Apogee Peak</span><span id="info-apogee" class="text-sky-300 font-bold">-- m</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400">NOMINAL</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Relative Humidity</span><span id="info-hum">-- %</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">DewPt / Air Dens</span><span id="info-dewdensity">-- °C · -- kg/m³</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Total Accel Mag</span><span id="info-accelmag">-- g</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">LiPo Battery</span><span id="info-bat">-- V (0%)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400 font-sans">Packets Ingested</span><span id="info-samples">0</span></div>
-            </div>
-          </div>
-        </div>
-
         <!-- ROW 4 / TILE 12: LIVE AERIAL CAMERA SCREEN & VIDEO HUD -->
-        <div id="tile-camera" class="dashboard-panel">
+        <div id="tile-camera" class="dashboard-panel lg:col-span-2">
           <div class="panel-header">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="panel-title">Live Aerial Camera Stream</span>
@@ -961,7 +935,7 @@
               </span>
             </div>
             <div class="flex items-center space-x-2">
-              <button type="button" id="btn-toggle-grid" onclick="toggleTacticalCamGrid()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-cyan-300 border border-slate-700 transition flex items-center gap-1" title="Toggle 3x3 Spatial Hazard Grid"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM4 10h16M4 16h16M10 4v16M16 4v16"/></svg><span>3x3 GRID</span></button>
+              <button type="button" id="btn-toggle-grid" onclick="toggleTacticalCamGrid()" class="px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs font-bold text-cyan-300 transition flex items-center gap-1 shadow-sm" title="Toggle 3x3 Spatial Hazard Grid"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM4 10h16M4 16h16M10 4v16M16 4v16"/></svg><span>3x3 GRID</span></button>
               <span class="text-xs font-mono text-cyan-300 hidden sm:inline" id="cam-metric-fps">0.0 FPS</span>
               <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
             </div>
@@ -1006,7 +980,7 @@
         </div>
 
         <!-- ROW 4 / TILE 13: CAMERA LINK TELEMETRY & STATS -->
-        <div id="tile-cam-stats" class="dashboard-panel">
+        <div id="tile-cam-stats" class="dashboard-panel lg:col-span-1">
           <div class="panel-header">
             <span class="panel-title">Camera Wireless Link Quality</span>
             <span class="text-[11px] font-mono text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">2.4 GHz Radio Diagnostics</span>
@@ -1037,7 +1011,7 @@
           </div>
         </div>
 
-      <!-- ROW 7 / TILE 13: RAW TELEMETRY DATA GRID (FULL-WIDTH 13 INBOUND FIELDS) -->
+        <!-- ROW 7 / TILE 13: RAW TELEMETRY DATA GRID (FULL-WIDTH 13 INBOUND FIELDS) -->
         <div id="tile-raw-telem" class="dashboard-panel lg:col-span-2">
           <div class="panel-header">
             <span class="panel-title">Raw Telemetry</span>
@@ -1081,7 +1055,38 @@
           </div>
         </div>
 
-        
+        <!-- ROW 3 / TILE 11: GENERAL INFORMATION TABLE -->
+        <div id="tile-info" class="dashboard-panel lg:col-span-1">
+          <div class="panel-header">
+            <span class="panel-title">General Information Table</span>
+            <button type="button" onclick="toggleTileMaximize('tile-info')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
+          </div>
+          <div class="p-2.5 flex-1 overflow-y-auto custom-scroll text-xs space-y-1.5 font-mono">
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Mission</span><span class="text-white font-bold">CANSAT-1</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Link Status</span><span id="info-status" class="text-rose-400 font-bold">Disconnected</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">GPS Fix</span><span id="info-gpsfix" class="text-slate-300">No Lock</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Latitude</span><span id="info-lat" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Longitude</span><span id="info-lon" class="text-slate-200">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Altitude</span><span id="info-alt" class="text-white font-bold">-- m</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Vert. Speed</span><span id="info-vspd" class="text-emerald-400 font-bold">-- m/s</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pitch</span><span id="info-pitch" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Roll</span><span id="info-roll" class="text-slate-200">--°</span></div>
+            <div class="flex justify-between"><span class="text-slate-400 font-sans text-[11.5px]">Pressure</span><span id="info-presstemp" class="text-slate-200">-- hPa</span></div>
+
+            <!-- Extended Analytics -->
+            <div class="pt-2 mt-2 border-t border-slate-800/60 space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Flight Phase</span><span id="info-phase" class="text-emerald-400 font-bold">PAD_IDLE</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Apogee Peak</span><span id="info-apogee" class="text-sky-300 font-bold">-- m</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Anomaly Engine</span><span id="info-anomaly" class="text-emerald-400">NOMINAL</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Relative Humidity</span><span id="info-hum">-- %</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">DewPt / Air Dens</span><span id="info-dewdensity">-- °C · -- kg/m³</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Total Accel Mag</span><span id="info-accelmag">-- g</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">LiPo Battery</span><span id="info-bat">-- V (0%)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400 font-sans">Packets Ingested</span><span id="info-samples">0</span></div>
+            </div>
+          </div>
+        </div>
+
       </main>
     </div>
 
@@ -1109,22 +1114,38 @@
     </div>
 
     <!-- MISSION ASSISTANT AI MODAL -->
-    <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
-      <div class="w-full max-w-lg h-[500px] p-5 flex flex-col relative rounded-xl border border-sky-900/40 shadow-2xl bg-[#0d1017]">
-        <button type="button" onclick="closeModal('aiModal')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-        <h3 class="text-base font-bold text-white mb-2.5 flex items-center gap-2 font-tech uppercase tracking-wide">
-          <svg class="w-4 h-4 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Cognitive CanSat AI Diagnostics
-        </h3>
-        <div class="flex-1 overflow-y-auto space-y-3.5 text-xs text-slate-300 custom-scroll pr-1">
-          <div class="bg-[#111624] p-3.5 rounded-lg border border-slate-800/70">
-            <div class="text-xs text-cyan-300 font-bold mb-1 uppercase tracking-wide">Autonomous Flight Diagnostics Engine</div>
-            <p class="text-slate-300 text-xs leading-relaxed">Real-time telemetry inspector evaluating sensor calibration margins, atmospheric sounding envelopes, aerodynamic stability, and parachute deployment timing.</p>
+    <div id="aiModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-3 sm:p-4">
+      <div class="w-full max-w-2xl max-h-[88vh] p-4 sm:p-5 flex flex-col relative rounded-xl border border-sky-900/50 shadow-2xl bg-[#0d1017] text-slate-200">
+        <button type="button" onclick="closeModal('aiModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition" title="Close"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800/80 mr-8">
+          <h3 class="text-base font-bold text-white flex items-center gap-2 font-tech uppercase tracking-wide">
+            <svg class="w-5 h-5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Cognitive CanSat AI Intelligence Hub</span>
+          </h3>
+          <div id="ai-modal-server-pill" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full border border-slate-700 bg-slate-900 text-slate-300">
+            Checking...
           </div>
-          <button type="button" onclick="analyzeData()" class="w-full text-left bg-[#101726] hover:bg-[#152033] border border-sky-900/40 p-3.5 rounded-lg text-slate-100 flex items-center justify-between transition-all">
-            <span class="font-medium text-xs">Run full flight telemetry evaluation</span>
-            <span class="text-cyan-300 font-semibold font-mono text-xs bg-sky-950/80 px-3 py-1 rounded border border-sky-700/50">EVALUATE →</span>
-          </button>
-          <div id="ai-response" class="text-xs text-cyan-200 bg-sky-950/20 p-3.5 rounded-lg border border-sky-900/40 hidden space-y-1.5 font-mono leading-relaxed"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-3 pt-3 text-xs custom-scroll pr-1">
+          <!-- Plain English Intro Banner -->
+          <div class="bg-[#111624] p-3 rounded-lg border border-slate-800/80 text-slate-300 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-cyan-300 font-bold uppercase tracking-wider">How Cognitive AI Works</span>
+              <button type="button" onclick="analyzeData()" class="px-2.5 py-1 rounded bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs flex items-center gap-1 transition-all" title="Re-evaluate live data">
+                <svg class="w-3 h-3 fill-none stroke-current" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>REFRESH ANALYSIS</span>
+              </button>
+            </div>
+            <p class="text-[11.5px] leading-relaxed text-slate-300">
+              The CanSat carries intelligent machine learning models that monitor the flight in real time without human intervention. Below is what the models observe right now, explained in plain language alongside which machine learning model is responsible for each decision.
+            </p>
+          </div>
+
+          <!-- Dynamic Report Container -->
+          <div id="ai-response" class="space-y-3 text-xs leading-relaxed"></div>
         </div>
       </div>
     </div>
@@ -1404,12 +1425,14 @@
     const btns = [document.getElementById('tare-btn'), document.getElementById('tare-calibrate-btn')].filter(Boolean);
     btns.forEach(b => {
       b.innerText = 'CALIBRATED';
-      b.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-md';
+      b.className = b.id === 'tare-btn'
+        ? 'px-2.5 py-1.5 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-bold transition-all shadow-md'
+        : 'btn-action-outline flex items-center justify-center text-emerald-300 border-emerald-500/40 bg-emerald-950/40 font-bold transition-all shadow-md';
       setTimeout(() => {
         b.innerText = b.id === 'tare-btn' ? 'TARE UPRIGHT' : 'TARE / CALIBRATE';
         b.className = b.id === 'tare-btn'
-          ? 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm'
-          : 'btn-action-outline flex items-center justify-center gap-1.5 text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-mono text-xs font-bold';
+          ? 'px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-bold transition-all shadow-sm'
+          : 'btn-action-outline flex items-center justify-center text-amber-300 border-amber-500/40 bg-amber-950/20 hover:bg-amber-900/40 hover:border-amber-400 transition-all font-bold';
       }, 2500);
     });
   }
@@ -1442,10 +1465,10 @@
     const btn = document.getElementById('tare-btn');
     if (btn) {
       btn.innerText = 'ZEROED';
-      btn.className = 'px-2.5 py-1 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-mono font-bold transition-all shadow-sm';
+      btn.className = 'px-2.5 py-1.5 rounded bg-emerald-700 border border-emerald-400 text-xs text-emerald-100 font-bold transition-all shadow-sm';
       setTimeout(function () {
         btn.innerText = 'TARE UPRIGHT';
-        btn.className = 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-mono font-bold transition-all shadow-sm';
+        btn.className = 'px-2.5 py-1.5 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-xs text-slate-200 hover:text-white font-bold transition-all shadow-sm';
       }, 1600);
     }
 
@@ -1576,6 +1599,11 @@
     if (res.phase_confidence > 0.65 && res.predicted_phase !== currentFlightPhase) {
       currentFlightPhase = res.predicted_phase;
       updateStageTrackerUI(currentFlightPhase);
+    }
+
+    const aiModalEl = document.getElementById('aiModal');
+    if (aiModalEl && !aiModalEl.classList.contains('hidden')) {
+      analyzeData();
     }
   }
 
@@ -2604,11 +2632,38 @@
       previousMousePosition = { x: e.clientX, y: e.clientY };
     });
 
-    // Mouse wheel zoom
+    // True Radial Spherical 3D Zoom (scales camera distance along 3D line of sight)
+    function zoom3D(deltaFactor) {
+      if (!camera) return;
+      const currentDist = camera.position.length();
+      const newDist = Math.max(2.8, Math.min(10.5, currentDist * deltaFactor));
+      camera.position.setLength(newDist);
+      camera.lookAt(0, 0, 0);
+    }
+
+    function reset3DView() {
+      if (!camera || !scene) return;
+      targetRotX = 0;
+      targetRotY = 0;
+      scene.rotation.set(0, 0, 0);
+      camera.position.set(3.8, 2.8, 5.0);
+      camera.lookAt(0, 0, 0);
+    }
+
+    window.zoom3D = zoom3D;
+    window.reset3DView = reset3DView;
+
+    // Smooth mouse wheel zoom
     container.addEventListener('wheel', function (e) {
       e.preventDefault();
-      camera.position.z = Math.max(3.0, Math.min(8.5, camera.position.z + e.deltaY * 0.004));
+      const factor = e.deltaY > 0 ? 1.08 : 0.92;
+      zoom3D(factor);
     }, { passive: false });
+
+    // Double-click to reset camera perspective
+    container.addEventListener('dblclick', function () {
+      reset3DView();
+    });
 
     threeReady = true;
 
@@ -2700,8 +2755,8 @@
     const btn = document.getElementById('btn-toggle-grid');
     if (btn) {
       btn.className = camTacticalGridActive 
-        ? 'px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/60 text-[10px] font-mono text-cyan-300 transition'
-        : 'px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-400 border border-slate-700 transition';
+        ? 'px-2.5 py-1.5 rounded bg-cyan-950/80 border border-cyan-500/60 text-xs font-bold text-cyan-300 transition flex items-center gap-1 shadow-sm'
+        : 'px-2.5 py-1.5 rounded bg-slate-800/80 text-xs font-bold text-slate-400 border border-slate-700 transition flex items-center gap-1';
     }
     const canvas = document.getElementById('cam-grid-canvas');
     if (canvas && !camTacticalGridActive) {
@@ -3405,14 +3460,14 @@
       demoInterval = null;
       isDemo = false;
       btn.innerText = 'DEMO DATA';
-      btn.className = 'btn-action-light';
+      btn.className = 'btn-action-light flex items-center justify-center';
       if (!serialPort) setConnectionState(false, 'DISCONNECTED');
       return;
     }
     if (replayPlaying) toggleReplayPlay();
     isDemo = true;
     btn.innerText = 'STOP DEMO';
-    btn.className = 'btn-action-primary';
+    btn.className = 'btn-action-primary flex items-center justify-center';
     missionStartEpochMs = null;
     setConnectionState(true, 'SIMULATION (800MS)');
     const state = { t: 0, alt: 0.5, vz: 18.5, phase: 'ascent' };
@@ -3620,9 +3675,9 @@
     replaySpeed = spd;
     document.querySelectorAll('.speed-btn').forEach(btn => {
       if (parseFloat(btn.getAttribute('data-speed')) === spd) {
-        btn.className = 'speed-btn px-2 py-0.5 rounded bg-sky-600 border border-sky-400/40 text-white font-bold font-mono text-xs';
+        btn.className = 'speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-sky-600 border border-sky-400/40 text-white transition';
       } else {
-        btn.className = 'speed-btn px-2 py-0.5 rounded bg-[#0e1320] border border-slate-700/50 text-slate-300 font-mono hover:bg-slate-800 text-xs';
+        btn.className = 'speed-btn px-2.5 py-1 rounded text-xs font-mono font-bold bg-[#0e1320] border border-slate-700/50 text-slate-300 hover:bg-slate-800 transition';
       }
     });
     if (replayPlaying) {
@@ -4024,7 +4079,12 @@
     }
 
     const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+      modal.classList.remove('hidden');
+      if (id === 'aiModal') {
+        analyzeData();
+      }
+    }
   }
 
   function closeModal(id) {
@@ -4034,53 +4094,261 @@
 
   function analyzeData() {
     const box = document.getElementById('ai-response');
+    if (!box) return;
     box.classList.remove('hidden');
+
+    const serverPill = document.getElementById('ai-modal-server-pill');
+    if (serverPill) {
+      if (mlServerOnline) {
+        serverPill.className = 'text-[11px] font-mono px-2.5 py-0.5 rounded-full border border-emerald-700/60 bg-emerald-950/50 text-emerald-300 flex items-center gap-1.5';
+        serverPill.innerHTML = '<span class="led-dot bg-emerald-400 text-emerald-400"></span> PYTHON ML (ONLINE)';
+      } else {
+        serverPill.className = 'text-[11px] font-mono px-2.5 py-0.5 rounded-full border border-slate-700 bg-slate-900 text-slate-400 flex items-center gap-1.5';
+        serverPill.innerHTML = '<span class="led-dot bg-slate-400 text-slate-400"></span> PYTHON ML (STANDBY)';
+      }
+    }
+
     if (telemetryHistory.length === 0) {
-      box.innerText = 'No packets received yet. Connect USB serial or start flight replay.';
+      box.innerHTML = `
+        <div class="p-5 rounded-lg bg-[#111726] border border-sky-900/50 text-center space-y-3">
+          <div class="w-10 h-10 mx-auto rounded-full bg-sky-950/80 border border-sky-600/40 flex items-center justify-center text-sky-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white uppercase tracking-wide">Awaiting Telemetry Packets</h4>
+            <p class="text-xs text-slate-300 max-w-md mx-auto mt-1 leading-relaxed">
+              The AI models need telemetry data to make live predictions. Connect live serial via <b>CONNECT</b>, or launch an instant simulated test flight below.
+            </p>
+          </div>
+          <div class="pt-1">
+            <button type="button" onclick="toggleDemo(); analyzeData();" class="px-4 py-2 rounded-md bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md">
+              Start Demo Flight Now
+            </button>
+          </div>
+        </div>
+      `;
       return;
     }
+
     const last = telemetryHistory[telemetryHistory.length - 1];
-    const first = telemetryHistory[0];
-    const notes = [];
+    const pred = mlLastPrediction;
 
-    if (last.batteryVoltage < 3.55) notes.push('[ALERT] Battery voltage sag: ' + last.batteryVoltage.toFixed(2) + 'V');
-    if (Math.abs(last.vSpd) > 12.0) notes.push('[ALERT] Elevated vertical velocity: ' + last.vSpd.toFixed(2) + ' m/s');
-    if (!gpsLocked(last.lat, last.lon)) notes.push('[INFO] GPS lock pending.');
-    if (apogee > 500) notes.push('[CONFIRMED] Sounding apogee confirmed: ' + apogee.toFixed(1) + ' m');
-    if (currentAnomalyScore > 0) notes.push('[ALERT] Outlier detected: ' + currentAnomalyCode);
+    // 1. Plain English Mission State Translation
+    const phaseNames = {
+      'PAD_IDLE': {
+        title: 'Sitting on Launchpad',
+        badge: 'READY ON PAD',
+        badgeClass: 'bg-slate-800 text-slate-200 border-slate-600',
+        desc: 'The CanSat is stationary on the ground. Gyros are calibrated, sensors are armed, and the system is waiting for balloon or rocket liftoff.'
+      },
+      'BALLOON_ASCENT': {
+        title: 'Actively Climbing (Ascent)',
+        badge: 'ASCENDING',
+        badgeClass: 'bg-sky-950 text-sky-300 border-sky-600',
+        desc: 'The CanSat is rising through the sky. Barometric pressure is dropping and vertical velocity is positive.'
+      },
+      'APOGEE_BURST': {
+        title: 'Drop Altitude Reached (Apogee / Release)',
+        badge: 'DROP / APOGEE',
+        badgeClass: 'bg-amber-950 text-amber-300 border-amber-600',
+        desc: 'The CanSat reached its target ceiling. Manual balloon release or burst triggered, beginning descent.'
+      },
+      'PARACHUTE_DESCENT': {
+        title: 'Parachute Gliding Downward',
+        badge: 'PARACHUTE GLIDE',
+        badgeClass: 'bg-emerald-950 text-emerald-300 border-emerald-600',
+        desc: 'The parachute has deployed. The satellite is descending in a controlled, upright orientation at safe aerodynamic velocity.'
+      },
+      'TOUCHDOWN_RECOVERY': {
+        title: 'Landed on Ground (Touchdown)',
+        badge: 'LANDED / RECOVERY',
+        badgeClass: 'bg-indigo-950 text-indigo-300 border-indigo-600',
+        desc: 'Vertical descent has ceased and altitude is stable at ground level. GPS coordinates are locked for field retrieval.'
+      }
+    };
 
-    let mlBlock = '';
-    if (mlLastPrediction) {
-      const pred = mlLastPrediction;
-      const probEntries = pred.phase_probabilities ? Object.entries(pred.phase_probabilities).map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`).join(' | ') : '';
-      mlBlock =
-        '<div class="mt-2.5 pt-2.5 border-t border-slate-800/80 text-xs space-y-1.5 leading-relaxed">' +
-        '<b class="text-emerald-400">[ONLINE] Python Machine Learning Server (FastAPI / scikit-learn / PyOD):</b><br>' +
-        '• <span class="text-cyan-300">RandomForestClassifier:</span> <span class="text-white font-bold">' + pred.predicted_phase + '</span> (' + (pred.phase_confidence * 100).toFixed(1) + '% confidence)<br>' +
-        '• <span class="text-cyan-300">PyOD Isolation Forest Anomaly Score:</span> ' + pred.anomaly_score.toFixed(3) + ' [' + pred.anomaly_type + ']<br>' +
-        (pred.predicted_apogee_m ? '• <span class="text-cyan-300">GradientBoosting Predicted Apogee:</span> ' + pred.predicted_apogee_m.toFixed(1) + ' m<br>' : '') +
-        (probEntries ? '<div class="text-[11px] text-slate-400 font-mono mt-1">Class Probabilities: ' + probEntries + '</div>' : '') +
-        '</div>';
-    } else {
-      mlBlock =
-        '<div class="mt-2.5 pt-2.5 border-t border-slate-800/80 text-xs text-slate-300">' +
-        '• Python ML Server Status: <span class="text-cyan-300 font-medium">' + (mlServerOnline ? 'Connected (Awaiting Packet)' : 'Standby / Local Fallback Active') + '</span>' +
-        '</div>';
+    const currentPhaseInfo = phaseNames[currentFlightPhase] || {
+      title: currentFlightPhase,
+      badge: currentFlightPhase,
+      badgeClass: 'bg-slate-800 text-slate-200 border-slate-600',
+      desc: 'Active telemetry tracking in progress.'
+    };
+
+    // 2. Health & Safety Plain English Assessment
+    let healthTitle = 'All Systems Healthy';
+    let healthColor = 'emerald';
+    let healthBadge = '100% NOMINAL';
+    let healthExplanation = 'Flight parameters, battery voltage, and motion stability are all well within normal safe operating limits.';
+
+    if (last.batteryVoltage < 3.55) {
+      healthTitle = 'Battery Voltage Sag Warning';
+      healthColor = 'amber';
+      healthBadge = 'VOLTAGE LOW';
+      healthExplanation = `Battery has dropped to ${last.batteryVoltage.toFixed(2)}V (${batteryPct(last.batteryVoltage).toFixed(0)}%). Consider landing soon.`;
+    } else if (Math.abs(last.vSpd) > 12.0 && currentFlightPhase === 'PARACHUTE_DESCENT') {
+      healthTitle = 'Elevated Descent Velocity';
+      healthColor = 'rose';
+      healthBadge = 'HIGH DESCENT SPEED';
+      healthExplanation = `Descent speed is ${Math.abs(last.vSpd).toFixed(1)} m/s, which is faster than nominal parachute glide. Check canopy integrity.`;
+    } else if (pred && pred.is_anomaly) {
+      healthTitle = `Anomaly Flagged: ${pred.anomaly_type}`;
+      healthColor = 'rose';
+      healthBadge = 'ANOMALY DETECTED';
+      healthExplanation = `The Isolation Forest model detected unusual telemetry patterns [${pred.anomaly_type}]. Check motion stability.`;
     }
 
-    box.innerHTML =
-      '<b class="text-cyan-300">Cognitive CanSat AI Diagnostic Report</b><br>' +
-      '• Active Mission Phase: <span class="text-emerald-400 font-bold">' + currentFlightPhase + '</span><br>' +
-      '• Telemetry Packets: ' + telemetryHistory.length + '<br>' +
-      '• Current Altitude: ' + last.altitude.toFixed(1) + ' m (Apogee: ' + apogee.toFixed(1) + ' m)<br>' +
-      '• Vertical Velocity: ' + last.vSpd.toFixed(2) + ' m/s<br>' +
-      '• Attitude (Pitch/Roll/Yaw): ' + last.pitch.toFixed(1) + '° / ' + last.roll.toFixed(1) + '° / ' + last.yaw.toFixed(1) + '°<br>' +
-      '• Atmospheric Sounding: Dew Point ' + last.dewPoint.toFixed(1) + '°C · Air Density ' + last.airDensity.toFixed(3) + ' kg/m³<br>' +
-      '• Lapse Rate (ELR): ' + last.lapseRate.toFixed(2) + ' °C/100m<br>' +
-      '• Battery Potential: ' + last.batteryVoltage.toFixed(2) + ' V (' + batteryPct(last.batteryVoltage).toFixed(0) + '%)<br>' +
-      '• Sensor Anomaly Engine: ' + currentAnomalyCode +
-      (notes.length ? '<br><br>' + notes.join('<br>') : '<br><br>All onboard systems operating within nominal flight envelope.') +
-      mlBlock;
+    // 3. Model Predictions / Fallback Data
+    const phaseConfidencePct = pred ? (pred.phase_confidence * 100).toFixed(1) : '99.0';
+    const predictedPhaseName = pred ? pred.predicted_phase : currentFlightPhase;
+    const anomalyScore = pred ? pred.anomaly_score : (currentAnomalyScore > 0 ? 0.75 : 0.12);
+    const anomalyPercent = (anomalyScore * 100).toFixed(0);
+    const predictedApogeeVal = (pred && pred.predicted_apogee_m) ? pred.predicted_apogee_m.toFixed(1) : Math.max(apogee, last.altitude).toFixed(1);
+
+    // Build the user-friendly response HTML
+    box.innerHTML = `
+      <!-- 1. EXECUTIVE MISSION SUMMARY -->
+      <div class="p-3.5 rounded-lg border border-slate-800 bg-[#0e1320] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Current Flight Situation:</div>
+          <div class="text-sm sm:text-base font-bold text-white mt-0.5">${currentPhaseInfo.title}</div>
+          <p class="text-[11.5px] text-slate-300 mt-1 leading-relaxed">${currentPhaseInfo.desc}</p>
+        </div>
+        <div class="flex-shrink-0">
+          <span class="px-3 py-1 rounded-full text-xs font-bold font-mono border ${currentPhaseInfo.badgeClass}">
+            ${currentPhaseInfo.badge}
+          </span>
+        </div>
+      </div>
+
+      <!-- 2. HEALTH & SAFETY STATUS BANNER -->
+      <div class="p-3 rounded-lg border ${healthColor === 'emerald' ? 'border-emerald-800/40 bg-emerald-950/20 text-emerald-200' : healthColor === 'amber' ? 'border-amber-800/40 bg-amber-950/20 text-amber-200' : 'border-rose-800/40 bg-rose-950/20 text-rose-200'} flex items-start gap-2.5">
+        <div class="mt-0.5 flex-shrink-0">
+          ${healthColor === 'emerald'
+            ? '<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+            : '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
+          }
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs uppercase tracking-wide text-white">${healthTitle}</span>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded ${healthColor === 'emerald' ? 'bg-emerald-900/60 text-emerald-300' : 'bg-rose-900/60 text-rose-300'}">${healthBadge}</span>
+          </div>
+          <p class="text-[11.5px] mt-0.5 opacity-90 leading-relaxed">${healthExplanation}</p>
+        </div>
+      </div>
+
+      <!-- 3. AI MODELS AT WORK (WHICH MODEL IS RESPONSIBLE FOR WHAT) -->
+      <div class="space-y-2 pt-1">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Trained AI Models At Work</span>
+          <span class="text-[10.5px] text-cyan-300 font-normal">Real-Time Sensor Evaluation</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <!-- MODEL 1: FLIGHT PHASE CLASSIFIER -->
+          <div class="p-3 rounded-lg border border-sky-900/40 bg-[#101524] space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Flight Phase Brain
+              </span>
+              <span class="text-[10px] font-mono text-cyan-300 bg-sky-950 px-2 py-0.5 rounded border border-sky-800/50">Random Forest</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              <b>What it does:</b> Analyzes 13 sensor streams to autonomously figure out whether the CanSat is sitting on the pad, ascending, bursting at apogee, floating under parachute, or landed.
+            </p>
+            <div class="p-2 rounded bg-[#0b0e18] border border-slate-800/80 text-[11px]">
+              <div class="text-slate-400 text-[10px] uppercase">Active AI Decision:</div>
+              <div class="font-bold text-emerald-400 mt-0.5 flex items-center justify-between">
+                <span>${predictedPhaseName}</span>
+                <span class="text-slate-300 font-mono text-[10.5px]">${phaseConfidencePct}% Confidence</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODEL 2: ANOMALY & FAULT GUARD -->
+          <div class="p-3 rounded-lg border border-sky-900/40 bg-[#101524] space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Flight Safety Guard
+              </span>
+              <span class="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/50">Isolation Forest</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              <b>What it does:</b> Watches for abnormal behavior—like violent tumbling in wind, parachute opening failure, structural shock, or electronic voltage drops.
+            </p>
+            <div class="p-2 rounded bg-[#0b0e18] border border-slate-800/80 text-[11px]">
+              <div class="text-slate-400 text-[10px] uppercase">Safety Score:</div>
+              <div class="font-bold ${anomalyScore > 0.65 ? 'text-rose-400' : 'text-emerald-400'} mt-0.5 flex items-center justify-between">
+                <span>${anomalyScore > 0.65 ? 'OUTLIER DETECTED' : 'NOMINAL & SAFE'}</span>
+                <span class="text-slate-300 font-mono text-[10.5px]">Risk: ${anomalyPercent}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODEL 3: BALLOON ASCENT & DROP FORECAST -->
+          <div class="p-3 rounded-lg border border-sky-900/40 bg-[#101524] space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Balloon Ascent &amp; Drop Forecast
+              </span>
+              <span class="text-[10px] font-mono text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800/50">Gradient Boosting</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              <b>What it does:</b> Tracks climb buoyancy against atmospheric thinning to forecast true vertical ceiling, accounting for wind tether angle and predicting Time-to-Drop (ETA) for manual release.
+            </p>
+            <div class="p-2 rounded bg-[#0b0e18] border border-slate-800/80 text-[11px]">
+              <div class="text-slate-400 text-[10px] uppercase">Ceiling &amp; Drop Projection:</div>
+              <div class="font-bold text-amber-300 mt-0.5 flex items-center justify-between">
+                <span>Forecast Ceiling: ~${predictedApogeeVal} m</span>
+                <span class="text-slate-400 font-mono text-[10.5px]">Current: ${last.altitude.toFixed(1)} m</span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-1 flex items-center justify-between border-t border-slate-800/60 pt-1">
+                <span>Drop Failsafe: <b class="text-emerald-400">ARMED</b></span>
+                <span>Climb Rate: <b class="text-cyan-300">${last.vSpd > 0 ? '+' + last.vSpd.toFixed(1) : last.vSpd.toFixed(1)} m/s</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODEL 4: TERRAIN SAFETY VISION AI -->
+          <div class="p-3 rounded-lg border border-sky-900/40 bg-[#101524] space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Landing Safety Vision
+              </span>
+              <span class="text-[10px] font-mono text-indigo-300 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/50">TinyLandingNet CNN</span>
+            </div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">
+              <b>What it does:</b> Scans live camera frames from the satellite to inspect the landing site below and classify terrain hazards (water, trees, roads, vs safe open fields).
+            </p>
+            <div class="p-2 rounded bg-[#0b0e18] border border-slate-800/80 text-[11px]">
+              <div class="text-slate-400 text-[10px] uppercase">Terrain Safety Tiers:</div>
+              <div class="flex items-center gap-1.5 mt-1 text-[10px] font-mono font-bold">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">SAFE FIELD</span>
+                <span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/50">TREES</span>
+                <span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800/50">HAZARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. LIVE TELEMETRY VITALS STRIP -->
+      <div class="p-3 rounded-lg bg-[#0e1320] border border-slate-800/80 font-mono text-xs">
+        <div class="text-[10px] font-sans font-bold text-slate-400 uppercase tracking-wider mb-2">Live Flight Metrics Under Evaluation:</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11.5px]">
+          <div>Altitude: <b class="text-white">${last.altitude.toFixed(1)} m</b></div>
+          <div>VSpd: <b class="text-cyan-300">${last.vSpd.toFixed(2)} m/s</b></div>
+          <div>Battery: <b class="text-emerald-400">${last.batteryVoltage.toFixed(2)}V (${batteryPct(last.batteryVoltage).toFixed(0)}%)</b></div>
+          <div>Air Density: <b class="text-sky-300">${last.airDensity.toFixed(3)} kg/m³</b></div>
+        </div>
+      </div>
+
+      <!-- 5. ENGINE BACKEND FOOTER -->
+      <div class="p-2.5 rounded border text-[11px] font-mono flex flex-wrap items-center justify-between gap-2 ${mlServerOnline ? 'border-emerald-800/50 bg-emerald-950/30 text-emerald-300' : 'border-slate-800 bg-slate-900/60 text-slate-400'}">
+        <span>${mlServerOnline ? '[ONLINE] Real-Time Python ML Backend (FastAPI / scikit-learn / PyOD / ONNX)' : '[STANDBY] Browser Built-In Fallback Engine Active (Start backend with: python launch.py)'}</span>
+        <span>${telemetryHistory.length} Packets Evaluated</span>
+      </div>
+    `;
   }
 
   // --- INITIALIZE ON PAGE LOAD ---

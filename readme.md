@@ -24,10 +24,11 @@ This project combines a browser-based mission control dashboard with a real-time
 - Dual Baro-Inertial Extended Kalman Filter (1D EKF) fusing vertical acceleration and barometric pressure for sub-meter altitude tracking with zero lag
 - Physics-informed Multi-Output ExtraTrees ML calibrator compensating for Bernoulli aerodynamic pressure drops
 - 1-Click Stationary TARE & Multi-Sensor Calibration: nulls out static MEMS gyro drift, aligns resting attitude to 0.0°, and zeroes ground pad altitude
-- Super-accurate 7-chart telemetry suite with native 1-meter integer/decimeter grids and edge-preserving shock filtering
+- Super-accurate 7-chart telemetry suite in an ergonomically balanced 3-column grid arrangement with native 1-meter integer/decimeter grids and edge-preserving shock filtering
 - Live anomaly scoring and safety alerts for abnormal flight behavior
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
-- 3D CanSat attitude visualization using Three.js with complementary sensor fusion
+- 3D CanSat attitude visualization using Three.js with true spherical radial zoom (`+`, `−`, `RESET`), distance clamping, and complementary sensor fusion, positioned directly alongside the XYZ Gyroscope
+- Cognitive AI Intelligence Hub with 4 transparent model attributions (Random Forest phase classifier, PyOD Isolation Forest anomaly guard, Gradient Boosting Balloon Ascent & Drop Forecast, TinyLandingNet CNN) and plain-English mission summaries
 - Synchronized multi-chart crosshair inspection projected across all 7 telemetry plots
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
 - Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
