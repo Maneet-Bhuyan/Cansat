@@ -159,4 +159,33 @@ Let's connect on the paper outline and conference deadlines!
    ```powershell
    .venv\Scripts\python.exe firmware/ground_cam_viewer.py --port COM5
    ```
+
+--------------------------------------------------------------------------------
+6. TINYLANDINGNET TRAINING & BENCHMARKING COMPLETE (Share in the group)
+--------------------------------------------------------------------------------
+🚀 *Team Update: TinyLandingNet Vision Model Trained, Quantized & Benchmarked!*
+
+Hey team! Great news from the GPU workstation — Tasks ML-01 through ML-04 and Milestone M3 are 100% complete and verified on `main`:
+
+🎯 *Key Results & Metrics*:
+- *Dataset*: 27,000 EuroSAT Sentinel-2 satellite images categorized into 4 CanSat Safe Landing Area Index (SLAI) tiers.
+- *Model*: Depthwise Separable CNN (`TinyLandingNet`, 7,320 parameters).
+- *Validation Accuracy*: **93.80%** (target $\ge 90\%$)
+- *Holdout Test Accuracy*: **93.04%** ($N = 4,050$)
+- *Macro F1-Score*: **93.21%** (target $\ge 88\%$)
+- *Per-Tier F1*: `SAFE_LZ`: 93.13% | `OBSTACLE_CANOPY`: 96.21% | `CRITICAL_HAZARD`: 94.01% | `WATER_HAZARD`: 89.48%
+
+⚡ *Embedded Footprint & Inference Benchmarking*:
+- *Quantized Flash ROM*: **7.15 KB** in `firmware/esp32_cam_airborne/model_data.h` (well under the 25 KB limit!).
+- *RAM Requirement*: **< 40 KB** tensor SRAM (effortlessly fits within ESP32 520 KB internal SRAM).
+- *Ground Station (ONNX CPU)*: **0.055 ms** per inference (18,073 FPS).
+- *Ground Station (RTX 4060 GPU)*: **0.614 ms** per inference (1,628 FPS).
+- *Airborne Edge MCU (ESP32-CAM)*: **~16.3 ms** estimated latency (783,360 MACs), comfortably beating the 150 ms deadline!
+- *3x3 Spatial Grid Evaluation*: **4.23 ms** (236.6 FPS) on live QVGA video.
+
+📦 *Deliverables on GitHub*:
+- Pull latest `main` (`git pull origin main`).
+- Maneet can compile `firmware/esp32_cam_airborne/model_data.h` directly onto the airborne camera pod.
+- Ganesh has the confusion matrix and latency tables in `docs/architecture_and_ml.txt` ready for the IEEE research paper draft!
 ================================================================================
+

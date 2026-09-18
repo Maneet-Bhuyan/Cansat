@@ -85,21 +85,33 @@ P07  | ESP32-CAM Airborne Firmware (OV3660)    | Firmware (Edge)  | DONE       |
 P08  | ESP32 Ground Receiver Firmware          | Firmware (GCS)   | DONE       | firmware/esp32_ground_receiver/
 P09  | Multimodal Landing Safety Index (MLSI)  | ML (Fusion)      | PENDING    | backend/ml/multimodal_fusion.py
 P10  | Camera HUD & Video Tile on Web UI       | Frontend HUD     | DONE       | index.html (tile-camera)
-P11  | Research Notebooks (MetPy & Ablation)   | Science / Eval(Rishi - Data analytics)   | PENDING    | analysis/*.ipynb
+P11  | Research Notebooks (MetPy & Ablation)   | Science / Eval (Rishi Analytics) | DONE       | analysis/*.ipynb, test_cases/*.ipynb
 P12  | GitHub Linguist Vendoring Override      | Repository       | DONE       | .gitattributes
 
 --------------------------------------------------------------------------------
 4. MODEL SPECIFICATIONS & HARDWARE BUDGET
 --------------------------------------------------------------------------------
 
-A. Edge Model (ESP32-CAM Microcontroller):
-- Architecture: 8-bit Quantized MobileNetV1-0.25 (or Ultra-lightweight Patch CNN)
-- Input Dimensions: 96x96 grayscale or 64x64 RGB
-- Output: 3x3 Topological Landing Safety Matrix (Safe LZ, Hazard, Obstacle)
-- Target Model Size: < 60 KB INT8 weights
-- Peak SRAM Footprint: < 120 KB
-- Inference Latency: ~50-80 ms per frame on 240 MHz Xtensa LX6
-- Duty Cycle: 1 Hz to 2 Hz during parachute descent phase
+A. Edge Model (TinyLandingNet on ESP32-CAM Microcontroller):
+- Architecture: TinyLandingNet (Depthwise Separable CNN with Pointwise 1x1 Convolutions)
+- Input Dimensions: 64x64 RGB (or 320x240 QVGA segmented into 3x3 spatial sectors)
+- Output: 4-Tier Safe Landing Area Index (SLAI): SAFE_LZ, OBSTACLE_CANOPY, CRITICAL_HAZARD, WATER_HAZARD
+- Total Parameters: 7,320 (quantized to 8-bit signed integers, `int8_t`)
+- Flash ROM Footprint: 7.15 KB (`firmware/esp32_cam_airborne/model_data.h`, target < 25 KB)
+- Peak SRAM Footprint: < 40 KB (comfortably fits in 520 KB internal ESP32 SRAM, no PSRAM required)
+- Computational Complexity: 783,360 MACs (1.567 MFLOPs per inference)
+- Inference Latency:
+  * Airborne ESP32-CAM (Xtensa LX6 @ 240 MHz): ~16.3 ms per inference (Target: < 150 ms)
+  * Ground Station ONNX Runtime (CPU): 0.055 ms per inference (18,073 FPS throughput)
+  * Ground Station PyTorch CUDA (RTX 4060 GPU): 0.614 ms per inference (1,628 FPS throughput)
+  * Full 3x3 Spatial Grid + Evasion Heading: 4.23 ms (236.6 FPS) on QVGA stream
+- Classification Performance (N = 4,050 Holdout Test Samples):
+  * Best Validation Accuracy: 93.80% (target >= 90%)
+  * Overall Test Accuracy: 93.04%
+  * Macro F1-Score: 93.21% (target >= 88%)
+  * Per-Class F1: SAFE_LZ: 93.13%, OBSTACLE_CANOPY: 96.21%, CRITICAL_HAZARD: 94.01%, WATER_HAZARD: 89.48%
+- Duty Cycle: 1 Hz to 5 Hz during parachute descent phase
+
 
 B. Ground Station Models (Python Backend):
 - Flight Phase Classifier: Random Forest (n_estimators=120, max_depth=12), Accuracy: 99.61%

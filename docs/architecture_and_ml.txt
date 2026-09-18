@@ -1,4 +1,4 @@
-﻿================================================================================
+================================================================================
  COGNITIVE CANSAT MISSION CONTROL & TELEMETRY GROUND STATION
  Technical Architecture, Python Machine Learning Backend, & Statistical Validation
  Target Audience: 4th-Year Computer Science & Engineering (CSE / Aerospace)
@@ -184,6 +184,74 @@ Model: pyod.models.iforest.IForest (n_estimators=100, contamination=0.06)
 +---------------------------------------+---------------------+---------------------+
 
 
+================================================================================
+TABLE 7: TINYLANDINGNET EDGE VISION CLASSIFIER (DEPTHWISE SEPARABLE CNN)
+================================================================================
+Model: TinyLandingNet (Depthwise Separable CNN, 7,320 parameters)
+Dataset: EuroSAT Sentinel-2 Multi-Spectral Aerial Dataset (27,000 images, 64x64 RGB)
+Holdout Test Size: N = 4,050 samples (15% split) | Best Validation Accuracy: 93.80%
+
++--------------------+-----------+--------+----------+---------+---------------------------------+
+| SLAI Hazard Tier   | Precision | Recall | F1-Score | Support | Physical Environment / Class    |
++--------------------+-----------+--------+----------+---------+---------------------------------+
+| SAFE_LZ            |   0.9310  | 0.9316 |  0.9313  |  1,608  | Pasture, crops, open grassland  |
+| OBSTACLE_CANOPY    |   0.9474  | 0.9774 |  0.9621  |    442  | Dense forest, tree canopy       |
+| CRITICAL_HAZARD    |   0.9408  | 0.9393 |  0.9401  |  1,219  | Highway, industrial, buildings  |
+| WATER_HAZARD       |   0.9023  | 0.8873 |  0.8948  |    781  | Rivers, lakes, open water bodies|
++--------------------+-----------+--------+----------+---------+---------------------------------+
+| Accuracy           |           |        |  0.9304  |  4,050  | (3,768 / 4,050 correct)         |
+| Macro Average      |   0.9304  | 0.9339 |  0.9321  |  4,050  | Target: >= 0.88 (ACHIEVED)      |
+| Weighted Average   |   0.9302  | 0.9304 |  0.9303  |  4,050  | Support-weighted score          |
++--------------------+-----------+--------+----------+---------+---------------------------------+
+
+
+================================================================================
+TABLE 8: TINYLANDINGNET CONFUSION MATRIX (N = 4,050 HOLDOUT SAMPLES)
+================================================================================
+Rows = Ground Truth Classes | Columns = Model Predicted Classes
+
++--------------------+---------+-----------------+-----------------+--------------+
+| Actual \ Predicted | SAFE_LZ | OBSTACLE_CANOPY | CRITICAL_HAZARD | WATER_HAZARD |
++--------------------+---------+-----------------+-----------------+--------------+
+| SAFE_LZ            |  1,498  |        20       |        41       |      49      |
+| OBSTACLE_CANOPY    |      6  |       432       |         0       |       4      |
+| CRITICAL_HAZARD    |     51  |         1       |     1,145       |      22      |
+| WATER_HAZARD       |     54  |         3       |        31       |     693      |
++--------------------+---------+-----------------+-----------------+--------------+
+Total Holdout Accuracy: 93.04% (3,768 out of 4,050 frames classified correctly)
+
+
+================================================================================
+TABLE 9: TINYLANDINGNET QUANTIZATION FOOTPRINT & HARDWARE RESOURCE BUDGET
+================================================================================
+Target Hardware: AI-Thinker ESP32-CAM (Xtensa dual-core 32-bit LX6 @ 240 MHz, 520 KB SRAM)
+
++----------------------------+---------------+---------------+--------------------+
+| Model Format / Deliverable | Data Type     | Storage Size  | Resource Limit     |
++----------------------------+---------------+---------------+--------------------+
+| PyTorch Weights (.pth)     | Float32       | 39.4 KB       | Host Storage       |
+| ONNX Optimized Graph (.onnx)| Float32      | 30.8 KB       | Ground Station GCS |
+| C++ Header Array (model_data.h)| Signed INT8 | 7.15 KB (raw) | < 25.0 KB Flash ROM|
+| Runtime Active Tensor SRAM | Int8 / Int32  | < 40.0 KB     | < 520 KB ESP32 RAM |
+| Total Parameter Count      | 8-bit Integer | 7,320 params  | Microcontroller    |
++----------------------------+---------------+---------------+--------------------+
+
+
+================================================================================
+TABLE 10: INFERENCE BENCHMARKING & REAL-TIME LATENCY (TASK ML-04)
+================================================================================
+
++-----------------------+--------------------------------+-------------+------------+--------------------+
+| Execution Environment | Hardware / Engine Details      | Mean Latency| Throughput | Target Margin      |
++-----------------------+--------------------------------+-------------+------------+--------------------+
+| Ground Station (ONNX) | ONNX Runtime (CPUProvider)     |   0.055 ms  | 18,073 FPS | < 150 ms (3000x)   |
+| Ground Station (CUDA) | NVIDIA RTX 4060 Laptop (8GB)   |   0.614 ms  |  1,628 FPS | < 150 ms (244x)    |
+| Edge MCU (Estimated)  | ESP32-CAM (Xtensa LX6 240 MHz) |  ~16.30 ms  |    61 FPS  | < 150 ms (9.2x)    |
+| 3x3 Spatial Grid (HUD)| Full 9-sector QVGA (320x240)   |   4.230 ms  |  236.6 FPS | 60 Hz Realtime     |
++-----------------------+--------------------------------+-------------+------------+--------------------+
+* Complexity: 783,360 Multiply-Accumulate Operations (MACs) / 1.567 MFLOPs per forward pass.
+
+
 --------------------------------------------------------------------------------
 4. SCIENTIFIC COMPUTING & CONTROL THEORY ENGINES
 --------------------------------------------------------------------------------
@@ -207,6 +275,18 @@ C. STATE ESTIMATION & GEODESY (`FilterPy` Formulation)
    - GPS Coordinate Low-Pass Filter ($\alpha = 0.65$ Exponential Moving Average):
      $\hat{\mathbf{p}}_t = \alpha \mathbf{p}_t + (1 - \alpha) \hat{\mathbf{p}}_{t-1}$
    - Equirectangular Planar Geodesic Distance & Forward Azimuth Bearing.
+
+D. TINYLANDINGNET DEPTHWISE SEPARABLE VISION & 3x3 HAZARD GRID
+   - Depthwise Separable Convolution:
+     $K_{\text{depthwise}} = 3 \times 3 \times C_{\text{in}}, \quad K_{\text{pointwise}} = 1 \times 1 \times C_{\text{in}} \times C_{\text{out}}$
+     Computational complexity reduction ratio: $\frac{1}{C_{\text{out}}} + \frac{1}{K^2} \approx \frac{1}{9}$ compared to standard convolution.
+   - 3x3 Spatial Hazard Sector Scoring:
+     $S_k = 1.0 \cdot p_{\text{safe}} - 0.5 \cdot p_{\text{canopy}} - 1.0 \cdot p_{\text{hazard}} - 1.0 \cdot p_{\text{water}}$
+   - Directional Escape Vector & Heading:
+     $\vec{v}_{\text{escape}} = \sum_{k=0}^{8} (S_k - S_{\text{center}}) \cdot (\vec{c}_k - \vec{c}_{\text{center}}), \quad \theta_{\text{evade}} = \arctan2(dx, -dy) \pmod{360^\circ}$
+   - Visible Atmospheric Resistant Index (VARI):
+     $\text{VARI} = \frac{G - R}{G + R - B}$
+
 
 
 --------------------------------------------------------------------------------

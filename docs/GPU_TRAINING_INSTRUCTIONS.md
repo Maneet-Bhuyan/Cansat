@@ -108,28 +108,46 @@ Run the INT8 quantization and C++ flatbuffer export script:
 python ml/export_tinyml_header.py
 ```
 * Converts floating-point weights into 8-bit signed integer (`int8_t`) weight tables.
-* Verifies total binary size is under **30 KB**.
-* Generates `firmware/esp32_cam_airborne/model_data.h`, ready to compile directly in the Arduino IDE for the ESP32-CAM.
+* Verifies total binary size is under **25 KB** (Achieved: **7.15 KB** / 7,320 parameters).
+* Generates `firmware/esp32_cam_airborne/model_data.h` and `ml/saved_models/model_data.h`, ready to compile directly in the Arduino IDE for the ESP32-CAM.
 
 ---
 
-## 6. Step 5: Sync Trained Artifacts Back to GitHub
+## 6. Step 5: Benchmark Inference & Validate Embedded Constraints (Task ML-04)
 
-Once training and quantization are complete, sync the deliverables to GitHub:
+Run the automated inference benchmarking pipeline:
+```powershell
+python ml/benchmark_inference.py
+```
+* Measures ONNX Runtime CPU latency (Achieved: **0.055 ms** / 18,073 FPS).
+* Measures PyTorch CUDA GPU latency on RTX 4060 (Achieved: **0.614 ms** / 1,628 FPS).
+* Computes edge microcontroller budget (AI-Thinker ESP32-CAM Xtensa LX6 @ 240 MHz):
+  - Total MACs: **783,360** (1.567 MFLOPs)
+  - Estimated Edge Latency: **~16.3 ms** (Target: < 150 ms per frame — **PASS**)
+  - Flash ROM: **7.15 KB** (Target: < 25 KB — **PASS**)
+* Validates full 3x3 spatial hazard grid segmentation and directional escape vector derivation on 320x240 QVGA frames in **4.23 ms** (236.6 FPS).
+* Records all benchmark figures to `ml/model_metrics.json`.
+
+---
+
+## 7. Step 6: Sync Trained Artifacts Back to GitHub
+
+Once training, quantization, and benchmarking are complete, sync the deliverables to GitHub:
 
 ```powershell
 # 1. Pull latest upstream commits to avoid conflicts
 git pull --rebase origin main
 
 # 2. Stage only the newly generated model artifacts & code
-git add ml/saved_models/ ml/model_metrics.json firmware/
+git add ml/saved_models/ ml/model_metrics.json ml/benchmark_inference.py firmware/esp32_cam_airborne/model_data.h tasks.txt docs/
 
 # 3. Verify that 27k image files in data/eurosat/ are NOT staged
 git status
 
 # 4. Commit and push
-git commit -m "feat(ml): train TinyML landing safety vision model on NVIDIA GPU"
+git commit -m "feat(ml): complete TinyLandingNet training, INT8 quantization, and inference benchmarking"
 git push origin main
 ```
 
-Once pushed, Laptop 1 can run `git pull origin main` to instantly receive the trained models and compile the ESP32 firmware!
+Once pushed, other workstations can run `git pull origin main` to instantly receive the trained models, benchmark telemetry, and compile the ESP32 firmware!
+

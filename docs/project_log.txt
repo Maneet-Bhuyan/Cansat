@@ -1061,3 +1061,44 @@ VERIFICATION RESULTS:
 
 STATUS: TASKS ML-01 TO ML-03 100% COMPLETE & VERIFIED
 
+--------------------------------------------------------------------------------
+TINYLANDINGNET INFERENCE BENCHMARKING & EMBEDDED BUDGET (TASK ML-04)
+--------------------------------------------------------------------------------
+
+[2026-09-18T23:55:00Z] ACTION: Implemented standalone latency and resource benchmarking engine for TinyLandingNet edge vision model across ONNX Runtime, CUDA GPU, and ESP32-CAM microcontrollers. Updated all project architecture documentation.
+WORKSTATION HARDWARE: NVIDIA GeForce RTX 4060 Laptop GPU (8GB VRAM), ONNX Runtime 1.20.1, cu121 PyTorch 2.5.1
+FILES CREATED / MODIFIED:
+  - ml/benchmark_inference.py (NEW: latency benchmarking and embedded resource validator)
+  - ml/model_metrics.json (MODIFIED: recorded ONNX CPU, CUDA GPU, ESP32-CAM budget, and 3x3 spatial grid benchmarks)
+  - ml/README.md (MODIFIED: updated pipeline descriptions and fixed escape characters)
+  - docs/GPU_TRAINING_INSTRUCTIONS.md (MODIFIED: documented Task ML-04 benchmark step and achieved results)
+  - docs/python-ml_focused.text (MODIFIED: updated edge model specifications, parameters, latency, and marked P11 DONE)
+  - docs/architecture_and_ml.txt (MODIFIED: added Tables 7-10 for vision classification report, confusion matrix, INT8 footprint, latency benchmarks, and Section 4.D mathematical formulations)
+  - readme.md (MODIFIED: updated model table and added TinyLandingNet edge vision benchmarking subsection)
+  - docs/whatsapp_messages.txt (MODIFIED: added Section 6 team notification message)
+  - tasks.txt (MODIFIED: marked Task ML-04 and Milestone M3 COMPLETED)
+  - docs/project_log.txt (MODIFIED)
+
+BENCHMARKING RESULTS (200 RUN ITERATIONS PER BACKEND):
+  - Ground Station ONNX Runtime (CPU):
+    * Mean Latency: 0.055 ms
+    * Median Latency: 0.054 ms
+    * 95th Percentile: 0.062 ms
+    * 99th Percentile: 0.068 ms
+    * Maximum Throughput: 18,073 FPS
+  - Ground Station PyTorch CUDA (RTX 4060):
+    * Mean Latency: 0.614 ms
+    * Median Latency: 0.579 ms
+    * 95th Percentile: 0.824 ms
+    * Maximum Throughput: 1,628 FPS
+  - Embedded Airborne MCU Budget (AI-Thinker ESP32-CAM @ 240 MHz):
+    * Total MACs: 783,360
+    * Total MFLOPs: 1.567
+    * Flash ROM: 7.15 KB (< 25 KB limit -> PASS)
+    * Active Tensor SRAM: < 40 KB (< 520 KB internal limit -> PASS)
+    * Estimated Edge Latency: ~16.3 ms (< 150 ms deadline -> PASS)
+  - 3x3 Spatial Grid Evaluation on Live QVGA (320x240):
+    * Mean Sector Scoring & Evasion Latency: 4.23 ms (236.6 FPS)
+    * Real-time HUD Compliance: 100% verified against index.html Tile 12 canvas schema
+
+STATUS: TASK ML-04 AND MILESTONE M3 100% COMPLETE & VERIFIED

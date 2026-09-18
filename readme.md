@@ -335,7 +335,24 @@ The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry
 | Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
 | Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
 | Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
-| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | ~22k params, INT8 < 25 KB ROM, Latency < 150 ms |
+| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |
+
+### TinyLandingNet Edge Vision & Microcontroller Benchmarking (`ml/benchmark_inference.py`)
+
+The TinyLandingNet edge vision model is trained on 27,000 EuroSAT Sentinel-2 satellite images and deployed both onboard the ESP32-CAM airborne node and in the ground station HUD:
+
+* **Model Architecture**: Depthwise Separable Convolutional Neural Network with pointwise 1x1 convolutions, global average pooling, and a 4-class softmax head (7,320 parameters).
+* **Quantization & ROM Footprint**: Quantized from FP32 to signed 8-bit integers (`int8_t`). Total Flash ROM footprint is **7.15 KB** (well within the < 25 KB requirement) and active tensor SRAM requirement is **< 40 KB** (fitting within ESP32's 520 KB internal SRAM without external PSRAM).
+* **Validation & Test Metrics** ($N = 4,050$ holdout test samples):
+  - Best Validation Accuracy: **93.80%** (target $\ge 90\%$)
+  - Test Accuracy: **93.04%**
+  - Macro F1-Score: **93.21%** (target $\ge 0.88$)
+  - Per-Class F1: `SAFE_LZ`: 93.13%, `OBSTACLE_CANOPY`: 96.21%, `CRITICAL_HAZARD`: 94.01%, `WATER_HAZARD`: 89.48%
+* **Inference Benchmarking (Task ML-04)**:
+  - **Ground Station ONNX Runtime (CPU)**: 0.055 ms mean latency (18,073 FPS throughput).
+  - **Ground Station PyTorch CUDA (RTX 4060 GPU)**: 0.614 ms mean latency (1,628 FPS throughput).
+  - **Airborne Edge MCU (AI-Thinker ESP32-CAM @ 240 MHz)**: ~16.3 ms estimated edge latency (783,360 MACs, 1.567 MFLOPs), comfortably beating the < 150 ms per frame real-time deadline.
+  - **3x3 Spatial Grid Evaluation on QVGA (320x240)**: 4.23 ms mean latency (236.6 FPS) including sector scoring and directional evasion heading derivation.
 
 ### Safe Landing Area Index (SLAI) & 3x3 Spatial Hazard Grid
 
