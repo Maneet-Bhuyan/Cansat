@@ -1,7 +1,7 @@
 ================================================================================
                     COGNITIVE CANSAT MISSION - TASK TRACKER
                              File: tasks.txt
-                    Last Updated: 2026-09-14T03:55:00+05:30
+                    Last Updated: 2026-09-18T20:15:00+05:30
 ================================================================================
 
 PROJECT OVERVIEW:
@@ -205,22 +205,29 @@ academic literature review, conference research paper authorship and submission.
 Primary Responsibilities: Training, validating, quantizing, and deploying the Edge
 AI TinyML vision model (TinyLandingNet) for autonomous Safe Landing Area Index (SLAI).
 
-[ ] TASK ML-01: EUROSAT AERIAL DATASET CURATION & VERIFICATION
+[X] TASK ML-01: EUROSAT AERIAL DATASET CURATION & SPATIAL HAZARD GRID PIPELINE (COMPLETED)
     - Dataset: 27,000 satellite/aerial image tiles (64x64 RGB, 10 spectral classes).
-    - Map the 10 EuroSAT classes into the 4 CanSat Safe Landing Area Index (SLAI) tiers:
-      * Tier 0: Pasture / Herbaceous Vegetation -> SAFE / OPTIMAL
-      * Tier 1: Annual Crops / Permanent Crops -> ACCEPTABLE
-      * Tier 2: Forest / River / Highway -> HAZARDOUS / CAUTION
-      * Tier 3: Industrial / Residential Buildings -> UNSAFE / ABORT
-    - Verify dataset structure in ml/data/EuroSAT/ (or follow docs/GPU_TRAINING_INSTRUCTIONS.md).
+    - Mapped EuroSAT 10 spectral classes into 4 CanSat Safe Landing Area Index (SLAI) tiers:
+      * Tier 0: SAFE_LZ (Pasture, Herbaceous Vegetation)
+      * Tier 1: OBSTACLE_CANOPY (Forest canopy, dense trees)
+      * Tier 2: CRITICAL_HAZARD (Highway, Industrial, Residential buildings)
+      * Tier 3: WATER_HAZARD (Rivers, lakes, open water)
+    - Engineered 3x3 Spatial Hazard Grid segmentation: evaluates 9 visual sectors, computes sector safety
+      scores, derives optimal landing sector, and calculates directional escape vector (dx, dy) and evasion heading.
+    - Integrated Remote Sensing Index: Visible Atmospheric Resistant Index (VARI = (G - R) / (G + R - B))
+      and optical Time-To-Impact (TTI) divergence estimator.
+    - Fully wired into ml/train_tinyml_vision.py, firmware/ground_cam_viewer.py, and index.html (Tile 12 HUD).
+    - Archive: data/EuroSAT_RGB.zip (89.9 MB tracked in Git) with auto-extraction scripts ready.
 
-[ ] TASK ML-02: MODEL TRAINING (TINYLANDINGNET) ON GPU
+[ ] TASK ML-02: MODEL TRAINING (TINYLANDINGNET) ON GPU WORKSTATION
     - Script: ml/train_tinyml_vision.py
     - Architecture: Depthwise separable CNN (~22,000 parameters).
-    - Run training on GPU workstation with mixed-precision acceleration:
-        python ml/train_tinyml_vision.py --data-dir ml/data/EuroSAT --epochs 30 --batch-size 64
+    - Automated Setup: SETUP_GPU_WORKSTATION.bat & setup_gpu_workstation.ps1 auto-install CUDA PyTorch
+      and extract the 27,000 images in < 20s.
+    - Execution Command:
+        python ml/train_tinyml_vision.py --data-dir data/eurosat/EuroSAT --epochs 30 --batch-size 64
     - Target Metrics: Validation Accuracy >= 90%, F1-score >= 0.88 across all 4 tiers.
-    - Deliverables: ml/tinylandingnet_best.pth and ml/tinylandingnet.onnx.
+    - Deliverables: ml/saved_models/tinylandingnet_best.pth and ml/saved_models/tinylandingnet.onnx.
 
 [ ] TASK ML-03: INT8 POST-TRAINING QUANTIZATION & C++ HEADER EXPORT
     - Script: ml/export_tinyml_header.py

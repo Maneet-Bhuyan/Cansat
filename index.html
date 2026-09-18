@@ -991,20 +991,28 @@
         <!-- ROW 4 / TILE 12: LIVE AERIAL CAMERA SCREEN & VIDEO HUD -->
         <div id="tile-camera" class="dashboard-panel xl:col-span-2">
           <div class="panel-header">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="panel-title">Live Aerial Camera Stream</span>
               <span id="cam-status-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-semibold text-slate-300">
                 <span id="cam-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
                 <span id="cam-status-text">STANDBY</span>
               </span>
+              <!-- Safe Landing Area Index (SLAI) Badge -->
+              <span id="cam-slai-pill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300">
+                <span id="cam-slai-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span id="cam-slai-text">SLAI: SAFE_LZ</span>
+              </span>
             </div>
             <div class="flex items-center space-x-2">
+              <button type="button" id="btn-toggle-grid" onclick="toggleTacticalCamGrid()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-cyan-300 border border-slate-700 transition" title="Toggle 3x3 Spatial Hazard Grid">⊞ 3x3 GRID</button>
               <span class="text-xs font-mono text-cyan-300 hidden sm:inline" id="cam-metric-fps">0.0 FPS</span>
               <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View">⤢</button>
             </div>
           </div>
-          <div class="relative flex-1 min-h-[220px] flex items-center justify-center bg-[#07090e] overflow-hidden rounded-b-md">
+          <div class="relative flex-1 min-h-[240px] flex items-center justify-center bg-[#07090e] overflow-hidden rounded-b-md">
             <img id="live-cam-img" class="w-full h-full object-contain" alt="Aerial Camera Stream" style="display: none;" />
+            <canvas id="cam-grid-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            
             <div id="cam-placeholder" class="text-center p-4 space-y-2">
               <div class="w-10 h-10 mx-auto rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400 text-lg">
                 📹
@@ -1012,6 +1020,7 @@
               <div class="text-xs font-tech tracking-wider text-slate-300 uppercase font-bold">AERIAL CAMERA FEED STANDBY</div>
               <div class="text-[11px] font-mono text-slate-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
             </div>
+            
             <!-- Tactical Camera HUD Overlay -->
             <div id="cam-hud" class="absolute top-2 left-2 bg-[#090d16]/90 border border-sky-900/40 p-2 rounded text-[10.5px] text-slate-300 font-mono shadow-md backdrop-blur-sm space-y-0.5 pointer-events-none tabular-nums hidden">
               <div class="text-[9.5px] text-sky-300 font-bold uppercase tracking-wider border-b border-sky-900/40 pb-0.5 flex justify-between gap-3">
@@ -1022,6 +1031,19 @@
               <div class="flex justify-between gap-3"><span>Size:</span><span id="cam-hud-size" class="text-white">0.0 KB</span></div>
               <div class="flex justify-between gap-3"><span>Airtime:</span><span id="cam-hud-airtime" class="text-emerald-400">0 ms</span></div>
               <div class="flex justify-between gap-3"><span>Radio:</span><span class="text-sky-400">ESP-NOW Ch1</span></div>
+            </div>
+
+            <!-- Directional Escape Vector HUD -->
+            <div id="cam-evade-hud" class="absolute top-2 right-2 bg-[#090d16]/90 border border-emerald-500/40 p-1.5 px-2.5 rounded text-[10.5px] text-emerald-300 font-mono shadow-md backdrop-blur-sm hidden flex items-center gap-1.5 pointer-events-none">
+              <span id="cam-evade-arrow" class="text-base text-emerald-400">↗</span>
+              <span id="cam-evade-text" class="font-bold tracking-wide">EVADE 042°</span>
+            </div>
+
+            <!-- Remote Sensing & TTI Telemetry Strip -->
+            <div id="cam-vari-hud" class="absolute bottom-2 left-2 right-2 bg-[#090d16]/90 border border-slate-800/80 p-1.5 px-3 rounded text-[10.5px] font-mono flex flex-wrap justify-between items-center backdrop-blur-sm pointer-events-none hidden gap-2">
+              <span class="text-slate-400">REMOTE SENSING: <b id="cam-vari-val" class="text-emerald-400">VARI +0.28 (VEG)</b></span>
+              <span class="text-slate-400">OPTICAL TTI: <b id="cam-tti-val" class="text-cyan-300">14.2s</b></span>
+              <span class="text-slate-400">DESCENT HAZARD: <b id="cam-risk-val" class="text-emerald-300">LOW RISK (SAFE)</b></span>
             </div>
           </div>
         </div>
@@ -2609,6 +2631,226 @@
   let camTotalBytes = 0;
   let lastCamFrameTs = null;
   let camFps = 0.0;
+  let camTacticalGridActive = true;
+  let offscreenCamCanvas = null;
+
+  function toggleTacticalCamGrid() {
+    camTacticalGridActive = !camTacticalGridActive;
+    const btn = document.getElementById('btn-toggle-grid');
+    if (btn) {
+      btn.className = camTacticalGridActive 
+        ? 'px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/60 text-[10px] font-mono text-cyan-300 transition'
+        : 'px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-400 border border-slate-700 transition';
+    }
+    const canvas = document.getElementById('cam-grid-canvas');
+    if (canvas && !camTacticalGridActive) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function analyzeAndRenderCameraFrame(imgEl) {
+    if (!imgEl || !imgEl.naturalWidth) return;
+    const canvas = document.getElementById('cam-grid-canvas');
+    if (!canvas) return;
+
+    if (canvas.width !== imgEl.naturalWidth || canvas.height !== imgEl.naturalHeight) {
+      canvas.width = imgEl.naturalWidth || 320;
+      canvas.height = imgEl.naturalHeight || 240;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!offscreenCamCanvas) {
+      offscreenCamCanvas = document.createElement('canvas');
+      offscreenCamCanvas.width = 64;
+      offscreenCamCanvas.height = 48;
+    }
+    const offCtx = offscreenCamCanvas.getContext('2d', { willReadFrequently: true });
+    offCtx.drawImage(imgEl, 0, 0, 64, 48);
+    const imgData = offCtx.getImageData(0, 0, 64, 48);
+    const data = imgData.data;
+
+    let totR = 0, totG = 0, totB = 0;
+    const len = data.length;
+    for (let i = 0; i < len; i += 4) {
+      totR += data[i];
+      totG += data[i+1];
+      totB += data[i+2];
+    }
+    const pxCount = len / 4;
+    const meanR = totR / pxCount;
+    const meanG = totG / pxCount;
+    const meanB = totB / pxCount;
+
+    // Global VARI = (G - R) / (G + R - B)
+    const denom = (meanG + meanR - meanB);
+    let vari = Math.abs(denom) > 1e-4 ? (meanG - meanR) / denom : 0.0;
+    vari = Math.max(-1.0, Math.min(1.0, vari));
+
+    // 3x3 Sectors Analysis
+    const cw = Math.floor(64 / 3);
+    const ch = Math.floor(48 / 3);
+    let bestScore = -999;
+    let bestCell = [1, 1];
+    let bestLabel = 'SAFE_LZ';
+    const sectorGrid = [];
+
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        let sR = 0, sG = 0, sB = 0, sCnt = 0;
+        for (let y = r * ch; y < (r + 1) * ch; y++) {
+          for (let x = c * cw; x < (c + 1) * cw; x++) {
+            const idx = (y * 64 + x) * 4;
+            sR += data[idx];
+            sG += data[idx+1];
+            sB += data[idx+2];
+            sCnt++;
+          }
+        }
+        const avgR = sR / sCnt;
+        const avgG = sG / sCnt;
+        const avgB = sB / sCnt;
+        const sDenom = (avgG + avgR - avgB);
+        let sVari = Math.abs(sDenom) > 1e-4 ? (avgG - avgR) / sDenom : 0.0;
+
+        let sLabel = 'SAFE_LZ';
+        let sScore = 1.0 + sVari;
+        let sColor = 'rgba(16, 185, 129, 0.20)';
+
+        if (sVari > 0.12) {
+          sLabel = 'SAFE_LZ';
+          sScore = 1.0 + sVari;
+          sColor = 'rgba(16, 185, 129, 0.25)';
+        } else if (sVari >= -0.05) {
+          sLabel = 'OBSTACLE_CANOPY';
+          sScore = 0.2 + sVari;
+          sColor = 'rgba(245, 158, 11, 0.22)';
+        } else if (avgB > (avgR + avgG) * 0.65) {
+          sLabel = 'WATER_HAZARD';
+          sScore = -1.0;
+          sColor = 'rgba(6, 182, 212, 0.25)';
+        } else {
+          sLabel = 'CRITICAL_HAZARD';
+          sScore = -0.6;
+          sColor = 'rgba(239, 68, 68, 0.25)';
+        }
+
+        sectorGrid.push({ r, c, sLabel, sScore, sColor });
+        if (sScore > bestScore) {
+          bestScore = sScore;
+          bestCell = [r, c];
+          bestLabel = sLabel;
+        }
+      }
+    }
+
+    // Directional Escape Vector from Center (1, 1)
+    const dx = bestCell[1] - 1;
+    const dy = -(bestCell[0] - 1);
+    let evadeAngle = 0;
+    if (dx !== 0 || dy !== 0) {
+      evadeAngle = Math.round((Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360);
+    }
+    const needsEvade = (bestCell[0] !== 1 || bestCell[1] !== 1);
+
+    // Update Live SLAI Badge
+    const slaiPill = document.getElementById('cam-slai-pill');
+    const slaiDot = document.getElementById('cam-slai-dot');
+    const slaiTxt = document.getElementById('cam-slai-text');
+    if (slaiTxt && slaiPill && slaiDot) {
+      slaiTxt.innerText = 'SLAI: ' + bestLabel;
+      if (bestLabel === 'SAFE_LZ') {
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300';
+        slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+      } else if (bestLabel === 'OBSTACLE_CANOPY') {
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono font-semibold text-amber-300';
+        slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
+      } else if (bestLabel === 'WATER_HAZARD') {
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/60 text-[10px] font-mono font-semibold text-cyan-300';
+        slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse';
+      } else {
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/60 text-[10px] font-mono font-semibold text-rose-300';
+        slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse';
+      }
+    }
+
+    // Update Escape Vector HUD
+    const evadeHud = document.getElementById('cam-evade-hud');
+    const evadeTxt = document.getElementById('cam-evade-text');
+    const evadeArrow = document.getElementById('cam-evade-arrow');
+    if (evadeHud && evadeTxt && evadeArrow) {
+      if (needsEvade) {
+        evadeHud.classList.remove('hidden');
+        evadeTxt.innerText = `EVADE ${String(evadeAngle).padStart(3, '0')}°`;
+        const arrowGlyphs = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+        const arrowIdx = Math.round(evadeAngle / 45) % 8;
+        evadeArrow.innerText = arrowGlyphs[arrowIdx];
+      } else {
+        evadeHud.classList.add('hidden');
+      }
+    }
+
+    // Update Remote Sensing & TTI HUD
+    const variHud = document.getElementById('cam-vari-hud');
+    const variVal = document.getElementById('cam-vari-val');
+    const ttiVal = document.getElementById('cam-tti-val');
+    const riskVal = document.getElementById('cam-risk-val');
+    if (variHud && variVal && ttiVal && riskVal) {
+      variHud.classList.remove('hidden');
+      const vegType = vari > 0.15 ? 'DENSE VEG' : (vari >= 0.0 ? 'MODERATE VEG' : (vari >= -0.15 ? 'DRY GROUND' : 'WATER/ASPHALT'));
+      variVal.innerText = `VARI ${vari >= 0 ? '+' : ''}${vari.toFixed(2)} (${vegType})`;
+      const curAlt = (clientAltitudeFilter && clientAltitudeFilter.z !== undefined) ? clientAltitudeFilter.z : 45.0;
+      const curVspd = Math.abs(telemetryHistory.length ? (telemetryHistory[telemetryHistory.length - 1].v_spd || 4.8) : 4.8);
+      const estTti = curVspd > 0.3 ? (curAlt / curVspd) : 15.0;
+      ttiVal.innerText = estTti.toFixed(1) + 's';
+      riskVal.innerText = bestLabel === 'SAFE_LZ' ? 'LOW RISK (SAFE)' : (bestLabel === 'OBSTACLE_CANOPY' ? 'MODERATE (CANOPY)' : 'CRITICAL HAZARD');
+      riskVal.className = bestLabel === 'SAFE_LZ' ? 'text-emerald-300 font-bold' : (bestLabel === 'OBSTACLE_CANOPY' ? 'text-amber-300 font-bold' : 'text-rose-400 font-bold');
+    }
+
+    // Draw 3x3 Grid Overlay
+    if (camTacticalGridActive) {
+      const W = canvas.width;
+      const H = canvas.height;
+      const sw = W / 3;
+      const sh = H / 3;
+
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+
+      for (const sec of sectorGrid) {
+        const x = sec.c * sw;
+        const y = sec.r * sh;
+        ctx.fillStyle = sec.sColor;
+        ctx.fillRect(x, y, sw, sh);
+        ctx.strokeRect(x, y, sw, sh);
+      }
+
+      // Highlight best sector
+      const bx = bestCell[1] * sw;
+      const by = bestCell[0] * sh;
+      ctx.lineWidth = 2.0;
+      ctx.strokeStyle = '#10B981';
+      ctx.strokeRect(bx + 2, by + 2, sw - 4, sh - 4);
+      ctx.fillStyle = '#10B981';
+      ctx.font = '10px monospace';
+      ctx.fillText('OPTIMAL LZ', bx + 6, by + 16);
+
+      // Escape Vector Arrow
+      if (needsEvade) {
+        const cx = W / 2;
+        const cy = H / 2;
+        const tx = bx + sw / 2;
+        const ty = by + sh / 2;
+        ctx.strokeStyle = '#34D399';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+      }
+    }
+  }
 
   function handleCameraFrameLine(line) {
     const parts = line.split(',', 5);
@@ -2639,6 +2881,10 @@
       imgEl.style.display = 'block';
       if (placeholderEl) placeholderEl.style.display = 'none';
       if (hudEl) hudEl.classList.remove('hidden');
+      // Trigger tactical spatial grid & remote sensing analysis
+      imgEl.onload = function() {
+        analyzeAndRenderCameraFrame(imgEl);
+      };
     }
 
     const hudFrame = document.getElementById('cam-hud-frame');

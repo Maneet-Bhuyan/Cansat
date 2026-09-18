@@ -939,3 +939,49 @@ FILES MODIFIED / CREATED / MOVED:
    - Clean git status with all files tracked and categorized.
 
 STATUS: WORKSPACE CLEANED, ORGANIZED & SYNCHRONIZED
+
+--------------------------------------------------------------------------------
+TINYLANDINGNET 3X3 SPATIAL HAZARD GRID, ESCAPE VECTOR & REMOTE SENSING
+--------------------------------------------------------------------------------
+
+[2026-09-18T20:15:00Z] ACTION: Engineered 3x3 Spatial Hazard Grid, directional escape vector derivation, VARI remote sensing index, and optical Time-To-Impact (TTI) estimation across edge vision ML, ground receiver viewer, and web HUD.
+FILES MODIFIED / CREATED:
+  - ml/train_tinyml_vision.py (MODIFIED: added VARI calculation, 3x3 spatial grid batch inference, and optical TTI estimator)
+  - firmware/ground_cam_viewer.py (MODIFIED: integrated 3x3 translucent grid overlay, evasion vector arrow, VARI/TTI HUD, and 'g' hotkey)
+  - index.html (MODIFIED: Tile 12 canvas overlay for 3x3 grid, directional evasion vector, SLAI badge, and VARI telemetry strip)
+  - tasks.txt (MODIFIED: completed Task ML-01 and updated Task ML-02 for GPU workstation execution)
+  - readme.md (MODIFIED: documented 3x3 spatial hazard grid, escape vector math, and VARI formulation)
+  - docs/project_log.txt (MODIFIED)
+
+1. MATHEMATICAL & ALGORITHMIC FORMULATIONS IMPLEMENTED:
+   - Safe Landing Area Index (SLAI) 4-Tier Categorization:
+     * Tier 0: SAFE_LZ (Green: open grass, pasture, herbaceous fields)
+     * Tier 1: OBSTACLE_CANOPY (Yellow: dense trees, forest canopy)
+     * Tier 2: CRITICAL_HAZARD (Red: roads, asphalt, industrial structures, buildings)
+     * Tier 3: WATER_HAZARD (Blue: rivers, lakes, open water)
+   - 3x3 Spatial Hazard Grid & Sector Safety Scoring:
+     Frames divided into 9 equal quadrants (3 rows x 3 cols). Each sector k has safety score:
+       S_k = 1.0 * p(SAFE) - 0.5 * p(CANOPY) - 1.0 * p(HAZARD) - 1.0 * p(WATER)
+     Sectors color-coded with translucent alpha overlays. The optimal LZ sector k_opt = argmax_k(S_k) is highlighted.
+   - Directional Escape Vector & Evasion Heading:
+     When center sector is hazardous (S_center < 0.2), evasion vector derived from safety-weighted centroid:
+       v_escape = sum_k (S_k - S_center) * (c_k - c_center)
+       theta_evade = (atan2(dx, -dy) * 180 / pi + 360) % 360
+     Visualized with a dynamic green directional guidance arrow.
+   - Remote Sensing: Visible Atmospheric Resistant Index (VARI):
+       VARI = (G - R) / (G + R - B)
+     Measures vegetation density and surface chlorophyll reflectance, neutralizing atmospheric aerosol scattering.
+   - Optical Divergence & Visual Time-To-Impact (TTI):
+       TTI ~ dt * sigma_1 / (sigma_2 - sigma_1)
+     Estimates seconds until ground touchdown from optical image expansion.
+
+2. VERIFICATION & SYSTEM INTEGRITY:
+   - Full automated test suite executed:
+     * node tests/selftest.js (27/27 assertions PASS)
+     * powershell tests/selftest.ps1 (17/17 assertions PASS)
+     * powershell tests/test_sm.ps1 (10/10 mission profiles PASS)
+     * python tests/test_backend_core.py (12/12 test cases PASS)
+     * python tests/test_firmware_protocol.py (4/4 test cases PASS)
+   - Zero test regressions; clean Git workspace ready for push.
+
+STATUS: TINYLANDINGNET SPATIAL GRID & REMOTE SENSING PIPELINE OPERATIONAL

@@ -415,5 +415,138 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
     print(f"[OK] Updated {METRICS_PATH} successfully.")
     print("\n[SUCCESS] TinyML Aerial Vision Pipeline training complete!")
 
+# ---------------------------------------------------------------------------
+# Multimodal & Spatial Vision Utilities: 3x3 Grid, Escape Vector, VARI & TTI
+# ---------------------------------------------------------------------------
+def compute_vari(image: np.ndarray) -> Tuple[float, str]:
+    """
+    Computes the Visible Atmospheric Resistant Index (VARI) from an RGB image:
+        VARI = (Green - Red) / (Green + Red - Blue)
+    Returns: (vari_score, vegetation_classification)
+    """
+    if image is None or image.size == 0:
+        return 0.0, "UNKNOWN"
+    
+    # Convert BGR to RGB if needed (assuming RGB input)
+    arr = image.astype(np.float32)
+    r = np.mean(arr[:, :, 0])
+    g = np.mean(arr[:, :, 1])
+    b = np.mean(arr[:, :, 2])
+    
+    denom = (g + r - b)
+    if abs(denom) < 1e-6:
+        vari = 0.0
+    else:
+        vari = float((g - r) / denom)
+    vari = max(-1.0, min(1.0, vari))
+    
+    if vari > 0.20:
+        label = "DENSE VEGETATION"
+    elif vari >= 0.0:
+        label = "MODERATE VEGETATION / CROPS"
+    elif vari >= -0.15:
+        label = "DRY SOIL / BARE GROUND"
+    else:
+        label = "WATER / ARTIFICIAL SURFACE"
+        
+    return round(vari, 3), label
+
+
+def evaluate_3x3_spatial_grid(model: nn.Module, pil_image: Image.Image, device=None) -> Dict:
+    """
+    Partitions an incoming aerial image into a 3x3 spatial grid (9 sectors),
+    evaluates each sector with TinyLandingNet, and computes the Directional Escape Vector.
+    """
+    if device is None:
+        device = next(model.parameters()).device
+        
+    model.eval()
+    w, h = pil_image.size
+    cell_w = w // 3
+    cell_h = h // 3
+    
+    transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    
+    grid_results = []
+    crops = []
+    
+    for r in range(3):
+        row_res = []
+        for c in range(3):
+            box = (c * cell_w, r * cell_h, (c + 1) * cell_w, (r + 1) * cell_h)
+            crop = pil_image.crop(box)
+            tensor = transform(crop).unsqueeze(0).to(device)
+            crops.append((r, c, tensor))
+            
+    # Batch evaluate all 9 sectors
+    batch_tensors = torch.cat([t for _, _, t in crops], dim=0)
+    with torch.no_grad():
+        logits = model(batch_tensors)
+        probs = torch.softmax(logits, dim=1).cpu().numpy()
+        
+    scores = np.zeros((3, 3), dtype=np.float32)
+    class_grid = [[None]*3 for _ in range(3)]
+    
+    for idx, (r, c, _) in enumerate(crops):
+        p = probs[idx]
+        pred_class_idx = int(np.argmax(p))
+        # Safety score: Safe(+1.0), Canopy(-0.5), Critical(-1.0), Water(-1.0)
+        safety_score = float(1.0 * p[0] - 0.5 * p[1] - 1.0 * p[2] - 1.0 * p[3])
+        scores[r, c] = safety_score
+        class_grid[r][c] = {
+            "class_id": pred_class_idx,
+            "class_name": SLAI_CLASSES[pred_class_idx],
+            "confidence": round(float(p[pred_class_idx]), 3),
+            "safety_score": round(safety_score, 3)
+        }
+        
+    # Best evacuation sector
+    best_idx = np.unravel_index(np.argmax(scores), scores.shape)
+    best_r, best_c = int(best_idx[0]), int(best_idx[1])
+    
+    # Escape vector from frame center (1, 1)
+    dx = best_c - 1 # -1 (Left), 0 (Center), +1 (Right)
+    dy = -(best_r - 1) # +1 (Up), 0 (Center), -1 (Down) in cartesian
+    
+    heading_deg = 0.0
+    if dx != 0 or dy != 0:
+        heading_deg = (np.degrees(np.arctan2(dx, dy)) + 360.0) % 360.0
+        
+    center_safe = (class_grid[1][1]["class_name"] == "SAFE_LZ")
+    
+    return {
+        "grid": class_grid,
+        "safest_sector": {"row": best_r, "col": best_c, "score": float(scores[best_r, best_c])},
+        "escape_vector": {
+            "dx": dx,
+            "dy": dy,
+            "heading_deg": round(float(heading_deg), 1),
+            "requires_evasion": not center_safe
+        }
+    }
+
+
+def compute_visual_tti(prev_crop: np.ndarray, curr_crop: np.ndarray, dt: float) -> float:
+    """
+    Estimates visual Time-To-Impact (TTI) via pixel divergence rate.
+    """
+    if dt <= 0 or prev_crop is None or curr_crop is None:
+        return 0.0
+    # Basic structural difference expansion estimate
+    h, w = curr_crop.shape[:2]
+    diff = np.abs(curr_crop.astype(np.float32) - prev_crop.astype(np.float32))
+    divergence = np.mean(diff)
+    if divergence < 1.0:
+        return 99.9
+    # TTI proxy scaled to nominal 5 m/s parachute descent
+    tti = max(1.0, min(120.0, (255.0 / divergence) * dt * 3.5))
+    return round(float(tti), 1)
+
+
 if __name__ == "__main__":
     train_model(epochs=12, batch_size=64, learning_rate=1e-3)
+
