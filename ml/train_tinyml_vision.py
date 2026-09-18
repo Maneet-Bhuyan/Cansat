@@ -74,14 +74,31 @@ class EuroSATLandingDataset(Dataset):
         self.samples: List[Tuple[str, int]] = []
         self.transform = transform
         
-        if not os.path.exists(root_dir):
+        candidates = [
+            root_dir,
+            os.path.join(root_dir, "2750"),
+            os.path.join(root_dir, "EuroSAT"),
+            os.path.join(os.path.dirname(root_dir), "2750"),
+            os.path.join(os.path.dirname(root_dir), "EuroSAT"),
+            os.path.join(REPO_ROOT, "data", "eurosat", "2750"),
+            os.path.join(REPO_ROOT, "data", "eurosat", "EuroSAT"),
+            os.path.join(REPO_ROOT, "data", "eurosat")
+        ]
+        
+        found_dir = None
+        for cand in candidates:
+            if cand and os.path.exists(cand) and any(os.path.isdir(os.path.join(cand, c)) for c in CLASS_MAP):
+                found_dir = cand
+                break
+
+        if not found_dir:
             raise FileNotFoundError(
                 f"Dataset directory not found at {root_dir}. "
                 "Please run: python ml/download_dataset.py"
             )
 
-        for folder_name in sorted(os.listdir(root_dir)):
-            folder_path = os.path.join(root_dir, folder_name)
+        for folder_name in sorted(os.listdir(found_dir)):
+            folder_path = os.path.join(found_dir, folder_name)
             if os.path.isdir(folder_path) and folder_name in CLASS_MAP:
                 target_label = CLASS_MAP[folder_name]
                 for fname in os.listdir(folder_path):
@@ -89,7 +106,7 @@ class EuroSATLandingDataset(Dataset):
                         self.samples.append((os.path.join(folder_path, fname), target_label))
 
         if len(self.samples) == 0:
-            raise RuntimeError(f"No valid image files found in {root_dir}")
+            raise RuntimeError(f"No valid image files found in {found_dir}")
 
     def __len__(self):
         return len(self.samples)
@@ -146,11 +163,18 @@ class TinyLandingNet(nn.Module):
 # ---------------------------------------------------------------------------
 # Training Engine
 # ---------------------------------------------------------------------------
-def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1e-3):
+def train_model(data_dir: str = None, epochs: int = 30, batch_size: int = 64, learning_rate: float = 1e-3):
     # Set deterministic seeds
     torch.manual_seed(42)
     np.random.seed(42)
     random.seed(42)
+
+    if data_dir is None:
+        dataset_source = DATA_DIR
+    elif not os.path.isabs(data_dir):
+        dataset_source = os.path.join(REPO_ROOT, data_dir)
+    else:
+        dataset_source = data_dir
 
     # Hardware Detection
     is_cuda = torch.cuda.is_available()
@@ -188,8 +212,8 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    print(f"[1/5] Loading EuroSAT dataset from: {DATA_DIR} ...")
-    full_dataset = EuroSATLandingDataset(DATA_DIR, transform=None)
+    print(f"[1/5] Loading EuroSAT dataset from: {dataset_source} ...")
+    full_dataset = EuroSATLandingDataset(dataset_source, transform=None)
     total_len = len(full_dataset)
     print(f"[OK] Found {total_len:,} labeled aerial images.")
 
@@ -242,7 +266,8 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
     start_time = time.time()
 
     best_val_acc = 0.0
-    best_weights_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.pth")
+    best_weights_path = os.path.join(MODELS_DIR, "tinylandingnet_best.pth")
+    legacy_weights_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.pth")
 
     for epoch in range(1, epochs + 1):
         epoch_start = time.time()
@@ -302,6 +327,7 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), best_weights_path)
+            torch.save(model.state_dict(), legacy_weights_path)
 
     total_dur = time.time() - start_time
     print(f"\n[OK] Training completed in {total_dur:.1f}s. Best Val Accuracy: {best_val_acc:.2f}%")
@@ -371,10 +397,12 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
     # Step 5: Export Artifacts (ONNX + JSON Metrics)
     # -----------------------------------------------------------------------
     print(f"\n[5/5] Exporting ONNX graph and updating {METRICS_PATH}...")
-    onnx_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.onnx")
+    onnx_path = os.path.join(MODELS_DIR, "tinylandingnet.onnx")
+    legacy_onnx_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.onnx")
     dummy_input = torch.randn(1, 3, 64, 64, device=device)
     
     try:
+        import shutil
         torch.onnx.export(
             model, dummy_input, onnx_path,
             export_params=True,
@@ -384,7 +412,8 @@ def train_model(epochs: int = 12, batch_size: int = 64, learning_rate: float = 1
             output_names=['slai_logits'],
             dynamic_axes={'input_image': {0: 'batch_size'}, 'slai_logits': {0: 'batch_size'}}
         )
-        print(f"[OK] ONNX model saved to: {onnx_path}")
+        shutil.copyfile(onnx_path, legacy_onnx_path)
+        print(f"[OK] ONNX model saved to: {onnx_path} and {legacy_onnx_path}")
     except Exception as onnx_err:
         print(f"[!] Note on ONNX export: {onnx_err}")
 
@@ -548,5 +577,13 @@ def compute_visual_tti(prev_crop: np.ndarray, curr_crop: np.ndarray, dt: float) 
 
 
 if __name__ == "__main__":
-    train_model(epochs=12, batch_size=64, learning_rate=1e-3)
+    import argparse
+    parser = argparse.ArgumentParser(description="TinyLandingNet Aerial Safety Vision Model Trainer")
+    parser.add_argument("--data-dir", type=str, default="data/eurosat/EuroSAT", help="Path to EuroSAT dataset directory")
+    parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
+    parser.add_argument("--batch-size", type=int, default=64, help="Batch size for training and validation")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Initial learning rate")
+    args = parser.parse_args()
+
+    train_model(data_dir=args.data_dir, epochs=args.epochs, batch_size=args.batch_size, learning_rate=args.lr)
 

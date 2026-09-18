@@ -13,7 +13,11 @@ import numpy as np
 import torch
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(REPO_ROOT, "ml", "saved_models", "tinyml_landing_safety.pth")
+CANDIDATE_PATHS = [
+    os.path.join(REPO_ROOT, "ml", "saved_models", "tinylandingnet_best.pth"),
+    os.path.join(REPO_ROOT, "ml", "saved_models", "tinyml_landing_safety.pth")
+]
+MODEL_PATH = next((p for p in CANDIDATE_PATHS if os.path.exists(p)), CANDIDATE_PATHS[0])
 FIRMWARE_HEADER = os.path.join(REPO_ROOT, "firmware", "esp32_cam_airborne", "model_data.h")
 SAVED_HEADER = os.path.join(REPO_ROOT, "ml", "saved_models", "model_data.h")
 

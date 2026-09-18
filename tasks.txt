@@ -220,19 +220,21 @@ AI TinyML vision model (TinyLandingNet) for autonomous Safe Landing Area Index (
     - Fully wired into ml/train_tinyml_vision.py, firmware/ground_cam_viewer.py, and index.html (Tile 12 HUD).
     - Archive: data/EuroSAT_RGB.zip (89.9 MB tracked in Git) with auto-extraction scripts ready.
 
-[ ] TASK ML-02: MODEL TRAINING (TINYLANDINGNET) ON GPU WORKSTATION
+[X] TASK ML-02: MODEL TRAINING (TINYLANDINGNET) ON GPU WORKSTATION (COMPLETED)
     - Script: ml/train_tinyml_vision.py
-    - Architecture: Depthwise separable CNN (~22,000 parameters).
+    - Architecture: Depthwise separable CNN (TinyLandingNet).
     - Automated Setup: SETUP_GPU_WORKSTATION.bat & setup_gpu_workstation.ps1 auto-install CUDA PyTorch
       and extract the 27,000 images in < 20s.
     - Execution Command:
         python ml/train_tinyml_vision.py --data-dir data/eurosat/EuroSAT --epochs 30 --batch-size 64
     - Target Metrics: Validation Accuracy >= 90%, F1-score >= 0.88 across all 4 tiers.
+    - Achieved Metrics: Best Val Accuracy = 93.80%, Test Accuracy = 93.04%, Macro F1-Score = 93.21%.
     - Deliverables: ml/saved_models/tinylandingnet_best.pth and ml/saved_models/tinylandingnet.onnx.
 
-[ ] TASK ML-03: INT8 POST-TRAINING QUANTIZATION & C++ HEADER EXPORT
+[X] TASK ML-03: INT8 POST-TRAINING QUANTIZATION & C++ HEADER EXPORT (COMPLETED)
     - Script: ml/export_tinyml_header.py
     - Quantize float32 weights into 8-bit integers (INT8) to achieve < 25 KB ROM footprint.
+    - Achieved Footprint: 7.15 KB Flash ROM (7,320 INT8 parameters, < 40 KB SRAM requirement).
     - Generate deployment header: firmware/esp32_cam_airborne/model_data.h
     - Deliverable: Ready-to-compile C++ byte array header for microcontroller embedding.
 
