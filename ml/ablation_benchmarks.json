@@ -1,0 +1,575 @@
+{
+  "training": [
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.41,
+      "mae_deg": 3.7e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "No_IMU",
+      "mae_m": 0.37,
+      "mae_deg": 3.35e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.39,
+      "mae_deg": 3.54e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.32,
+      "mae_deg": 2.92e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.58,
+      "mae_deg": 5.19e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "No_IMU",
+      "mae_m": 0.55,
+      "mae_deg": 4.92e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.55,
+      "mae_deg": 4.92e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.45,
+      "mae_deg": 4.02e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "Full_Suite",
+      "mae_m": 3.68,
+      "mae_deg": 3.319e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "No_IMU",
+      "mae_m": 3.44,
+      "mae_deg": 3.1e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 3.27,
+      "mae_deg": 2.948e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "GPS_Only",
+      "mae_m": 3.16,
+      "mae_deg": 2.85e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.4,
+      "mae_deg": 3.6e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "No_IMU",
+      "mae_m": 0.37,
+      "mae_deg": 3.36e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.38,
+      "mae_deg": 3.46e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.33,
+      "mae_deg": 2.94e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.39,
+      "mae_deg": 3.49e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "No_IMU",
+      "mae_m": 0.3,
+      "mae_deg": 2.72e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.36,
+      "mae_deg": 3.21e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.29,
+      "mae_deg": 2.59e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.33,
+      "mae_deg": 3e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "No_IMU",
+      "mae_m": 0.29,
+      "mae_deg": 2.63e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.33,
+      "mae_deg": 3.02e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.29,
+      "mae_deg": 2.59e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.36,
+      "mae_deg": 3.26e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "No_IMU",
+      "mae_m": 0.33,
+      "mae_deg": 2.96e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.36,
+      "mae_deg": 3.29e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.3,
+      "mae_deg": 2.72e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "Full_Suite",
+      "mae_m": 2.93,
+      "mae_deg": 2.642e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "No_IMU",
+      "mae_m": 2.81,
+      "mae_deg": 2.533e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 2.92,
+      "mae_deg": 2.635e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "GPS_Only",
+      "mae_m": 2.88,
+      "mae_deg": 2.592e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.33,
+      "mae_deg": 3.01e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "No_IMU",
+      "mae_m": 0.3,
+      "mae_deg": 2.73e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.32,
+      "mae_deg": 2.89e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.29,
+      "mae_deg": 2.62e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "No_IMU",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    }
+  ],
+  "testing": [
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.81,
+      "mae_deg": 7.28e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "No_IMU",
+      "mae_m": 0.76,
+      "mae_deg": 6.82e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.77,
+      "mae_deg": 6.95e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "01_nominal_sounding_flight",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.64,
+      "mae_deg": 5.76e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.95,
+      "mae_deg": 8.54e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "No_IMU",
+      "mae_m": 0.91,
+      "mae_deg": 8.18e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.99,
+      "mae_deg": 8.96e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "02_high_altitude_burst_1200m",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.9,
+      "mae_deg": 8.09e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "Full_Suite",
+      "mae_m": 5.6,
+      "mae_deg": 5.047e-05,
+      "r2": 0.9998
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "No_IMU",
+      "mae_m": 5.0,
+      "mae_deg": 4.507e-05,
+      "r2": 0.9998
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 4.87,
+      "mae_deg": 4.389e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "03_severe_wind_shear_drift",
+      "feature_set": "GPS_Only",
+      "mae_m": 4.48,
+      "mae_deg": 4.04e-05,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.87,
+      "mae_deg": 7.86e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "No_IMU",
+      "mae_m": 0.8,
+      "mae_deg": 7.23e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 1.0,
+      "mae_deg": 9.02e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "04_apogee_ejection_shock_tumble",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.87,
+      "mae_deg": 7.82e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.77,
+      "mae_deg": 6.91e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "No_IMU",
+      "mae_m": 0.56,
+      "mae_deg": 5.01e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.77,
+      "mae_deg": 6.91e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "05_parachute_pendulum_resonance",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.74,
+      "mae_deg": 6.7e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.72,
+      "mae_deg": 6.47e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "No_IMU",
+      "mae_m": 0.56,
+      "mae_deg": 5.02e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.72,
+      "mae_deg": 6.46e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "06_delayed_chute_deployment",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.61,
+      "mae_deg": 5.46e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.72,
+      "mae_deg": 6.47e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "No_IMU",
+      "mae_m": 0.69,
+      "mae_deg": 6.19e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.7,
+      "mae_deg": 6.32e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "07_thermal_inversion_sounding",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.67,
+      "mae_deg": 6.07e-06,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "Full_Suite",
+      "mae_m": 8.67,
+      "mae_deg": 7.81e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "No_IMU",
+      "mae_m": 8.87,
+      "mae_deg": 7.989e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 8.44,
+      "mae_deg": 7.606e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "08_sensor_glitch_gps_recovery",
+      "feature_set": "GPS_Only",
+      "mae_m": 8.11,
+      "mae_deg": 7.302e-05,
+      "r2": 1.0
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.91,
+      "mae_deg": 8.23e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "No_IMU",
+      "mae_m": 0.85,
+      "mae_deg": 7.63e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.93,
+      "mae_deg": 8.41e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "09_low_battery_voltage_sag",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.92,
+      "mae_deg": 8.27e-06,
+      "r2": 0.9999
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "Full_Suite",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "No_IMU",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "No_Env_Sensors",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    },
+    {
+      "scenario": "10_ground_pad_static_test",
+      "feature_set": "GPS_Only",
+      "mae_m": 0.0,
+      "mae_deg": 0.0,
+      "r2": 1.0
+    }
+  ],
+  "module_impact": {
+    "Full_Suite_mean_m": 2.0,
+    "No_IMU_mean_m": 1.9,
+    "No_IMU_degradation_pct": -5.1,
+    "No_Env_Sensors_mean_m": 1.92,
+    "No_Env_Sensors_degradation_pct": -4.1,
+    "GPS_Only_mean_m": 1.79,
+    "GPS_Only_degradation_pct": -10.4
+  }
+}

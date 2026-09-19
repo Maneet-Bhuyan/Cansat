@@ -106,14 +106,25 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
     - Engineered Touchdown Prognostics pipeline: GradientBoostingRegressor with quantile loss (10th, median, 90th percentile TTD) and aerodynamic descent regime classifier (ml/train_touchdown_prognostics.py, analysis/).
     - Sensor suite ablation study notebook: test_cases/cansat_eval_ablation.ipynb.
 
-[ ] TASK DA-06: FLIGHT DYNAMICS & POST-FLIGHT ANALYSIS DEEP DIVE PAGE (analysis.html)
-    - Author a dedicated educational and technical page positioned immediately after ML Models in the navigation sequence.
-    - Explain in clear, plain English (accessible to non-specialists) how telemetry data analysis works alongside rigorous aerospace formulations:
-      * Savitzky-Golay filtering: explain how it strips sensor noise without introducing phase delay.
-      * Vertical descent velocity & dynamic G-shock profiling: how impacts and separation shocks are isolated.
-      * Environmental Lapse Rate (ELR) & atmospheric sounding: barometric altimetry, temperature lapse, and potential temperature.
-      * Aerodynamic descent regimes: terminal velocity, parachute drag coefficients, and touchdown prognostics.
-    - Wire interactive analysis charts, flight profile selector, and publication figure visualizers.
+[X] TASK DA-06: FLIGHT DYNAMICS & POST-FLIGHT ANALYSIS DEEP DIVE PAGE (analysis.html) (COMPLETED)
+    - Authored analysis.html in Resend pure jet-black design system positioned directly after ML Models and before Research & Results.
+    - Explained in clear, plain English alongside rigorous aerospace formulations:
+      * Savitzky-Golay polynomial convolution (N=11, 2nd order): zero-phase numerical filtering without delay.
+      * Vertical kinematics (dz/dt) and dynamic resultant G-shock profiling (|G| = sqrt(ax^2+ay^2+az^2)).
+      * Atmospheric sounding & MetPy Poisson adiabatic potential temperature (theta = T * (P0/P)^(Rd/cp)).
+      * Aerodynamic descent regimes & multi-quantile touchdown prognostics (v_term = sqrt(2mg / (rho * Cd * A))).
+    - Interactive flight_analyzer module:
+      * 10-scenario dropdown selector with instant KPI telemetry readouts (Apogee, Ascent/Descent speeds, G-shock).
+      * Multi-tab responsive Chart.js visualizer (Altitude Trajectory, Velocity & G-Shock, Atmospheric Sounding).
+      * Direct links to high-res 4-panel publication figures and individual vector PDF flight reports.
+      * One-click "Download All 10 Reports (.ZIP)" via /api/analysis/reports-zip.
+    - Interactive cansat_eval_ablation module:
+      * Evaluates 4 sensor suites (Full_Suite, No_IMU, No_Env_Sensors, GPS_Only).
+      * Interactive grouped bar charts with Training Benchmark Data vs Testing Evaluation Data toggles.
+      * Distance error (meters) and angular error (degrees) units.
+      * Live Testing Data Deployment & Sensor Dropout Simulator calling /api/analysis/run-ablation.
+    - Embedded into backend/app.py before results.html (/analysis.html and /analysis routes, ZIP streamer, and ablation endpoints).
+    - Synchronized site-wide navigation across all 6 pages (index, tinyml, dashboard, models, analysis, results).
 
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING

@@ -33,6 +33,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
 - Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
 - CanSat sensor suite ablation & evaluation notebook (`test_cases/cansat_eval_ablation.ipynb`) benchmarking touchdown prognostics under sensor dropouts (Full Suite, No IMU, No Env, GPS-Only) using MetPy physics
+- Interactive Post-Flight Analysis & Sensor Ablation Web Suite (`analysis.html`) featuring interactive telemetry graphs, 4-sensor ablation bar charts, live sensor dropout simulator, and 1-click batch ZIP report downloads (`/api/analysis/reports-zip`)
 - Tactical GIS tracking and recovery tools with Leaflet mapping and direct navigation links
 - CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes
 - Direct hardware USB serial streaming via the native browser Web Serial API
@@ -57,15 +58,18 @@ Python Backend Core (backend/core/):
 FastAPI Telemetry & Inference Server (backend/app.py):
   - /ws/serial: Real-time dual-port WebSocket dispatcher to web HUD
   - /analytics/kinematics & /analytics/sounding REST APIs
-  - /hardware/ports: Enumeration of system serial ports
+  - /hardware/ports & /hardware/tare: Serial port manager & gyro tare
   - /api/predict: Random Forest phase classifier & Isolation Forest anomaly detector
+  - /api/analysis/*: Scenarios, raw telemetry, ablation benchmarks & 1-click reports ZIP bundle
                                 |
                                 v
-Ground Station Web UI (index.html):
-  - Live 3D vehicle orientation (Three.js with quaternion slerp)
-  - Synchronized telemetry charts (Chart.js 4 with multi-chart crosshairs)
-  - Tile 12: Real-time Aerial Video Stream & Link Diagnostics HUD
-  - Tactical GIS satellite tracker (Leaflet with ESRI & CartoDB tiles)
+Mission Control Web UI Suite:
+  - index.html: Mission overview, interactive 3D PLA airframe, and hardware specs
+  - dashboard.html: Real-time telemetry HUD, 3D attitude, and Web Serial bridge
+  - tinyml.html: TinyML edge vision deep dive, INT8 quantization & inference simulator
+  - models.html: 6-model machine learning architecture and comparative benchmark analysis
+  - analysis.html: Post-flight mission analytics, sensor ablation suite & dropout simulator
+  - results.html: Flight testing research data viewer and scenario comparison charts
 ```
 
 ## Repository structure
@@ -73,9 +77,10 @@ Ground Station Web UI (index.html):
 ```text
 .
 ├── index.html                  # CanSat Mission Overview & Interactive 3D PLA Airframe Inspector
-├── tinyml.html                 # TinyML Deep Dive, INT8 Quantization & Inference Simulator
 ├── dashboard.html              # Mission Control Aerospace Telemetry HUD & Web Serial Bridge
+├── tinyml.html                 # TinyML Deep Dive, INT8 Quantization & Inference Simulator
 ├── models.html                 # Machine Learning Architecture & 6-Model Comparative Analysis
+├── analysis.html               # Post-Flight Telemetry Analytics, Multi-Sensor Ablation Suite & Dropout Simulator
 ├── results.html                # Research & Results Data Viewer with Scenario Charting
 ├── tasks.txt                   # Master task tracker & team assignments (Maneet, Rishi, Shubham, Ganesh)
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
@@ -104,6 +109,7 @@ Ground Station Web UI (index.html):
 │   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
 │   ├── train_touchdown_prognostics.py # Touchdown prognostics & descent aerodynamics pipeline
 │   ├── flight_analyzer.py     # Automated post-flight telemetry analyzer & publication PDF report generator
+│   ├── ablation_benchmarks.json # Pre-computed 4-sensor ablation benchmarks across all 10 missions
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
 │   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx, .h)
@@ -533,7 +539,7 @@ Hotkeys for rapid ground station operation (disabled during text input):
 
 The project includes comprehensive test suites for unit, firmware, and integration testing:
 
-### Python backend core unit tests (16 assertions)
+### Python backend core unit tests (12 test cases)
 ```bash
 python -m unittest tests/test_backend_core.py
 ```

@@ -13,12 +13,33 @@ This directory contains automated unit tests, verification suites, and synthetic
 
 ## Running the Tests
 
-From PowerShell in the project root:
+### 1. PowerShell Mission Verification Suite (17 assertions)
 ```powershell
 powershell -ExecutionPolicy Bypass -File tests/selftest.ps1
 ```
+Verifies Mission Elapsed Time (MET) clock formatting, CSV flight profiles across the 5-phase flight sequence, and UI component integrity.
 
-From Node.js:
+### 2. Node.js Telemetry & Parsing Tests (27 assertions)
 ```bash
 node tests/selftest.js
 ```
+Validates 13-field CSV parsing, invalid packet rejection, kinematic derivations, attitude math, battery clamping, RFC 4180 export compliance, Web Serial compatibility, and UI styling tokens.
+
+### 3. Python Backend Core Unit Tests (12 assertions)
+```bash
+.\.venv\Scripts\python.exe -m unittest tests/test_backend_core.py
+```
+Validates 1D Kalman state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, and ML inference pipelines.
+
+### 4. Firmware Protocol & ESP-NOW Chunking Tests (4 assertions)
+```bash
+.\.venv\Scripts\python.exe tests/test_firmware_protocol.py
+```
+Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
+
+### 5. 5-Phase Flight State Machine Verification (10 profiles)
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/test_sm.ps1
+```
+Validates end-to-end HMM and ML state transitions across all 10 mission profiles (`PAD_IDLE` -> `BALLOON_ASCENT` -> `APOGEE_BURST` -> `PARACHUTE_DESCENT` -> `TOUCHDOWN_RECOVERY`).
+
