@@ -1359,6 +1359,33 @@ FLIGHT DYNAMICS DEEP DIVE (analysis.html), SENSOR ABLATION & ZIP REPORT EXPORTER
    - python scratch/test_analysis_api.py: 7/7 PASS (All analysis endpoints verified)
 
 STATUS: TASK DA-06 (analysis.html, ABLATION MODULE & ZIP REPORTS) COMPLETED AND VERIFIED
+--------------------------------------------------------------------------------
+REPOSITORY REORGANIZATION & CODEBASE CLEANUP
+--------------------------------------------------------------------------------
 
+[2026-09-19T16:15:00Z] ACTION: Reorganized entire repository to eliminate root clutter, centralizing web surfaces in frontend/ and GPU setup scripts in scripts/. Updated backend routing, launchers, test suites, and documentation.
 
+1. Directory Reorganization:
+   - Created frontend/: Moved all 6 HTML pages (index.html, dashboard.html, tinyml.html, models.html, analysis.html, results.html), styles (css/resend-theme.css), and scripts (js/cansat-3d.js, js/mission-slider.js, js/results-charts.js, js/tinyml-demo.js). Added frontend/README.md.
+   - Created scripts/: Moved GPU workstation setup utilities (SETUP_GPU_WORKSTATION.bat, setup_gpu_workstation.ps1).
+   - Root directory now exclusively holds mission launchers (START_MISSION_CONTROL.bat, launch.py), environment specs (requirements.txt), and documentation/tracking files (readme.md, tasks.txt, .gitattributes, .gitignore).
 
+2. Backend & Launcher Updates:
+   - backend/app.py: Updated FRONTEND_DIR = os.path.join(BASE_DIR, "frontend"); all HTML route handlers and static mounts (/css, /js) now serve directly from frontend/.
+   - backend/standalone_server.ps1: Set $FrontendDir = Join-Path $RootDir "frontend"; updated file resolution and browser launch path.
+   - START_MISSION_CONTROL.bat: Updated browser fallback path to %~dp0frontend\index.html.
+   - tests/selftest.js: Updated dashboard.html file read path to frontend/dashboard.html.
+   - tests/selftest.ps1: Updated $htmlPath to frontend/dashboard.html.
+   - .gitattributes: Updated linguist vendoring patterns to frontend/*, frontend/**/*.html, frontend/**/*.css, frontend/**/*.js.
+   - readme.md: Updated repository directory tree and local launch commands (start frontend/index.html and python -m http.server 8000 --directory frontend).
+   - docs/README.md: Added repository structure breakdown.
+
+3. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Python py_compile on backend/app.py: PASS (0 syntax/import errors)
+
+STATUS: REPOSITORY REORGANIZATION, DOCUMENTATION OVERHAUL, AND VERIFICATION COMPLETE

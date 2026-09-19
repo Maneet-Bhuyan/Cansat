@@ -248,45 +248,48 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
         "lapse_rate_c_100m": float(round(lapse_rate, 2))
     }
 
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
 @app.get("/")
 def read_root():
-    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.get("/index.html")
 @app.get("/home.html")
 def serve_index_html():
-    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.get("/tinyml.html")
 def serve_tinyml_html():
-    return FileResponse(os.path.join(BASE_DIR, "tinyml.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "tinyml.html"))
 
 @app.get("/dashboard.html")
 def serve_dashboard_html():
-    return FileResponse(os.path.join(BASE_DIR, "dashboard.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
 
 @app.get("/models.html")
 @app.get("/models")
 def serve_models_html():
-    return FileResponse(os.path.join(BASE_DIR, "models.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "models.html"))
 
 @app.get("/analysis.html")
 @app.get("/analysis")
 def serve_analysis_html():
-    return FileResponse(os.path.join(BASE_DIR, "analysis.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "analysis.html"))
 
 @app.get("/results.html")
 def serve_results_html():
-    return FileResponse(os.path.join(BASE_DIR, "results.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
 
 
-css_dir = os.path.join(BASE_DIR, "css")
+css_dir = os.path.join(FRONTEND_DIR, "css")
 if os.path.exists(css_dir):
     app.mount("/css", StaticFiles(directory=css_dir), name="css")
 
-js_dir = os.path.join(BASE_DIR, "js")
+js_dir = os.path.join(FRONTEND_DIR, "js")
 if os.path.exists(js_dir):
     app.mount("/js", StaticFiles(directory=js_dir), name="js")
+
 
 test_cases_dir = os.path.join(BASE_DIR, "test_cases")
 if os.path.exists(test_cases_dir):

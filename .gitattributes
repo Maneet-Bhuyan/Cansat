@@ -7,7 +7,10 @@ test_cases/* linguist-vendored
 *.csv linguist-vendored
 
 # 2. Web UI Ground Station Viewport (Presentation template)
-index.html linguist-vendored
+frontend/* linguist-vendored
+frontend/**/*.html linguist-vendored
+frontend/**/*.css linguist-vendored
+frontend/**/*.js linguist-vendored
 
 # 3. Microcontroller Firmware Recognition (C++)
 *.ino linguist-language=C++
