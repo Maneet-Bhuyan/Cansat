@@ -72,16 +72,26 @@ Ground Station Web UI (index.html):
 
 ```text
 .
-├── index.html                  # Mission dashboard and frontend logic
+├── index.html                  # CanSat Mission Overview & Interactive 3D PLA Airframe Inspector
+├── tinyml.html                 # TinyML Deep Dive, INT8 Quantization & Inference Simulator
+├── dashboard.html              # Mission Control Aerospace Telemetry HUD & Web Serial Bridge
+├── models.html                 # Machine Learning Architecture & 6-Model Comparative Analysis
+├── results.html                # Research & Results Data Viewer with Scenario Charting
 ├── tasks.txt                   # Master task tracker & team assignments (Maneet, Rishi, Shubham, Ganesh)
 ├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
 ├── SETUP_GPU_WORKSTATION.bat   # 1-Click autonomous bootstrapper for fresh NVIDIA GPU machines
 ├── setup_gpu_workstation.ps1   # PowerShell zero-to-hero GPU environment installer
-├── launch.py                   # System launcher with port manager and browser dispatch
+├── launch.py                   # System launcher with port manager, auto-reload, and browser dispatch
 ├── requirements.txt            # Python dependencies
+├── css/
+│   └── resend-theme.css        # Clean Obsidian dark theme (Inter, Newsreader, JetBrains Mono)
+├── js/
+│   ├── cansat-3d.js            # Three.js 3D PLA CanSat model & interactive component inspector
+│   ├── mission-slider.js       # Interactive flight timeline scrubber & nadir camera simulator
+│   ├── results-charts.js       # Research results Chart.js data visualization engine
+│   └── tinyml-demo.js          # Client-side TinyLandingNet interactive inference simulator
 ├── backend/
-│   ├── app.py                 # FastAPI ML inference & telemetry backend
-│   ├── flight_analyzer.py     # Post-flight analyzer import alias / module
+│   ├── app.py                 # FastAPI ML inference, HTML router & telemetry WebSocket backend
 │   ├── core/                  # Python core signal processing & ingestion engines
 │   │   ├── serial_manager.py  # DualSerialManager (COM4/COM3 LoRa @ 9600 & COM5 Video @ 460800)
 │   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
@@ -96,7 +106,10 @@ Ground Station Web UI (index.html):
 │   ├── flight_analyzer.py     # Automated post-flight telemetry analyzer & publication PDF report generator
 │   ├── train_models.py        # Tabular ML training pipeline
 │   ├── model_metrics.json     # Model performance summary
-│   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx)
+│   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx, .h)
+├── analysis/
+│   ├── Touchdown_Prognostics_and_Descent_Analytics.ipynb # Flight dynamics & descent analytics notebook
+│   └── figures/               # Correlation matrices, aerodynamic drag curves, and confusion matrices
 ├── data/
 │   ├── EuroSAT_RGB.zip        # [Tracked] EuroSAT 89.9 MB aerial dataset archive
 │   └── eurosat/               # [Gitignored] 27,000 extracted Sentinel-2 images
@@ -107,24 +120,30 @@ Ground Station Web UI (index.html):
 │   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
 ├── test_cases/                # Ten mission profile CSV datasets
 │   └── cansat_eval_ablation.ipynb # Sensor suite ablation study & touchdown localization benchmarking
-├── reports/                   # Generated publication PDF/PNG flight telemetry reports & summary CSV
+├── reports/                   # Automated post-flight telemetry reports
+│   ├── README.md              # Reports documentation and batch regeneration instructions
+│   ├── all_missions_summary.csv # Consolidated flight benchmark matrix across all 10 scenarios
+│   ├── pdf/                   # Publication-grade vector PDF flight reports (10 mission profiles)
+│   └── figures/               # High-resolution 300 DPI PNG figures for papers and presentations
 ├── docs/
+│   ├── README.md              # Documentation index and guides
 │   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
 │   ├── project_log.txt        # Development and mission log
-│   ├── whatsapp_messages.txt  # Formatted team task briefings
+│   ├── whatsapp_messages.txt  # Formatted team task briefings (Maneet, Rishi, Shubham, Ganesh)
 │   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
 │   └── python-ml_focused.text # Python & ML transformation master roadmap
 ├── tests/
-│   ├── test_backend_core.py   # Python backend core unit test suite (10 assertions)
+│   ├── test_backend_core.py   # Python backend core unit test suite (12 assertions)
 │   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
 │   ├── selftest.js            # Node.js automated unit testing suite (27 assertions)
 │   ├── selftest.ps1           # PowerShell mission verification suite (17 assertions)
-│   ├── test_sm.ps1            # Flight state machine transition checker
+│   ├── test_sm.ps1            # Flight state machine transition checker (10 scenarios)
 │   ├── generate_test_cases.ps1# Synthetic scenario generator (PowerShell)
 │   └── generate_test_cases.js # Synthetic scenario generator (JavaScript)
 ├── .gitattributes             # Accurate GitHub Linguist language classifications
 └── .gitignore
 ```
+
 
 ## Key technologies
 

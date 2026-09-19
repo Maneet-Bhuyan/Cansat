@@ -250,8 +250,35 @@ def read_root():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
 @app.get("/index.html")
+@app.get("/home.html")
 def serve_index_html():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/tinyml.html")
+def serve_tinyml_html():
+    return FileResponse(os.path.join(BASE_DIR, "tinyml.html"))
+
+@app.get("/dashboard.html")
+def serve_dashboard_html():
+    return FileResponse(os.path.join(BASE_DIR, "dashboard.html"))
+
+@app.get("/results.html")
+def serve_results_html():
+    return FileResponse(os.path.join(BASE_DIR, "results.html"))
+
+@app.get("/models.html")
+@app.get("/models")
+def serve_models_html():
+    return FileResponse(os.path.join(BASE_DIR, "models.html"))
+
+
+css_dir = os.path.join(BASE_DIR, "css")
+if os.path.exists(css_dir):
+    app.mount("/css", StaticFiles(directory=css_dir), name="css")
+
+js_dir = os.path.join(BASE_DIR, "js")
+if os.path.exists(js_dir):
+    app.mount("/js", StaticFiles(directory=js_dir), name="js")
 
 test_cases_dir = os.path.join(BASE_DIR, "test_cases")
 if os.path.exists(test_cases_dir):

@@ -89,7 +89,7 @@ assert('CSV 17 columns', header.split(',').length === 17);
 
 const fs = require('fs');
 const path = require('path');
-const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'dashboard.html'), 'utf8');
 assert('Web Serial requestPort', html.includes('navigator.serial.requestPort'));
 assert('TextDecoderStream', html.includes('TextDecoderStream'));
 assert('baud 115200', html.includes('115200'));

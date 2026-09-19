@@ -1270,3 +1270,51 @@ AUTOMATED TEST VERIFICATION:
 
 STATUS: 3D RADIAL ZOOM, TYPOGRAPHY, BALANCED GRID & AI HUB COMPLETE AND VERIFIED
 
+--------------------------------------------------------------------------------
+3D PLA CANSAT KIT, ML MODELS PAGE, PROJECT CLEANUP & TASK ASSIGNMENTS
+--------------------------------------------------------------------------------
+
+[2026-09-19T11:15:00Z] ACTION: Implemented 3D PLA CanSat kit modeling, nadir camera orientation, side GPS bracket, blinking beacon highlight, created ML Models page (models.html), resolved FastAPI routing, cleaned project clutter, and updated team task assignments.
+
+1. 3D PLA CanSat Hardware Modeling & Inspection:
+   - Updated Page 1 (index.html) to authentic matte black 3D-printed PLA construction (#18181b, roughness: 0.85).
+   - Modeled realistic FDM print features: micro-layer groove rings, top/bottom end-caps with countersunk M3 machine screws, side sensor aperture, top brass SMA bulkhead with whip antenna and metal bat-lever toggle switch, and bottom 9V battery bay.
+   - Modeled physical avionics matching the kit: Arduino Nano, LoRa SX1278 (Ra-02), DHT11 blue slotted grid, BMP180, MPU6050, brass standoffs, and AI-Thinker ESP32-CAM + Dev Board.
+   - Downward-Facing Nadir Camera: Positioned ESP32-CAM at the bottom-most deck (y = -0.58) with camera lens turret facing nadir along the -Y axis.
+   - Side-Mounted NEO-6M GPS: Relocated GPS receiver to the side vertical bracket slot on the cylinder airframe (x = 0.69-0.77, y = 0.20), matching the physical kit manual.
+   - Blinking Beacon Highlight Pulse: Upgraded component selection highlight to a periodic avionics beacon blinking cycle (550ms period: 340ms bright neon cyan flash at 2.8 intensity, 210ms dimmed baseline at 0.18 intensity).
+   - Cutaway Raycasting: Configured raycasting to prioritize internal avionics through the outer PLA shell.
+
+2. Machine Learning Architecture Page (models.html):
+   - Created dedicated models.html positioned directly after Mission Control in navigation.
+   - Explained all 6 project ML models with plain-English analogies for non-specialists alongside aerospace benchmarks:
+     * TinyLandingNet (Edge Vision CNN)
+     * Flight Phase & State Classifier (Random Forest)
+     * Touchdown Prognostics Regressor (Multi-Quantile GBDT)
+     * Sensor Physics Calibrator (Multi-Output ExtraTrees)
+     * Apogee Peak Altitude Regressor (Gradient Boosting)
+     * In-Flight Telemetry Anomaly Detector (Isolation Forest - PyOD)
+   - Integrated unified master comparison table and site-wide navigation links.
+   - Resolved FastAPI 404 by adding explicit @app.get("/models.html") and @app.get("/models") routes in backend/app.py and enabled reload=True in launch.py.
+
+3. Project Directory Reorganization & Clutter Cleanup:
+   - Removed obsolete backup file (dashboard.backup.html) from root.
+   - Removed duplicate script (backend/flight_analyzer.py); ml/flight_analyzer.py is canonical.
+   - Cleaned up scratch/ directory; moved scratch tests to tests/scratch/ and updated .gitignore.
+   - Restructured reports/: moved all 10 PDF reports into reports/pdf/ and 60+ PNG figures into reports/figures/; created reports/README.md.
+   - Updated ml/flight_analyzer.py to automatically output to reports/pdf/ and reports/figures/.
+
+4. Team Task Assignments:
+   - Rishi (Data Analytics Lead): Assigned TASK DA-06 (Flight Dynamics & Post-Flight Analysis Deep Dive Page - analysis.html) in tasks.txt and updated WhatsApp briefing.
+   - Shubham (Web Dev & Testing Lead): Assigned TASK WD-07 (Production Deployment & Comprehensive Batch Testing Suite across all 5 test suites and 10 mission profiles) in tasks.txt and updated WhatsApp briefing.
+
+AUTOMATED TEST VERIFICATION:
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - python -m unittest tests/test_backend_core.py: 12/12 PASS
+  - python ml/flight_analyzer.py --file test_cases/01_nominal_sounding_flight.csv: PASS (PDF & PNGs in reports/pdf/ and reports/figures/)
+  - python -m py_compile backend/app.py ml/flight_analyzer.py: PASS (0 syntax/import errors)
+
+STATUS: PROJECT CLEANUP, DOCS UPDATES, AND TEAM TASK ASSIGNMENTS COMPLETED
+
+

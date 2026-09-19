@@ -100,14 +100,24 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
     - Review false-positive rates on historical sounding test runs.
 
 [X] TASK DA-05: AUTOMATED POST-FLIGHT ANALYSIS REPORT SCRIPT & TOUCHDOWN PROGNOSTICS (COMPLETED)
-    - Developed ml/flight_analyzer.py and backend/flight_analyzer.py with automated batch processing (--all).
-    - Generates publication-grade 4-panel figures (Altitude, Velocity, G-Shock, Sounding) and individual vector PDF reports for all 10 mission profiles in reports/.
+    - Developed ml/flight_analyzer.py with automated batch processing (--all).
+    - Generates publication-grade 4-panel figures (Altitude, Velocity, G-Shock, Sounding) and individual vector PDF reports for all 10 mission profiles in reports/pdf/ and reports/figures/.
     - Compiled master benchmark matrix: reports/all_missions_summary.csv.
     - Engineered Touchdown Prognostics pipeline: GradientBoostingRegressor with quantile loss (10th, median, 90th percentile TTD) and aerodynamic descent regime classifier (ml/train_touchdown_prognostics.py, analysis/).
     - Sensor suite ablation study notebook: test_cases/cansat_eval_ablation.ipynb.
 
+[ ] TASK DA-06: FLIGHT DYNAMICS & POST-FLIGHT ANALYSIS DEEP DIVE PAGE (analysis.html)
+    - Author a dedicated educational and technical page positioned immediately after ML Models in the navigation sequence.
+    - Explain in clear, plain English (accessible to non-specialists) how telemetry data analysis works alongside rigorous aerospace formulations:
+      * Savitzky-Golay filtering: explain how it strips sensor noise without introducing phase delay.
+      * Vertical descent velocity & dynamic G-shock profiling: how impacts and separation shocks are isolated.
+      * Environmental Lapse Rate (ELR) & atmospheric sounding: barometric altimetry, temperature lapse, and potential temperature.
+      * Aerodynamic descent regimes: terminal velocity, parachute drag coefficients, and touchdown prognostics.
+    - Wire interactive analysis charts, flight profile selector, and publication figure visualizers.
+
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
+
 ================================================================================
 Primary Responsibilities: Ground station web interface, WebSocket server, serial
 bridges, high-performance UI rendering, and automated test suites.
@@ -174,8 +184,21 @@ bridges, high-performance UI rendering, and automated test suites.
       * Mark docs/* and markdown logs as documentation (linguist-documentation)
     - Guarantees repository language distribution accurately reflects core Python & C++ logic.
 
+[ ] TASK WD-07: PRODUCTION DEPLOYMENT & COMPREHENSIVE BATCH TESTING SUITE
+    - Prepare and verify production deployment for the entire Cognitive CanSat system:
+      * Configure production web serving and WebSocket streaming parameters.
+      * Validate cross-platform deployment scripts and containerization/hosting readiness.
+    - Execute end-to-end batch testing across all 10 mission profiles in test_cases/ and all 5 automated test suites:
+      * node tests/selftest.js (27 assertions)
+      * powershell tests/selftest.ps1 (17 assertions)
+      * python tests/test_backend_core.py (12 assertions)
+      * python tests/test_firmware_protocol.py (4 assertions)
+      * powershell tests/test_sm.ps1 (10 scenario state machine progressions)
+    - Document test coverage, deployment URLs, and runtime stability metrics.
+
 ================================================================================
 4. GANESH — DOCUMENTATION, TECHNICAL ARCHITECTURE & RESEARCH PAPER
+
 ================================================================================
 Primary Responsibilities: Comprehensive system documentation, engineering diagrams,
 academic literature review, conference research paper authorship and submission.

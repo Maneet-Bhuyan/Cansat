@@ -5,7 +5,7 @@ Write-Host "====================================================================
 
 $rootDir = Split-Path -Parent $PSScriptRoot
 $testCasesDir = Join-Path $rootDir "test_cases"
-$htmlPath = Join-Path $rootDir "index.html"
+$htmlPath = Join-Path $rootDir "dashboard.html"
 $failed = 0
 
 function Assert-Test([string]$name, [bool]$condition, [string]$detail = "") {

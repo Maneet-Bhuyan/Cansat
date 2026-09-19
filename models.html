@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machine Learning Architecture &amp; Predictive Models | Cognitive CanSat</title>
+  <link rel="stylesheet" href="css/resend-theme.css">
+  <style>
+    .model-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.75rem;
+      margin-top: 2rem;
+    }
+
+    .model-spec-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .model-spec-item {
+      background: #000000;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.6rem 0.85rem;
+    }
+
+    .model-spec-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .model-spec-value {
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .analogy-box {
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 2px solid var(--accent-cyan);
+      padding: 0.85rem 1rem;
+      margin: 1rem 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .analogy-title {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .pipeline-step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      background: #111111;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .comparison-table-wrapper {
+      overflow-x: auto;
+      margin-top: 2rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- NAVIGATION BAR                                                 -->
+  <!-- ============================================================== -->
+  <nav class="resend-navbar">
+    <a href="index.html" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <span>Cognitive CanSat</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Overview</a></li>
+      <li><a href="tinyml.html" class="nav-link">TinyML Deep Dive</a></li>
+      <li><a href="dashboard.html" class="nav-link">Mission Control</a></li>
+      <li><a href="models.html" class="nav-link active">ML Models</a></li>
+      <li><a href="results.html" class="nav-link">Research &amp; Results</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="system-status-badge">
+        <span class="status-dot"></span>
+        <span>Flight System 2.0</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content-container">
+
+    <!-- ============================================================== -->
+    <!-- HERO SECTION                                                   -->
+    <!-- ============================================================== -->
+    <header style="margin-top: 5rem; margin-bottom: 6rem; max-width: 860px;">
+      <div class="hero-pill-badge" style="display: inline-flex;">
+        <span>Autonomous Flight Intelligence &middot; 6 Specialized Models</span>
+      </div>
+
+      <h1 class="hero-serif-title" style="margin-top: 1.5rem; margin-bottom: 1.25rem;">
+        The AI &amp; predictive models powering the CanSat
+      </h1>
+
+      <p class="hero-subtitle" style="font-size: 1.05rem; line-height: 1.7;">
+        A high-speed rocket flight produces noisy, fluctuating sensor data. Instead of relying on rigid hardcoded formulas or slow human commands from the ground, the Cognitive CanSat utilizes an integrated suite of six specialized machine learning models. Together, they give the probe real-time sight, spatial reflexes, self-calibration, and predictive landing safety.
+      </p>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+        <div><strong style="color: #ffffff; font-weight: 600;">6</strong> Distinct ML Models</div>
+        <span style="color: var(--border-subtle); user-select: none;">&middot;</span>
+        <div><strong style="color: #ffffff; font-weight: 600;">Onboard &amp; Ground</strong> Dual Execution</div>
+        <span style="color: var(--border-subtle); user-select: none;">&middot;</span>
+        <div><strong style="color: #ffffff; font-weight: 600;">93.8%</strong> Terrain Vision Accuracy</div>
+        <span style="color: var(--border-subtle); user-select: none;">&middot;</span>
+        <div><strong style="color: #ffffff; font-weight: 600;">98.6%</strong> Flight Stage Precision</div>
+      </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: HOW THE TWO-TIER ML ARCHITECTURE WORKS               -->
+    <!-- ============================================================== -->
+    <section>
+      <div class="section-header">
+        <div class="section-tag">COMPUTATIONAL ARCHITECTURE</div>
+        <h2 class="section-title">Two Brains: Onboard Reflexes &amp; Ground Intelligence</h2>
+        <p class="section-desc">
+          Why don't all models run in one place? Radio waves travel with latency and microcontrollers have strict memory limits. The system strategically divides the computing workload into two domains:
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+        <!-- Domain 1: Onboard Edge AI -->
+        <div class="resend-card" style="border-color: rgba(0, 229, 255, 0.25);">
+          <div class="card-badge" style="color: var(--accent-cyan); width: fit-content; margin-bottom: 0.75rem;">Domain 1 // In The Air</div>
+          <h3 class="card-title" style="margin-bottom: 0.75rem;">Onboard Edge Microcontroller (ESP32-CAM)</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
+            Runs ultra-compact neural networks directly inside 520 KB of internal chip memory at 240 MHz. Because there is no internet connection and no time to wait for a radio signal, this model acts like the human spinal reflex: it sees danger and steers instantly in 38 milliseconds.
+          </p>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">
+            Primary Model: TinyLandingNet (Hazard Vision)
+          </div>
+        </div>
+
+        <!-- Domain 2: Ground Station Analytics -->
+        <div class="resend-card" style="border-color: rgba(168, 85, 247, 0.25);">
+          <div class="card-badge" style="color: var(--accent-purple-light); width: fit-content; margin-bottom: 0.75rem;">Domain 2 // On The Ground</div>
+          <h3 class="card-title" style="margin-bottom: 0.75rem;">Ground Station Telemetry Engine (Mission Control)</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
+            Runs heavier predictive models on the ground station laptop receiving the 433MHz radio stream. These models perform deep sensor physics calibration, detect hidden in-flight anomalies, predict the exact second of landing, and forecast peak apogee altitude.
+          </p>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-purple-light);">
+            Models: Flight Phase, Countdown (TTD), Physics Calibrator, Apogee, Anomaly
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: THE 6 MACHINE LEARNING MODELS IN DETAIL             -->
+    <!-- ============================================================== -->
+    <section style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">DETAILED MODEL BREAKDOWN</div>
+        <h2 class="section-title">The 6 Core Models Explained</h2>
+        <p class="section-desc">
+          Every model serves a specific purpose in ensuring the CanSat survives its descent, understands its environment, and lands safely.
+        </p>
+      </div>
+
+      <div class="model-card-grid">
+
+        <!-- MODEL 1: TinyLandingNet -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 01 &middot; Edge Computer Vision</span>
+            <span class="card-badge" style="color: var(--accent-cyan);">Onboard Airframe</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">TinyLandingNet: Downward Hazard Vision</h3>
+          
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The CanSat's eyes and visual reflexes. Like looking out of a falling plane, recognizing whether you are over trees, roads, or grass, and pointing the steering parachute toward safe grass before you hit the ground.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> Analyzes raw camera images captured directly underneath the descending CanSat at 10 frames per second. It splits the ground view into a 3&times;3 grid (9 sectors) and classifies each sector into one of four terrain types:
+          </p>
+
+          <ul style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.75rem 0 1rem 1.25rem; line-height: 1.6;">
+            <li><strong style="color: var(--accent-green);">SAFE_LZ:</strong> Open grassy fields, soft soil, or agricultural farmland suitable for impact.</li>
+            <li><strong style="color: var(--accent-amber);">OBSTACLE_CANOPY:</strong> Dense trees and forest cover that could snag the parachute.</li>
+            <li><strong style="color: var(--accent-red);">CRITICAL_HAZARD:</strong> Concrete buildings, roofs, active roads, or high-voltage power lines.</li>
+            <li><strong style="color: var(--accent-cyan);">WATER_HAZARD:</strong> Rivers, lakes, or swamps that would drown electronics upon touchdown.</li>
+          </ul>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it predicts:</strong> The safest landing sector and an evasion heading angle (e.g. 315&deg; northwest) to steer the parachute lines autonomously.
+          </p>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Depthwise Separable CNN</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Parameters</div>
+              <div class="model-spec-value">6,996 (7.15 KB INT8)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Accuracy</div>
+              <div class="model-spec-value">93.04% (93.21% F1)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Execution Speed</div>
+              <div class="model-spec-value">16.3 ms (38 ms full loop)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL 2: Flight Phase Classifier -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 02 &middot; State Estimation</span>
+            <span class="card-badge" style="color: var(--accent-purple-light);">Ground Station</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">Flight Phase &amp; State Classifier</h3>
+
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The automated flight director. Rocket launches happen too quickly for humans to press buttons. This model watches all sensors at once like an experienced pilot to know exactly when the rocket stops climbing and starts falling.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> Watches 17 incoming telemetry variables (barometric altitude, rate of climb/fall, 3-axis acceleration, 3-axis gyroscope spin, and battery voltage) to identify what stage of flight the probe is currently in.
+          </p>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
+            <strong>What it predicts:</strong> Identifies 5 critical flight phases:
+          </p>
+
+          <ul style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.75rem 0 1rem 1.25rem; line-height: 1.6;">
+            <li><code>PAD_IDLE</code> (100% recall): Sitting on the launchpad before ignition.</li>
+            <li><code>BALLOON_ASCENT</code> (99.7% recall): High-speed climbing through the atmosphere.</li>
+            <li><code>APOGEE_BURST</code>: The precise moment upward velocity hits zero at maximum height.</li>
+            <li><code>PARACHUTE_DESCENT</code> (98.1% recall): Steady downward float under canopy.</li>
+            <li><code>TOUCHDOWN_RECOVERY</code> (100% recall): Impact detected and resting on the ground.</li>
+          </ul>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Random Forest Classifier</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Overall Accuracy</div>
+              <div class="model-spec-value">98.56%</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Key Features</div>
+              <div class="model-spec-value">vSpd (18.4%), dAlt (16.2%)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Latency</div>
+              <div class="model-spec-value">&lt; 1 ms per packet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL 3: Touchdown Prognostics Regressor -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 03 &middot; Descent Analytics</span>
+            <span class="card-badge" style="color: var(--accent-purple-light);">Ground Station</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">Touchdown Prognostics Regressor</h3>
+
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The smart landing countdown clock. Simply dividing height by speed gives false estimates because air gets thicker near the ground and wind causes swinging. This model constantly updates an accurate countdown clock so recovery crews know the exact second it touches down.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> Learns the nonlinear aerodynamic drag profile of the parachute as it descends through changing atmospheric air density (from $1.10\,\text{kg/m}^3$ at high altitude to $1.225\,\text{kg/m}^3$ at sea level).
+          </p>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
+            <strong>What it predicts:</strong> Time-to-Touchdown (TTD in seconds) with statistical confidence bounds:
+          </p>
+
+          <ul style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.75rem 0 1rem 1.25rem; line-height: 1.6;">
+            <li><strong>P10 (Fastest Case):</strong> If heavy downward wind shears accelerate the fall.</li>
+            <li><strong>P50 (Expected Case):</strong> The most probable landing second.</li>
+            <li><strong>P90 (Slowest Case):</strong> If thermal updrafts keep the parachute lofted longer.</li>
+          </ul>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Multi-Quantile GBDT</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Confidence Bounds</div>
+              <div class="model-spec-value">10th, 50th, 90th Percentile</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Target Metric</div>
+              <div class="model-spec-value">Time-to-Touchdown (s)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Aerodynamics</div>
+              <div class="model-spec-value">Air density drag curve</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL 4: Sensor Physics Calibrator -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 04 &middot; Physics Calibration</span>
+            <span class="card-badge" style="color: var(--accent-purple-light);">Ground Station</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">Sensor Physics Calibrator</h3>
+
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The wind-rush filter. When you stick your hand out of a fast-moving car window, rushing air creates false pressure. The CanSat's altitude sensor experiences the same error while falling. This model subtracts the wind distortion to calculate the probe's true height and speed.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> High-speed descent creates aerodynamic pressure drops (Bernoulli effect) that fool barometers into reporting incorrect altitudes. Furthermore, onboard electronics generate heat that causes temperature drift in MEMS sensors.
+          </p>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
+            <strong>What it predicts:</strong> Takes 13 raw noisy sensor channels and outputs:
+          </p>
+
+          <ul style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.75rem 0 1rem 1.25rem; line-height: 1.6;">
+            <li><strong>True Geometric Altitude:</strong> Error reduced from $\pm 18\,\text{m}$ down to $0.49\,\text{m}$.</li>
+            <li><strong>True Vertical Speed:</strong> Cleaned of aerodynamic buffeting and vibration noise.</li>
+          </ul>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Multi-Output ExtraTrees</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Altitude R²</div>
+              <div class="model-spec-value">1.000 (MAE: 0.499 m)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">vSpd R²</div>
+              <div class="model-spec-value">0.9516 (MAE: 0.513 m/s)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Inputs</div>
+              <div class="model-spec-value">13 Raw Telemetry Features</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL 5: Apogee Peak Regressor -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 05 &middot; Trajectory Forecasting</span>
+            <span class="card-badge" style="color: var(--accent-purple-light);">Ground Station</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">Apogee Peak Altitude Regressor</h3>
+
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The altitude forecaster. Just like a basketball player knows whether a shot will reach the hoop the moment it leaves their fingers, this model watches the first few seconds of the rocket burn and calculates exactly how high it will soar before falling.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> Analyzes early rocket motor burn dynamics, thrust acceleration curves, and atmospheric pressure decay during the initial 5 to 10 seconds of launch.
+          </p>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
+            <strong>What it predicts:</strong> The maximum peak altitude (apogee in meters AGL) the rocket will attain before it starts falling. This enables mission controllers to know if the launch will clear competition flight ceilings or drift outside safety perimeters.
+          </p>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Gradient Boosting Regressor</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">R² Score</div>
+              <div class="model-spec-value">0.9951</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">RMSE</div>
+              <div class="model-spec-value">24.16 meters</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Forecast Horizon</div>
+              <div class="model-spec-value">35 to 45 seconds ahead</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL 6: In-Flight Telemetry Anomaly Detector -->
+        <div class="resend-card">
+          <div class="card-header">
+            <span class="pipeline-step-badge">Model 06 &middot; Safety &amp; Health</span>
+            <span class="card-badge" style="color: var(--accent-purple-light);">Ground Station</span>
+          </div>
+
+          <h3 class="card-title" style="margin-bottom: 0.5rem;">In-Flight Telemetry Anomaly Detector</h3>
+
+          <div class="analogy-box">
+            <div class="analogy-title">Plain English Analogy</div>
+            The onboard flight doctor. It has studied hundreds of healthy flight patterns. If something unexpected happens—like a sudden tumble, severe battery drain, or a loose sensor cable—it sounds the alarm on Mission Control instantly.
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
+            <strong>What it does:</strong> High-g launches can cause solder joints to fracture, parachutes to tangle, or radio packets to corrupt. Instead of requiring engineers to watch 17 graphs simultaneously, this unsupervised model continuously evaluates all telemetry in high-dimensional space.
+          </p>
+
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
+            <strong>What it predicts:</strong> A continuous Anomaly Health Score (0.0 normal to 1.0 critical hazard). If the score crosses the 0.06 contamination threshold, it highlights the exact sensor channel that is misbehaving.
+          </p>
+
+          <div class="model-spec-list">
+            <div class="model-spec-item">
+              <div class="model-spec-label">Algorithm</div>
+              <div class="model-spec-value">Isolation Forest (PyOD)</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Training Base</div>
+              <div class="model-spec-value">1,927 Nominal Flight Packets</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Threshold</div>
+              <div class="model-spec-value">6.0% Contamination Limit</div>
+            </div>
+            <div class="model-spec-item">
+              <div class="model-spec-label">Execution Time</div>
+              <div class="model-spec-value">&lt; 0.2 ms per packet</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 3: COMPREHENSIVE MODEL COMPARISON TABLE                -->
+    <!-- ============================================================== -->
+    <section style="margin-top: 7rem; margin-bottom: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">UNIFIED COMPARISON</div>
+        <h2 class="section-title">Master Machine Learning Model Index</h2>
+        <p class="section-desc">
+          Quick reference index detailing execution environment, primary objectives, and verified performance benchmarks for all project models.
+        </p>
+      </div>
+
+      <div class="comparison-table-wrapper">
+        <table class="mass-budget-table" style="font-size: 0.85rem;">
+          <thead>
+            <tr>
+              <th>Model Name</th>
+              <th>Location</th>
+              <th>Algorithm</th>
+              <th>Plain English Purpose</th>
+              <th>What It Predicts</th>
+              <th>Key Benchmark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">TinyLandingNet</td>
+              <td><span style="color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.75rem;">ESP32-CAM</span></td>
+              <td>Depthwise CNN (INT8)</td>
+              <td>CanSat's eyes and landing reflexes</td>
+              <td>Safe vs hazardous ground sectors &amp; escape angle</td>
+              <td>93.04% Acc &middot; 38 ms</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">Flight Phase Classifier</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
+              <td>Random Forest</td>
+              <td>Automated flight director &amp; stage detector</td>
+              <td>5 flight stages (Pad, Ascent, Apogee, Chute, Landed)</td>
+              <td>98.56% Accuracy</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">Touchdown Prognostics</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
+              <td>Multi-Quantile GBDT</td>
+              <td>Intelligent landing countdown clock</td>
+              <td>Time-to-Touchdown with P10/P50/P90 confidence bounds</td>
+              <td>Sub-second precision</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">Physics Calibrator</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
+              <td>Multi-Output ExtraTrees</td>
+              <td>Wind-rush and temperature distortion filter</td>
+              <td>True geometric altitude and true vertical speed</td>
+              <td>R² = 1.0 (0.49m error)</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">Apogee Peak Regressor</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
+              <td>Gradient Boosting</td>
+              <td>Rocket height forecaster during early ascent</td>
+              <td>Maximum altitude in meters &amp; time to apogee</td>
+              <td>R² = 0.9951 (24.1m RMSE)</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">Anomaly Detector</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
+              <td>Isolation Forest (PyOD)</td>
+              <td>Onboard health doctor &amp; glitch watchdog</td>
+              <td>Continuous Health Score (0.0 to 1.0)</td>
+              <td>6% Contamination threshold</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- FOOTER                                                         -->
+  <!-- ============================================================== -->
+  <footer class="resend-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        Cognitive CanSat Project // Sounding Pico-Satellite Autonomous Landing Research
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html" class="footer-link">Home</a></li>
+        <li><a href="tinyml.html" class="footer-link">TinyML Deep Dive</a></li>
+        <li><a href="dashboard.html" class="footer-link">Mission Control</a></li>
+        <li><a href="models.html" class="footer-link">ML Models</a></li>
+        <li><a href="results.html" class="footer-link">Research &amp; Results</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>

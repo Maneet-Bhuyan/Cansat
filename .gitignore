@@ -20,3 +20,6 @@ data/EuroSAT_RGB/
 .DS_Store
 Thumbs.db
 drivers/
+scratch/
+tests/scratch/
+*.backup.*

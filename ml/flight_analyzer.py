@@ -46,7 +46,11 @@ class FlightAnalyzer:
         self.df = None
         self.stats = {}
 
+        self.pdf_dir = os.path.join(self.output_dir, "pdf")
+        self.fig_dir = os.path.join(self.output_dir, "figures")
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.pdf_dir, exist_ok=True)
+        os.makedirs(self.fig_dir, exist_ok=True)
         self.mission_name = os.path.splitext(os.path.basename(self.csv_path))[0]
 
     def load_and_preprocess(self) -> pd.DataFrame:
@@ -153,7 +157,7 @@ class FlightAnalyzer:
 
     def generate_plots_and_report(self):
         """Generates individual 300 DPI PNGs, a 4-panel overview, and a combined PDF report."""
-        pdf_path = os.path.join(self.output_dir, f"{self.mission_name}_Flight_Report.pdf")
+        pdf_path = os.path.join(self.pdf_dir, f"{self.mission_name}_Flight_Report.pdf")
 
         plt.rcParams.update({
             'font.family': 'sans-serif',
@@ -181,7 +185,7 @@ class FlightAnalyzer:
                 for col in range(2): table[(row, col)].set_facecolor(bg_color)
             plt.title(f"Cognitive CanSat - Mission Summary: {self.mission_name}", fontsize=14, fontweight='bold', pad=20, color='#0f2038')
             pdf.savefig(fig, bbox_inches='tight')
-            fig.savefig(os.path.join(self.output_dir, f"{self.mission_name}_Summary_Table.png"), dpi=300, bbox_inches='tight')
+            fig.savefig(os.path.join(self.fig_dir, f"{self.mission_name}_Summary_Table.png"), dpi=300, bbox_inches='tight')
             plt.close(fig)
 
             # 2. Altitude vs Time
@@ -267,7 +271,7 @@ class FlightAnalyzer:
 
     def _save_fig(self, fig, pdf, filename_suffix: str):
         pdf.savefig(fig, bbox_inches='tight')
-        png_path = os.path.join(self.output_dir, f"{self.mission_name}_{filename_suffix}.png")
+        png_path = os.path.join(self.fig_dir, f"{self.mission_name}_{filename_suffix}.png")
         fig.savefig(png_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
 

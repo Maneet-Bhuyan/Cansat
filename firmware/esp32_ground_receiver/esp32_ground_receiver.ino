@@ -19,6 +19,8 @@
 #define MAX_CHUNKS           256     // Maximum chunks per frame
 #define FRAME_TIMEOUT_MS     400     // Drop incomplete frame if chunks stall
 
+#define RX_LED_PIN           2       // Onboard blue/green activity LED on ESP32 dev boards
+
 // Protocol Sync & Identifiers
 #define SYNC_WORD            0xAA55
 #define PKT_FRAME_START      0x01
@@ -26,24 +28,24 @@
 
 #pragma pack(push, 1)
 typedef struct {
-    uint16_t sync;
-    uint8_t  pkt_type;
-    uint16_t frame_id;
-    uint32_t total_bytes;
-    uint16_t total_chunks;
-    uint16_t width;
-    uint16_t height;
-    uint8_t  quality;
+    uint16_t sync;          // 0xAA55
+    uint8_t  pkt_type;      // PKT_FRAME_START (0x01)
+    uint16_t frame_id;      // Monotonically increasing sequence number
+    uint32_t total_bytes;   // Total JPEG length
+    uint16_t total_chunks;  // Total number of chunks in this frame
+    uint16_t width;         // Image width in pixels
+    uint16_t height;        // Image height in pixels
+    uint8_t  quality;       // JPEG quality factor
 } FrameHeaderPacket;
 
 typedef struct {
-    uint16_t sync;
-    uint8_t  pkt_type;
-    uint16_t frame_id;
-    uint16_t chunk_index;
-    uint16_t total_chunks;
-    uint8_t  chunk_len;
-    uint8_t  payload[CHUNK_MAX_SIZE];
+    uint16_t sync;          // 0xAA55
+    uint8_t  pkt_type;      // PKT_FRAME_DATA (0x02)
+    uint16_t frame_id;      // Matching frame sequence number
+    uint16_t chunk_index;   // 0-indexed chunk counter
+    uint16_t total_chunks;  // Total chunk count
+    uint8_t  chunk_len;     // Number of valid payload bytes in this chunk
+    uint8_t  payload[CHUNK_MAX_SIZE]; // Raw JPEG slice
 } FrameChunkPacket;
 #pragma pack(pop)
 
@@ -120,6 +122,9 @@ void dispatch_completed_frame() {
     // Stream base64 characters directly to UART output buffer
     stream_base64_to_serial(s_frame_buffer, s_expected_bytes);
     Serial.println(); // Frame delimiter
+
+    // Pulse activity LED on frame completion
+    digitalWrite(RX_LED_PIN, LOW);
 }
 
 // ----------------------------------------------------------------------------
@@ -132,9 +137,10 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 #endif
     if (!incomingData || len < 3) return; // Minimum sync word + type check
 
+    digitalWrite(RX_LED_PIN, HIGH); // Flash LED on wireless RF packet reception
     s_total_packets_received++;
     if (s_total_packets_received == 1) {
-        Serial.println(F("[RADIO] First wireless RF packet intercepted from air!"));
+        Serial.println(F("[RADIO] First wireless RF packet intercepted from airborne CanSat!"));
     }
 
     uint16_t sync = incomingData[0] | (incomingData[1] << 8);
@@ -193,16 +199,25 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 }
 
 // ----------------------------------------------------------------------------
-// ARDUINO SETUP
+// ARDUINO SETUP (AEROSPACE MISSION BOOT BANNER)
 // ----------------------------------------------------------------------------
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
     delay(1000);
 
+    pinMode(RX_LED_PIN, OUTPUT);
+    digitalWrite(RX_LED_PIN, LOW); // Off initially
+
+    // Clean Aerospace Ground Gateway Boot Banner
     Serial.println();
-    Serial.println(F("========================================================"));
-    Serial.println(F(" COGNITIVE CANSAT - GROUND RECEIVER NODE (ESP32-WROOM)  "));
-    Serial.println(F("========================================================"));
+    Serial.println(F("========================================================================"));
+    Serial.println(F("*              COGNITIVE CANSAT - GROUND RECEIVER GATEWAY             *"));
+    Serial.println(F("*              Node: 2.4 GHz ESP-NOW TELEMETRY & VIDEO INGESTION       *"));
+    Serial.println(F("*              Hardware: ESP-WROOM-32U + High-Gain External Antenna    *"));
+    Serial.println(F("*              Baud Rate: 460800 Baud (High-Speed USB UART Bridge)     *"));
+    Serial.println(F("*              Radio Link: 2.4 GHz Channel 1 (Promiscuous RX)         *"));
+    Serial.println(F("========================================================================"));
+    Serial.println(F("[SYSTEM] Xtensa dual-core processor initialized. High-speed UART ready."));
 
     WiFi.mode(WIFI_AP_STA);
     WiFi.disconnect(true);
@@ -215,7 +230,7 @@ void setup() {
     uint8_t primaryChan = 0;
     wifi_second_chan_t secondChan;
     esp_wifi_get_channel(&primaryChan, &secondChan);
-    Serial.printf("[RADIO] Station/AP radio locked to 2.4 GHz Channel %d (Max TX Power 19.5 dBm).\n", primaryChan);
+    Serial.printf("[RADIO] Station/AP radio locked to 2.4 GHz Channel %d (Max TX/RX Power: 19.5 dBm).\n", primaryChan);
 
     if (esp_now_init() != ESP_OK) {
         Serial.println(F("[ERROR] ESP-NOW init failed. Halting."));
@@ -225,6 +240,7 @@ void setup() {
     esp_now_register_recv_cb(OnDataRecv);
 
     Serial.printf("[INIT COMPLETE] Receiver active on Channel %d. Awaiting airborne feed...\n", primaryChan);
+    Serial.println(F("------------------------------------------------------------------------"));
 }
 
 // ----------------------------------------------------------------------------

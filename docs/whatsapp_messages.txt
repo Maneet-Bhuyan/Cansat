@@ -57,6 +57,13 @@ Hey Rishi! Here is your task breakdown for telemetry data analytics, flight kine
    - Fine-tune trigger thresholds: Gyro tumble (>150°/s), shock impact (>4.5G), voltage sag (<3.50V), and freefall glitches.
 5. *Post-Flight Analysis Python Script*:
    - Create a Python notebook or script in `ml/` or `backend/` using pandas/matplotlib to auto-generate trajectory graphs, descent velocity curves, and summary stats for Ganesh's research paper.
+6. *Flight Dynamics & Analysis Deep Dive Page (NEW)*:
+   - Build a dedicated new page (`analysis.html`) placed directly after the ML Models page in the navigation bar.
+   - Explain how our flight data analysis works in plain English for non-specialists alongside aerospace formulations:
+     * Savitzky-Golay polynomial smoothing (how it strips sensor jitter without phase delay).
+     * Descent velocity derivation and dynamic G-shock transient profiling (ejection, apogee, parachute deployment, and touchdown).
+     * Atmospheric sounding: barometric altitude formula, temperature decay, Environmental Lapse Rate (ELR), and potential temperature.
+     * Aerodynamic descent regimes and touchdown prognostics countdown.
 
 🤝 *Common ML Task (All 4 of us)*:
 We are collaborating on the TinyLandingNet safe landing classifier (evaluating validation accuracy, confusion matrices, and ROC curves). Check `ml/train_tinyml_vision.py` and `docs/GPU_TRAINING_INSTRUCTIONS.md`.
@@ -83,13 +90,19 @@ Hey Shubham! Here is your task roadmap for the Mission Control web dashboard, re
    - Monitor and enhance Tile 12 (Aerial Video Stream) and Tile 13 (Link Diagnostics) in `index.html`.
    - Maintain fallback standalone OpenCV viewer: `firmware/ground_cam_viewer.py`.
 4. *Comprehensive Automated Batch Testing*:
-   - Run and expand the test suites:
-     * `node tests/selftest.js` (telemetry parser, math, and UI probes)
-     * `powershell -File tests/selftest.ps1`
-     * `python tests/test_firmware_protocol.py` (ESP-NOW packet slicing & SHA-256 checks)
-   - Ensure all 10 flight profiles in `test_cases/` parse cleanly without regression.
+   - Run and maintain all 5 test suites across all 10 mission profiles in `test_cases/`:
+     * `node tests/selftest.js` (27 assertions: parser, kinematics, UI tokens)
+     * `powershell -File tests/selftest.ps1` (17 assertions: MET clock, state sequence)
+     * `python tests/test_backend_core.py` (12 assertions: Kalman filter, attitude, sounding)
+     * `python tests/test_firmware_protocol.py` (4 assertions: ESP-NOW chunking & SHA-256)
+     * `powershell -File tests/test_sm.ps1` (10 scenario state machine progressions)
+   - Ensure 100% pass rate with zero regressions across every flight profile.
 5. *One-Click Launch Stability*:
    - Ensure `.venv\Scripts\python.exe launch.py` runs cleanly on any Windows laptop.
+6. *Production System Deployment (NEW)*:
+   - Lead the deployment of the entire Cognitive CanSat project (production server configuration, multi-platform hosting setup, and environment packaging).
+   - Ensure the FastAPI backend, static asset pipeline, WebSocket serial bridges, and standalone fallback server are production-ready.
+
 
 🤝 *Common ML Task (All 4 of us)*:
 We are collaborating on the TinyLandingNet vision model (EuroSAT training and ONNX runtime integration for real-time video tile scoring). Check `ml/train_tinyml_vision.py`.

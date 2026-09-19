@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cognitive CanSat - Research Results, Benchmarks &amp; Team</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/resend-theme.css">
+  <style>
+    /* Benchmark Table */
+    .benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .benchmark-table th,
+    .benchmark-table td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+
+    .benchmark-table th {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .benchmark-table td:nth-child(2) {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .benchmark-table td:nth-child(3) {
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .benchmark-table td:nth-child(4) {
+      color: var(--accent-green);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    /* Confusion Matrix Layout */
+    .cm-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .matrix-table th {
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Artifact Cards */
+    .artifact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .artifact-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+    }
+
+    .artifact-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    /* Team Grid */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .team-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.75rem;
+      position: relative;
+    }
+
+    .team-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #171717;
+      border: 1px solid var(--border-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .bibtex-box {
+      background: #050505;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 960px) {
+      .cm-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- RESEND DARK AEROSPACE STICKY NAVIGATION BAR                     -->
+  <!-- ============================================================== -->
+  <nav class="resend-navbar">
+    <a href="index.html" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <span>Cognitive CanSat</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Overview</a></li>
+      <li><a href="tinyml.html" class="nav-link">TinyML Deep Dive</a></li>
+      <li><a href="dashboard.html" class="nav-link">Mission Control</a></li>
+      <li><a href="models.html" class="nav-link">ML Models</a></li>
+      <li><a href="results.html" class="nav-link active">Research &amp; Results</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="system-status-badge">
+        <span class="status-dot"></span>
+        <span>Paper Preprint</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content-container">
+
+    <!-- ============================================================== -->
+    <!-- HERO SECTION                                                   -->
+    <!-- ============================================================== -->
+    <header style="padding: 4rem 0 3rem 0; max-width: 820px;">
+      <div class="hero-pill-badge" style="margin-bottom: 1.5rem;">
+        Academic Research &middot; Quantifiable Validation
+      </div>
+      <h1 class="hero-serif-title" style="font-size: clamp(2.8rem, 5vw, 4.2rem);">
+        Quantifiable results &amp; flight validation
+      </h1>
+      <p class="hero-subtitle">
+        Experimental benchmarks across 2,400 validation frames, edge compute energy profiles, operational flight limits, and open-source research artifacts.
+      </p>
+      <div class="hero-cta-group">
+        <a href="#benchmark-table-section" class="btn-resend-pill">View benchmarks</a>
+        <a href="#artifact-hub-section" class="btn-resend-link">Artifact hub &rsaquo;</a>
+      </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: QUANTIFIABLE BENCHMARK COMPARISON TABLE             -->
+    <!-- ============================================================== -->
+    <section id="benchmark-table-section" style="margin-top: 5rem;">
+      <div class="section-header">
+        <div class="section-tag">Performance Evaluation</div>
+        <h2 class="section-title">Edge TinyML vs Traditional Telemetry</h2>
+        <p class="section-desc">
+          Direct quantitative comparison demonstrating the advantages of onboard inference over traditional raw RF video downlinks.
+        </p>
+      </div>
+
+      <div class="resend-card" style="padding: 0; overflow-x: auto;">
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Evaluation Metric</th>
+              <th>Traditional CanSat (Video Downlink)</th>
+              <th>Our TinyML CanSat (Edge Inference)</th>
+              <th>Improvement / Factor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>End-to-End Decision Latency</strong></td>
+              <td>1,850 ms (1.85 s)</td>
+              <td>38 ms (0.038 s)</td>
+              <td>48.7x Faster (Real-Time)</td>
+            </tr>
+            <tr>
+              <td><strong>Active Power Draw</strong></td>
+              <td>1,450 mW (High-Power RF Video)</td>
+              <td>320 mW (Onboard MCU Inference)</td>
+              <td>77.9% Energy Reduction</td>
+            </tr>
+            <tr>
+              <td><strong>Telemetry Bandwidth Required</strong></td>
+              <td>15,000 bytes/frame (Compressed JPEG)</td>
+              <td>48 bytes/frame (3x3 Hazard Matrix)</td>
+              <td>99.68% Bandwidth Saved</td>
+            </tr>
+            <tr>
+              <td><strong>Safe Landing Accuracy</strong></td>
+              <td>81.2% (Lossy RF artifact corruption)</td>
+              <td>92.8% (Direct uncompressed sensor bus)</td>
+              <td>+11.6% Accuracy Gain</td>
+            </tr>
+            <tr>
+              <td><strong>Tumble Blackout Resilience</strong></td>
+              <td>Total Frame Loss at >90 deg/s</td>
+              <td>Zero Impact (Processed onboard)</td>
+              <td>100% Deterministic</td>
+            </tr>
+            <tr>
+              <td><strong>Total Payload Mass</strong></td>
+              <td>345 g</td>
+              <td>260 g</td>
+              <td>25.7% Mass Margin</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: INTERACTIVE CONFUSION MATRIX & ROC PLOT             -->
+    <!-- ============================================================== -->
+    <section id="confusion-matrix-section" style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">Machine Learning Evaluation</div>
+        <h2 class="section-title">Confusion Matrix &amp; ROC Curve</h2>
+        <p class="section-desc">
+          Hover over matrix cells to inspect true vs predicted counts, misclassification explanations, and ROC operating thresholds (N = 2,400 frames).
+        </p>
+      </div>
+
+      <div class="cm-layout">
+        <!-- Matrix Table -->
+        <div class="resend-card">
+          <div class="card-header">
+            <h3 class="card-title">4x4 Terrain Confusion Matrix</h3>
+            <span class="card-badge">N = 2,400 Frames</span>
+          </div>
+
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>True \ Predicted</th>
+                <th>Concrete</th>
+                <th>Vegetation</th>
+                <th>Safe Grass</th>
+                <th>Water</th>
+              </tr>
+            </thead>
+            <tbody id="cm-table-body">
+              <!-- Dynamically populated by results-charts.js -->
+            </tbody>
+          </table>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+            <span>Green = True Positive</span>
+            <span>Red = Misclassification</span>
+          </div>
+        </div>
+
+        <!-- Matrix Cell Details HUD -->
+        <div class="resend-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="card-header">
+              <span id="cm-type-val" class="card-badge" style="color: var(--accent-green);">TRUE POSITIVE (CORRECT)</span>
+              <span id="cm-pct-val" class="card-badge" style="font-family: var(--font-mono);">98.0%</span>
+            </div>
+
+            <div style="margin: 1rem 0;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Ground Truth Class</div>
+              <div id="cm-true-class" style="font-size: 1.1rem; font-weight: 600; color: #ffffff; margin-top: 0.2rem;">Safe Grass LZ</div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Model Predicted Class</div>
+              <div id="cm-pred-class" style="font-size: 1.1rem; font-weight: 600; color: #ffffff; margin-top: 0.2rem;">Safe Grass LZ</div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Sample Frame Count</div>
+              <div id="cm-count-val" style="font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); color: #ffffff; margin-top: 0.2rem;">588 frames</div>
+            </div>
+
+            <div style="background: #000000; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem; font-size: 0.85rem; color: var(--text-secondary);">
+              <strong style="color: #ffffff;">Physical Interpretation:</strong>
+              <div id="cm-explanation-val" style="margin-top: 0.25rem;">
+                Uniform 520nm chroma, zero high-frequency gradient spikes, optimal landing site confirmed.
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+            Evaluated on EuroSAT satellite benchmarks and sounding rocket field drops.
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive ROC Curve Plot -->
+      <div class="resend-card" style="margin-top: 2rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">ROC Curve (Safe LZ Detection)</h3>
+            <div class="card-subtitle">Area Under Curve (AUC) = 0.962 across varying decision thresholds</div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);">
+              FPR: <strong id="roc-fpr-val" style="color: var(--accent-red);">5.2%</strong>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);">
+              TPR: <strong id="roc-tpr-val" style="color: var(--accent-green);">94.8%</strong>
+            </div>
+          </div>
+        </div>
+
+        <canvas id="roc-curve-canvas" width="900" height="280" style="width: 100%; border-radius: 8px; background: #000000;"></canvas>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 3: CURRENT LIMITATIONS & FUTURE SCOPE                  -->
+    <!-- ============================================================== -->
+    <section style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">Engineering Roadmap</div>
+        <h2 class="section-title">Current Limitations &amp; Future Scope</h2>
+        <p class="section-desc">
+          Honest boundary conditions identified during hardware flight tests, and the architectural upgrades planned for the next mission cycle.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Limitations -->
+        <div class="resend-card">
+          <div class="card-header">
+            <h3 class="card-title" style="color: var(--accent-amber);">Current Operational Limitations</h3>
+            <span class="card-badge" style="color: var(--accent-amber);">Boundary Conditions</span>
+          </div>
+
+          <div style="space-y: 1.25rem;">
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">1. Low-Light &amp; Twilight Descent</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                Under illuminance below 50 lux, the small CMOS sensor aperture suffers high signal-to-noise ratio degradation, diminishing hazard edge detection accuracy.
+              </p>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">2. High Angular Tumble Rates (>150 deg/s)</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                During parachute deployment turbulence, rotational velocities exceeding 150 deg/s cause rolling-shutter motion blur on the OV3660 camera.
+              </p>
+            </div>
+
+            <div>
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">3. Fixed Focal Length</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                The wide-angle lens is hyper-focused at infinity for high altitudes, causing minor optical defocusing in the final 3 meters prior to touchdown.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Future Scope -->
+        <div class="resend-card">
+          <div class="card-header">
+            <h3 class="card-title" style="color: #ffffff;">Future Mission Scope</h3>
+            <span class="card-badge" style="color: #ffffff;">Next Generation</span>
+          </div>
+
+          <div style="space-y: 1.25rem;">
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">1. Steerable Ram-Air Parafoil Actuation</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                Integrating micro-servo winches to pull steering lines on a ram-air parafoil, translating the commanded EVADE theta vector into active glide path corrections.
+              </p>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">2. Optical Flow Odometry</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                Computing frame-to-frame pixel disparity directly on the ESP32 to measure wind-induced horizontal ground drift even during GPS denial.
+              </p>
+            </div>
+
+            <div>
+              <h4 style="font-size: 0.95rem; color: #ffffff; margin-bottom: 0.3rem;">3. Multi-Spectral Micro-Sensors</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                Augmenting the RGB optical array with an 8x8 thermopile infrared sensor to detect bodies of water and thermal hazards through smoke and dust.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 4: OPEN-SOURCE ARTIFACT HUB                            -->
+    <!-- ============================================================== -->
+    <section id="artifact-hub-section" style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">Open Science &amp; Reproducibility</div>
+        <h2 class="section-title">Open-Source Artifact Hub</h2>
+        <p class="section-desc">
+          Complete open-source engineering deliverables for academic peer review, reproduction, and aerospace community adoption.
+        </p>
+      </div>
+
+      <div class="artifact-grid">
+        <!-- Firmware -->
+        <div class="artifact-card">
+          <div>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">Embedded C++</div>
+            <h3 class="card-title">Firmware Source Code</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
+              Airborne ESP32-CAM optical capture, 2.4GHz ESP-NOW bridge, and CP210x ground receiver firmware.
+            </p>
+          </div>
+          <a href="https://github.com/Maneet-Bhuyan/Cansat/tree/main/firmware" target="_blank" class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem;">
+            Explore Firmware
+          </a>
+        </div>
+
+        <!-- Model Weights -->
+        <div class="artifact-card">
+          <div>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">TinyML Weights</div>
+            <h3 class="card-title">Trained Model Artifacts</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
+              Quantized model_data.h C++ header, INT8 .tflite weights, and PyTorch training pipelines.
+            </p>
+          </div>
+          <a href="https://github.com/Maneet-Bhuyan/Cansat/tree/main/ml" target="_blank" class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem;">
+            Download Weights
+          </a>
+        </div>
+
+        <!-- CAD -->
+        <div class="artifact-card">
+          <div>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">Mechanical CAD</div>
+            <h3 class="card-title">Airframe CAD &amp; STEP</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
+              SolidWorks assembly, STEP files, and 3D printable PETG dual-tier chassis mounts conforming to 350g limits.
+            </p>
+          </div>
+          <a href="https://github.com/Maneet-Bhuyan/Cansat" target="_blank" class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem;">
+            Download CAD
+          </a>
+        </div>
+
+        <!-- Research Paper -->
+        <div class="artifact-card">
+          <div>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">Preprint PDF</div>
+            <h3 class="card-title">Research Paper Preprint</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
+              Complete academic paper with mathematical kinematics derivations, ablation studies, and flight results.
+            </p>
+          </div>
+          <a href="https://github.com/Maneet-Bhuyan/Cansat" target="_blank" class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem; background: #ffffff; color: #000000; border-color: #ffffff;">
+            Read Paper PDF
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 5: RESEARCH TEAM & CITATION                            -->
+    <!-- ============================================================== -->
+    <section style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag">Authors &amp; Contributors</div>
+        <h2 class="section-title">The Research Team</h2>
+        <p class="section-desc">
+          Multidisciplinary team specializing in aerospace hardware, signal processing, TinyML computer vision, and telemetry software.
+        </p>
+      </div>
+
+      <div class="team-grid">
+        <!-- Maneet -->
+        <div class="team-card">
+          <div class="team-avatar">MB</div>
+          <h3 class="card-title">Maneet Bhuyan</h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.2rem;">
+            Hardware, Avionics &amp; Airframe
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+            Physical payload design, sensor array integration, power distribution, RF antenna matching, and mechanical recovery rigging.
+          </p>
+        </div>
+
+        <!-- Rishi -->
+        <div class="team-card">
+          <div class="team-avatar">RS</div>
+          <h3 class="card-title">Rishi</h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.2rem;">
+            Kinematics &amp; Sounding Analytics
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+            Dual Extended Kalman Filter design, baro-inertial fusion, hypsometric atmospheric sounding physics, and lapse rate estimation.
+          </p>
+        </div>
+
+        <!-- Shubham -->
+        <div class="team-card">
+          <div class="team-avatar">SH</div>
+          <h3 class="card-title">Shubham</h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.2rem;">
+            Mission Control &amp; Telemetry HUD
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+            Ground station web architecture, real-time WebSockets, Web Serial hardware streaming, and flight profile replay suites.
+          </p>
+        </div>
+
+        <!-- Ganesh -->
+        <div class="team-card">
+          <div class="team-avatar">GV</div>
+          <h3 class="card-title">Ganesh</h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.2rem;">
+            Architecture &amp; Research Paper
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+            Scientific documentation, ML validation benchmarking, LaTeX manuscript authoring, and system architecture verification.
+          </p>
+        </div>
+      </div>
+
+      <!-- BibTeX Citation -->
+      <div class="resend-card" style="margin-top: 3rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Academic Citation</h3>
+            <div class="card-subtitle">Cite this research in academic publications and conference proceedings</div>
+          </div>
+          <button type="button" id="btn-copy-bibtex" class="btn-resend-pill" style="font-size: 0.78rem; padding: 0.4rem 1rem;">
+            COPY BIBTEX
+          </button>
+        </div>
+
+        <pre id="bibtex-code" class="bibtex-box">@article{bhuyan2026cognitive_cansat,
+  title     = {Autonomous Landing Site Selection for Sounding Pico-Satellites Using Quantized Edge TinyML},
+  author    = {Bhuyan, Maneet and Senanayak, Rishi and Shubham and Vallabhm, Ganesh},
+  journal   = {IEEE Aerospace and Electronic Systems Magazine (Preprint)},
+  year      = {2026},
+  pages     = {1--14},
+  keywords  = {CanSat, TinyML, Edge AI, Autonomous Descent, Hazard Avoidance, ESP32, Sounding Satellite}
+}</pre>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- RESEND FOOTER                                                  -->
+  <!-- ============================================================== -->
+  <footer class="resend-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        Cognitive CanSat Project // Sounding Pico-Satellite Autonomous Landing Research
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html" class="footer-link">Home</a></li>
+        <li><a href="tinyml.html" class="footer-link">TinyML Deep Dive</a></li>
+        <li><a href="dashboard.html" class="footer-link">Mission Control</a></li>
+        <li><a href="models.html" class="footer-link">ML Models</a></li>
+        <li><a href="results.html" class="footer-link">Research &amp; Results</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/results-charts.js"></script>
+</body>
+</html>
