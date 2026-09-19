@@ -370,6 +370,270 @@ Example prediction payload:
 }
 ```
 
+## Flight database architecture & relational schema
+
+The Cognitive CanSat system features an embedded SQLite database engine operating in **Write-Ahead Logging (WAL)** mode located at `data/cansat_missions.db`. It provides zero-latency, concurrent flight mission recording, high-throughput micro-batched telemetry ingestion, discrete flight event logging, and automated Post-Flight Review (PFR) regulatory audit persistence.
+
+### Database architecture & data flow
+
+```text
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                      CANSAT FLIGHT TELEMETRY SOURCES                   │
+ │   Airborne Sensors (LoRa @ 9600)  │  Test Profile Replay / Simulation  │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │ (13-field CSV Stream)
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                  GROUND STATION WEB HUD (dashboard.html)               │
+ │  - Real-Time 3D Attitude, Charts & Sensor Processing Engine            │
+ │  - Client-Side Micro-Batching Buffer (flushes 10 pkts or every 2.5s)   │
+ │  - Live Recording Controller: [ARM REC] / [FINISH] / [SAVE FLIGHT]     │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │ JSON REST API (HTTP POST)
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                    FASTAPI BACKEND SERVICE (backend/app.py)            │
+ │  /api/db/missions/start      -> Arm & allocate mission session         │
+ │  /api/db/missions/telemetry  -> Parameterized batch packet insert      │
+ │  /api/db/missions/{id}/events -> Discrete operational & alarm logging  │
+ │  /api/db/missions/{id}/finish -> Finalize, compute KPIs & persist PFR  │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │ Python Context-Managed Connection
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │           SQLITE WAL DATABASE ENGINE (backend/core/database.py)        │
+ │  - PRAGMA journal_mode = WAL;   (Concurrent lock-free reads & writes)  │
+ │  - PRAGMA synchronous = NORMAL; (Optimized high-rate flight streaming) │
+ │  - PRAGMA foreign_keys = ON;    (Cascading deletions across all tables)│
+ │  - File targets: data/cansat_missions.db & data/cansat_missions.db-wal │
+ └───────┬───────────────────┬───────────────────┬───────────────────┬────┘
+         │                   │                   │                   │
+         ▼                   ▼                   ▼                   ▼
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │  missions   │     │ telemetry_  │     │   mission_  │     │   mission_  │
+  │  (Master    │     │   records   │     │   reports   │     │    events   │
+  │   Session)  │     │ (Time-Series│     │ (PFR Audits │     │ (Milestones │
+  │             │     │   Packets)  │     │ & Compliance│     │   & Alarms) │
+  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+         │                   │                   │                   │
+         └───────────────────┴─────────┬─────────┴───────────────────┘
+                                       │
+                                       ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │             GROUND STATION DATABASE EXPLORER (#dbManagerModal)         │
+ │  - Storage Telemetry Cards: Missions, Packets, DB Disk Size, Engine    │
+ │  - Tab 1: Flight Sessions Explorer ([PFR], [REPLAY], [CSV], [DEL])     │
+ │  - Tab 2: Raw SQL Telemetry Viewer (Direct tabular database rows)      │
+ │  - Portability: Direct .db binary download & 25-column flight CSVs     │
+ │  - Nuclear Purge: Single-mission cascade delete & full database purge   │
+ └────────────────────────────────────────────────────────────────────────┘
+```
+
+### Entity-relationship (ER) diagram
+
+```mermaid
+erDiagram
+    missions ||--o{ telemetry_records : "1 to N (cascades on delete)"
+    missions ||--o| mission_reports : "1 to 1 (cascades on delete)"
+    missions ||--o{ mission_events : "1 to N (cascades on delete)"
+
+    missions {
+        TEXT id PK "Mission ID: MSN-YYYYMMDD-HHMMSS-XXXX"
+        TEXT name "Human-readable mission identifier"
+        TEXT callsign "RF callsign e.g. CANSAT-1"
+        TEXT operator "Flight Controller callsign"
+        TIMESTAMP start_time "Mission arming timestamp (UTC)"
+        TIMESTAMP end_time "Mission seal/finish timestamp (UTC)"
+        TEXT status "ARMED | ACTIVE | COMPLETED | ABORTED"
+        TEXT notes "Pre-flight operational notes"
+    }
+
+    telemetry_records {
+        INTEGER id PK "Auto-increment record ID"
+        TEXT mission_id FK "References missions(id) ON DELETE CASCADE"
+        INTEGER timestamp_ms "Microcontroller uptime ticks (ms)"
+        REAL met_seconds "Mission Elapsed Time (T+ seconds)"
+        REAL altitude "Barometric/GPS altitude (m)"
+        REAL pressure "Atmospheric pressure (hPa)"
+        REAL temp "Ambient temperature (deg C)"
+        REAL humidity "Relative humidity (pct)"
+        REAL battery_voltage "LiPo cell terminal voltage (V)"
+        REAL ax "Body accelerometer X-axis (g)"
+        REAL ay "Body accelerometer Y-axis (g)"
+        REAL az "Body accelerometer Z-axis (g)"
+        REAL gx "Gyroscope angular rate X-axis (deg/s)"
+        REAL gy "Gyroscope angular rate Y-axis (deg/s)"
+        REAL gz "Gyroscope angular rate Z-axis (deg/s)"
+        REAL lat "GPS latitude (WGS84 decimal deg)"
+        REAL lon "GPS longitude (WGS84 decimal deg)"
+        REAL v_spd "Derived vertical velocity (m/s)"
+        REAL accel_mag "Total acceleration magnitude (g)"
+        REAL pitch "Euler pitch attitude angle (deg)"
+        REAL roll "Euler roll attitude angle (deg)"
+        REAL air_density "Atmospheric air density (kg/m^3)"
+        REAL dew_point "Magnus-Tetens dew point (deg C)"
+        REAL lapse_rate "Environmental lapse rate (deg C/100m)"
+        TEXT flight_phase "PAD_IDLE | BALLOON_ASCENT | APOGEE_BURST | PARACHUTE_DESCENT | TOUCHDOWN_RECOVERY"
+        REAL anomaly_score "Isolation Forest anomaly score [0.0, 1.0]"
+        INTEGER is_anomaly "Binary anomaly threshold flag (0 or 1)"
+    }
+
+    mission_reports {
+        INTEGER id PK "Auto-increment report ID"
+        TEXT mission_id FK "References missions(id) ON DELETE CASCADE (UNIQUE)"
+        TIMESTAMP generated_at "PFR report generation timestamp"
+        REAL peak_apogee_agl "Maximum altitude above launch pad (m)"
+        REAL peak_altitude_msl "Maximum altitude above sea level (m)"
+        REAL time_to_apogee_s "Elapsed time from launch to apogee (s)"
+        REAL max_ejection_shock_g "Peak deployment acceleration shock (g)"
+        REAL terminal_descent_rate_mps "Terminal parachute descent rate (m/s)"
+        REAL average_descent_rate_mps "Mean parachute descent velocity (m/s)"
+        TEXT descent_compliance "COMPLIANT (6-11 m/s) | NON-COMPLIANT"
+        REAL total_flight_time_s "Total mission duration (s)"
+        INTEGER total_packets "Total telemetry packets stored"
+        REAL packet_loss_pct "Calculated packet drop percentage"
+        REAL launch_lat "Pad launch latitude (deg)"
+        REAL launch_lon "Pad launch longitude (deg)"
+        REAL touchdown_lat "Landing touchdown latitude (deg)"
+        REAL touchdown_lon "Landing touchdown longitude (deg)"
+        REAL horizontal_drift_m "Great-circle displacement from pad (m)"
+        REAL drift_azimuth_deg "Cardinal recovery bearing from pad (deg)"
+        REAL battery_start_v "Initial battery voltage at launch (V)"
+        REAL battery_end_v "Final battery voltage at landing (V)"
+        REAL battery_delta_v "Total battery cell discharge (V)"
+        TEXT anomaly_summary "Executive flight anomaly audit summary"
+        TEXT report_markdown "Formatted Markdown Post-Flight Review report"
+        TEXT report_json "Complete serializable PFR metrics JSON"
+    }
+
+    mission_events {
+        INTEGER id PK "Auto-increment event ID"
+        TEXT mission_id FK "References missions(id) ON DELETE CASCADE"
+        INTEGER timestamp_ms "Microcontroller timestamp (ms)"
+        TEXT event_type "ARMED | SEPARATION | CHUTE_DEPLOY | TOUCHDOWN | ALARM"
+        TEXT severity "INFO | WARNING | CRITICAL"
+        TEXT description "Operational event description"
+    }
+```
+
+### Relational schema specification (4 normalized tables)
+
+#### 1. Master missions table (`missions`)
+Stores top-level mission session metadata, operational callsigns, and lifecycle states.
+
+| Column Name | SQL Data Type | Constraints & Defaults | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `TEXT` | `PRIMARY KEY` | Unique mission identifier: `MSN-YYYYMMDD-HHMMSS-XXXX` (timestamp + 4-hex random suffix) |
+| `name` | `TEXT` | `NOT NULL` | Human-readable mission name (e.g. `Nominal Sounding Alpha`) |
+| `callsign` | `TEXT` | `NOT NULL DEFAULT 'CANSAT-1'` | Radio telemetry callsign for RF identification |
+| `operator` | `TEXT` | `NOT NULL DEFAULT 'Flight Controller'` | Ground station operator or flight director name |
+| `start_time` | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Mission arming and recording start timestamp (UTC) |
+| `end_time` | `TIMESTAMP` | `NULL` | Mission finish/seal timestamp (UTC) |
+| `status` | `TEXT` | `NOT NULL DEFAULT 'ARMED'` | Flight session state: `ARMED`, `ACTIVE`, `COMPLETED`, or `ABORTED` |
+| `notes` | `TEXT` | `NULL` | Pre-flight briefing notes, payload configuration, and target objectives |
+
+#### 2. High-rate telemetry records table (`telemetry_records`)
+Stores individual sensor readings, derived physical kinematics, sounding metrics, and ML classifications.
+
+| Column Name | SQL Data Type | Constraints & Defaults | Physics Unit | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | `PRIMARY KEY AUTOINCREMENT` | — | Unique telemetry packet record identifier |
+| `mission_id` | `TEXT` | `NOT NULL`, `FK -> missions(id) ON DELETE CASCADE` | — | Associated mission flight session identifier |
+| `timestamp_ms` | `INTEGER` | `NOT NULL` | `ms` | Onboard microcontroller milliseconds since boot |
+| `met_seconds` | `REAL` | `NOT NULL` | `seconds` | Mission Elapsed Time ($T+$ seconds normalized from launch) |
+| `altitude` | `REAL` | `NOT NULL` | `meters` | Barometric altitude calculated via hypsometric formula |
+| `pressure` | `REAL` | `NOT NULL` | `hPa` | Ambient atmospheric barometric pressure |
+| `temp` | `REAL` | `NOT NULL` | `°C` | Ambient temperature reading |
+| `humidity` | `REAL` | `NOT NULL` | `%` | Relative atmospheric humidity |
+| `battery_voltage` | `REAL` | `NOT NULL` | `Volts` | LiPo cell terminal voltage |
+| `ax`, `ay`, `az` | `REAL` | `NOT NULL` | `g` | 3-axis linear acceleration components |
+| `gx`, `gy`, `gz` | `REAL` | `NOT NULL` | `°/s` | 3-axis angular rates from gyroscope |
+| `lat`, `lon` | `REAL` | `NOT NULL` | `decimal deg` | GNSS geographic coordinates (WGS84 datum) |
+| `v_spd` | `REAL` | `NOT NULL DEFAULT 0.0` | `m/s` | Derived vertical climb/descent velocity ($\Delta z / \Delta t$) |
+| `accel_mag` | `REAL` | `NOT NULL DEFAULT 1.0` | `g` | Total resultant acceleration magnitude ($\sqrt{a_x^2 + a_y^2 + a_z^2}$) |
+| `pitch` | `REAL` | `NOT NULL DEFAULT 0.0` | `degrees` | Euler pitch attitude angle ($\arctan2(a_y, a_z)$) |
+| `roll` | `REAL` | `NOT NULL DEFAULT 0.0` | `degrees` | Euler roll attitude angle ($\arctan2(-a_x, \sqrt{a_y^2 + a_z^2})$) |
+| `air_density` | `REAL` | `NOT NULL DEFAULT 1.225` | `kg/m³` | Derived dry air density ($\rho = \frac{P \times 100}{R \cdot T}$) |
+| `dew_point` | `REAL` | `NOT NULL DEFAULT 15.0` | `°C` | Derived Magnus-Tetens atmospheric dew point |
+| `lapse_rate` | `REAL` | `NOT NULL DEFAULT 0.65` | `°C/100m` | Environmental temperature lapse rate |
+| `flight_phase` | `TEXT` | `NOT NULL DEFAULT 'PAD_IDLE'` | — | ML state machine classification (`PAD_IDLE`, `BALLOON_ASCENT`, `APOGEE_BURST`, `PARACHUTE_DESCENT`, `TOUCHDOWN_RECOVERY`) |
+| `anomaly_score` | `REAL` | `NOT NULL DEFAULT 0.0` | `[0.0, 1.0]` | Isolation Forest multidimensional outlier anomaly score |
+| `is_anomaly` | `INTEGER` | `NOT NULL DEFAULT 0` | `0 or 1` | Binary anomaly flag indicating safety boundary breach |
+
+**Database Indexes on `telemetry_records`:**
+- `idx_telemetry_mission_met`: Composite index on `(mission_id, met_seconds)` for sub-millisecond timeline queries and range scans.
+- `idx_telemetry_timestamp`: Composite index on `(mission_id, timestamp_ms)` for high-speed chronological ordering.
+
+#### 3. Post-flight review audit reports table (`mission_reports`)
+Stores regulatory compliance checks, kinematic KPIs, and serialized audit reports generated upon mission completion.
+
+| Column Name | SQL Data Type | Constraints & Defaults | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | `PRIMARY KEY AUTOINCREMENT` | Unique report record identifier |
+| `mission_id` | `TEXT` | `NOT NULL UNIQUE`, `FK -> missions(id) ON DELETE CASCADE` | 1-to-1 foreign key referencing parent mission |
+| `generated_at` | `TIMESTAMP` | `DEFAULT CURRENT_TIMESTAMP` | Report calculation and finalization timestamp (UTC) |
+| `peak_apogee_agl` | `REAL` | `NOT NULL` | True apogee above ground pad ($z_{\text{max}} - z_{\text{pad}}$ in meters) |
+| `peak_altitude_msl` | `REAL` | `NOT NULL` | Peak altitude above mean sea level ($z_{\text{max}}$ in meters) |
+| `time_to_apogee_s` | `REAL` | `NOT NULL` | Elapsed time from launch to peak apogee inflection (seconds) |
+| `max_ejection_shock_g` | `REAL` | `NOT NULL` | Peak pyrotechnic/ejection transient acceleration shock ($G$) |
+| `terminal_descent_rate_mps` | `REAL` | `NOT NULL` | Stable terminal descent rate under parachute ($m/s$) |
+| `average_descent_rate_mps` | `REAL` | `NOT NULL` | Mean vertical descent speed throughout parachute phase ($m/s$) |
+| `descent_compliance` | `TEXT` | `NOT NULL` | Regulatory status: `COMPLIANT (6-11 m/s)` or `NON-COMPLIANT` |
+| `total_flight_time_s` | `REAL` | `NOT NULL` | Total elapsed flight duration from pad to touchdown (seconds) |
+| `total_packets` | `INTEGER` | `NOT NULL` | Total number of telemetry packets received and stored |
+| `packet_loss_pct` | `REAL` | `NOT NULL DEFAULT 0.0` | Estimated RF packet drop percentage |
+| `launch_lat`, `launch_lon` | `REAL` | `NOT NULL` | Initial launch pad geographic coordinates (decimal degrees) |
+| `touchdown_lat`, `touchdown_lon` | `REAL` | `NOT NULL` | Terminal landing touchdown coordinates (decimal degrees) |
+| `horizontal_drift_m` | `REAL` | `NOT NULL` | Total great-circle surface drift distance from pad ($m$) |
+| `drift_azimuth_deg` | `REAL` | `NOT NULL` | Cardinal recovery azimuth bearing from pad ($^\circ$) |
+| `battery_start_v` | `REAL` | `NOT NULL` | Initial battery cell potential at launch ($V$) |
+| `battery_end_v` | `REAL` | `NOT NULL` | Final battery cell potential at recovery ($V$) |
+| `battery_delta_v` | `REAL` | `NOT NULL` | Net battery cell voltage discharge during flight ($V$) |
+| `anomaly_summary` | `TEXT` | `NOT NULL` | Executive plain-English summary of anomalies and alarms |
+| `report_markdown` | `TEXT` | `NOT NULL` | Formatted Markdown text of the Post-Flight Review audit |
+| `report_json` | `TEXT` | `NOT NULL` | Serialized JSON dictionary of all computed flight KPIs |
+
+#### 4. Mission operational events table (`mission_events`)
+Logs discrete flight events, phase transitions, and safety alarms.
+
+| Column Name | SQL Data Type | Constraints & Defaults | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | `PRIMARY KEY AUTOINCREMENT` | Unique event record identifier |
+| `mission_id` | `TEXT` | `NOT NULL`, `FK -> missions(id) ON DELETE CASCADE` | Foreign key referencing parent mission |
+| `timestamp_ms` | `INTEGER` | `NOT NULL` | Event occurrence timestamp ($ms$) |
+| `event_type` | `TEXT` | `NOT NULL` | Event classification: `ARMED`, `TAKEOFF`, `SEPARATION`, `APOGEE_BURST`, `PARACHUTE_DEPLOYMENT`, `TOUCHDOWN`, `ABNORMAL_TUMBLE_ALARM`, `HIGH_G_SHOCK_ALARM`, `LOW_BATTERY_ALARM` |
+| `severity` | `TEXT` | `NOT NULL DEFAULT 'INFO'` | Event severity level: `INFO`, `WARNING`, or `CRITICAL` |
+| `description` | `TEXT` | `NOT NULL` | Technical human-readable event description |
+
+---
+
+### Ground station database explorer & mission manager (`#dbManagerModal`)
+
+The Ground Station (`dashboard.html`) embeds an interactive aerospace Database Explorer accessible via the **`[DATABASE]`** button in the top mission bar or **`DATABASE MANAGER`** in the left sidebar:
+
+1. **Storage Telemetry Cards**:
+   - **Recorded Missions**: Real-time count of all flight sessions in SQLite.
+   - **Stored Packets**: Aggregate count of high-rate telemetry records.
+   - **DB Disk Size**: File footprint on disk + active WAL journal size.
+   - **Storage Engine**: Database file path (`data/cansat_missions.db`) and WAL concurrency mode.
+
+2. **Dual-Tab Interface**:
+   - **Tab 1: Flight Sessions Explorer**: Full mission table with status badges (`ARMED`, `COMPLETED`), duration, apogee, and packet count. Features inline action buttons:
+     - `[PFR]`: Launches the Post-Flight Review modal with audit markdown and PDF print.
+     - `[REPLAY]`: Streams the historical flight trajectory directly into the 3D attitude visualizer and GPS map.
+     - `[CSV]`: Exports standard 25-column flight telemetry CSV.
+     - `[DATA]`: Switches to Tab 2 and displays raw SQLite rows for that mission.
+     - `[DEL]`: Cascades deletion of that mission with instant UI refresh.
+   - **Tab 2: Raw SQL Telemetry Viewer**: Dedicated mission dropdown selector rendering actual raw database rows (`MET`, `Time (UTC)`, `Altitude`, `Pressure`, `Temp`, `Battery`, `Acc Mag`, `Pitch/Roll`, `Flight Phase`, `Anomaly Score`).
+
+3. **Data Portability & Purge Actions**:
+   - **`[DOWNLOAD .DB FILE]`**: Flushes the SQLite WAL via `PRAGMA wal_checkpoint(TRUNCATE)` and streams `data/cansat_missions.db` as `application/x-sqlite3` for offline inspection in external tools like *DB Browser for SQLite*.
+   - **`[CSV]` Export**: Exports 25 telemetry columns including raw sensor data, derived kinematics, and ML labels.
+   - **`[PURGE ALL]`**: Executes cascaded atomic wipe of all flight sessions (`DELETE /api/db/missions`) and resets auto-increment sequences.
+   - **PFR Deletion Action**: Added a red **`[DELETE MISSION]`** button in the Post-Flight Review modal header when viewing historical records.
+
+---
+
 ## Machine learning pipeline
 
 The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry vectors in real time:
