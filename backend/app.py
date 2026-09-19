@@ -554,6 +554,50 @@ def delete_db_mission(mission_id: str):
         raise HTTPException(status_code=404, detail="Mission not found")
     return {"status": "success", "deleted": True, "deleted_mission_id": mission_id}
 
+@app.delete("/api/db/missions")
+def purge_all_db_missions():
+    """Purge all recorded flight missions, resetting telemetry, reports, and events."""
+    try:
+        deleted_count = database.purge_all_missions()
+        return {"status": "success", "deleted_missions": deleted_count, "purged": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/stats")
+def get_db_stats():
+    """Retrieve overall SQLite database storage metrics, row counts, and health."""
+    try:
+        stats = database.get_database_stats()
+        return {"status": "success", "stats": stats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/download")
+def download_sqlite_database():
+    """Download the raw SQLite database file (cansat_missions.db) for external analysis."""
+    db_path = database.DEFAULT_DB_PATH
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="Database file not found on disk")
+    return FileResponse(
+        path=db_path,
+        filename="cansat_missions.db",
+        media_type="application/x-sqlite3"
+    )
+
+@app.get("/api/db/missions/{mission_id}/export/csv")
+def export_mission_telemetry_csv(mission_id: str):
+    """Download standard CanSat CSV formatted telemetry for the specified mission."""
+    csv_content = database.export_mission_csv(mission_id)
+    if not csv_content:
+        raise HTTPException(status_code=404, detail="No telemetry records found for this mission")
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={mission_id}_telemetry.csv"
+        }
+    )
+
 @app.get("/api/latest_telemetry")
 def get_latest_telemetry():
     return {

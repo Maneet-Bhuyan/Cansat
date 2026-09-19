@@ -21,7 +21,10 @@ from backend.core.database import (
     get_mission_report,
     get_mission_telemetry,
     get_mission_events,
-    delete_mission
+    delete_mission,
+    get_database_stats,
+    purge_all_missions,
+    export_mission_csv
 )
 
 
@@ -236,6 +239,87 @@ class TestCanSatDatabase(unittest.TestCase):
         self.assertIsNone(get_mission(mission_id, db_path=self.db_path))
         self.assertIsNone(get_mission_report(mission_id, db_path=self.db_path))
         self.assertEqual(len(get_mission_telemetry(mission_id, db_path=self.db_path)), 0)
+
+    def test_database_stats_csv_export_and_purge(self):
+        # Create 2 test missions
+        m1 = create_mission(name="Mission One", callsign="CANSAT-01", db_path=self.db_path)
+        m2 = create_mission(name="Mission Two", callsign="CANSAT-02", db_path=self.db_path)
+        
+        insert_telemetry_batch(m1["id"], [
+            {
+                "timestamp_ms": 1000, "met_seconds": 1.0, "altitude": 150.0,
+                "pressure": 1000.0, "temp": 20.0, "humidity": 50.0, "battery_voltage": 4.1,
+                "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0,
+                "lat": 10.0, "lon": 20.0, "v_spd": 5.0, "accel_mag": 1.0, "pitch": 0.0, "roll": 0.0,
+                "air_density": 1.2, "dew_point": 10.0, "lapse_rate": 0.65, "flight_phase": "ASCENT"
+            }
+        ], db_path=self.db_path)
+
+        # Test CSV Export
+        csv_str = export_mission_csv(m1["id"], db_path=self.db_path)
+        self.assertIsNotNone(csv_str)
+        self.assertIn("timestamp_iso", csv_str)
+        self.assertIn("met_seconds", csv_str)
+        self.assertIn("150.0", csv_str)
+
+        # Non-existent mission CSV should return None
+        self.assertIsNone(export_mission_csv("MSN-NON-EXISTENT", db_path=self.db_path))
+
+        # Test Stats
+        stats = get_database_stats(db_path=self.db_path)
+        self.assertEqual(stats["total_missions"], 2)
+        self.assertEqual(stats["total_telemetry_records"], 1)
+        self.assertEqual(stats["journal_mode"], "WAL")
+        self.assertGreater(stats["file_size_bytes"], 0)
+
+        # Test Purge
+        purged = purge_all_missions(db_path=self.db_path)
+        self.assertEqual(purged, 2)
+        stats_after = get_database_stats(db_path=self.db_path)
+        self.assertEqual(stats_after["total_missions"], 0)
+        self.assertEqual(stats_after["total_telemetry_records"], 0)
+
+    def test_api_db_endpoints(self):
+        from fastapi.testclient import TestClient
+        from backend.app import app
+        client = TestClient(app)
+
+        # 1. Stats
+        resp = client.get("/api/db/stats")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("stats", resp.json())
+
+        # 2. Download
+        resp = client.get("/api/db/download")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("application/x-sqlite3", resp.headers["content-type"])
+
+        # 3. Create, Ingest, CSV Export & Delete
+        s_resp = client.post("/api/db/missions/start", json={"name": "API Test Flight"})
+        self.assertEqual(s_resp.status_code, 200)
+        m_id = s_resp.json()["mission_id"]
+
+        t_resp = client.post("/api/db/missions/telemetry", json={
+            "mission_id": m_id,
+            "records": [{
+                "timestamp_ms": 1000, "met_seconds": 0.1, "altitude": 75.0,
+                "pressure": 1010.0, "temp": 21.0, "humidity": 45.0, "battery_voltage": 4.15,
+                "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0,
+                "lat": 12.9, "lon": 77.5, "v_spd": 8.0, "accel_mag": 1.0,
+                "pitch": 0.0, "roll": 0.0, "air_density": 1.2, "dew_point": 10.0,
+                "lapse_rate": 0.65, "flight_phase": "ASCENT"
+            }]
+        })
+        self.assertEqual(t_resp.status_code, 200)
+
+        csv_resp = client.get(f"/api/db/missions/{m_id}/export/csv")
+        self.assertEqual(csv_resp.status_code, 200)
+        self.assertIn("text/csv", csv_resp.headers["content-type"])
+        self.assertIn("75.0", csv_resp.text)
+
+        d_resp = client.delete(f"/api/db/missions/{m_id}")
+        self.assertEqual(d_resp.status_code, 200)
+        self.assertTrue(d_resp.json()["deleted"])
 
 
 if __name__ == "__main__":

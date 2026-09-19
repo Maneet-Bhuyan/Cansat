@@ -1413,3 +1413,38 @@ STATUS: SQLITE FLIGHT DATABASE & PFR AUDIT PERSISTENCE ENGINE FULLY OPERATIONAL 
 3. Verification:
    - End-to-end Python simulation of frontend JSON payloads verified 100% against live daemon server (HTTP 200 on /api/db/missions/start, telemetry batch ingestion, and PFR finalization).
    - All 18 unit and core tests passing cleanly.
+
+--------------------------------------------------------------------------------
+DATABASE EXPLORER, MISSION DELETION & DIRECT TELEMETRY ACCESS ENGINE
+--------------------------------------------------------------------------------
+
+[2026-09-19T22:35:00Z] ACTION: Designed, implemented, and verified Ground Station Database Explorer & Mission Manager (#dbManagerModal) with dual-tab interface (Flight Sessions Explorer vs Raw SQL Telemetry Viewer), cascading mission deletion, raw database download, 25-column CanSat CSV export, database storage diagnostics, and complete database purging.
+
+1. Database Storage & Export Capabilities (backend/core/database.py & backend/app.py):
+   - Storage Diagnostics (GET /api/db/stats): Exposes database file size on disk, WAL file size, journal mode, total missions, total packets, total events, and total reports.
+   - Raw SQLite Binary File Download (GET /api/db/download): Checkpoints WAL via PRAGMA wal_checkpoint(TRUNCATE) and streams data/cansat_missions.db as application/x-sqlite3 for inspection in tools like DB Browser for SQLite.
+   - 25-Column Flight CSV Export (GET /api/db/missions/{id}/export/csv): Streams comprehensive CSV telemetry containing all 13 sensor fields, derived kinematics (v_spd, accel_mag, pitch, roll), sounding parameters (air_density, dew_point, lapse_rate), and ML classifications (flight_phase, anomaly_score).
+   - Mission Deletion (DELETE /api/db/missions/{id}): Cascading deletion wiping master mission, telemetry packets, operational events, and PFR reports.
+   - Database Purge (DELETE /api/db/missions): Atomic wipe of all tables and sqlite_sequence reset.
+   - Primary Key Collision Protection: Hardened create_mission() with a 4-hex random suffix (MSN-YYYYMMDD-HHMMSS-XXXX), eliminating collision risks during rapid testing.
+
+2. Ground Station Database Explorer Interface (dashboard.html):
+   - Navigation Shortcuts: Added quick-access [DATABASE] button in top header strip and 'DATABASE MANAGER' in left sidebar.
+   - 4 Live Storage Telemetry Cards: Displays Recorded Missions, Stored Packets, Disk DB Size (KB/MB), and active SQLite storage engine path.
+   - Action Toolbar: [REFRESH], [DOWNLOAD .DB FILE], and [PURGE ALL].
+   - Tab 1 ('FLIGHT SESSIONS'): Interactive table of all recorded missions with badge indicators and inline action buttons:
+     * [PFR]: Inspect post-flight audit report in modal.
+     * [REPLAY]: Load flight into 3D trajectory visualizer and map.
+     * [CSV]: Download 25-column flight CSV.
+     * [DATA]: Switch directly to Tab 2 and inspect raw SQLite rows.
+     * [DEL]: Delete flight with instant UI refresh.
+   - Tab 2 ('RAW SQL TELEMETRY VIEWER'): Mission dropdown selector with responsive scrollable table displaying actual raw database records (MET, Altitude, Pressure, Temp, Battery, IMU, Phase, Anomaly).
+   - Post-Flight Review Modal Integration: Added dynamic [DELETE MISSION] button (#pfr-del-db-btn) and [CSV] export button when browsing historical flight records.
+
+3. Automated Verification:
+   - tests/test_database.py: 4/4 test suites PASS (WAL mode, lifecycle & PFR, stats & export & purge, API endpoints).
+   - tests/selftest.js: 27/27 PASS.
+   - Full discovery (python -m unittest discover tests): 20/20 test cases PASS.
+
+STATUS: DATABASE EXPLORER, MISSION DELETION & DIRECT ACCESS ENGINE FULLY OPERATIONAL AND VERIFIED
+

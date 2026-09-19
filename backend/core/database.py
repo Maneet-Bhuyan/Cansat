@@ -4,8 +4,11 @@ SQLite with Write-Ahead Logging (WAL) for concurrent, high-frequency flight pers
 """
 
 import os
+import io
+import csv
 import math
 import json
+import uuid
 import sqlite3
 import datetime
 from pathlib import Path
@@ -146,7 +149,7 @@ def create_mission(name: str, callsign: str = "CANSAT-1", operator: str = "Fligh
     init_db(db_path)
     if not mission_id:
         now = datetime.datetime.now(datetime.timezone.utc)
-        mission_id = f"MSN-{now.strftime('%Y%m%d-%H%M%S')}"
+        mission_id = f"MSN-{now.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:4].upper()}"
 
     with get_db_connection(db_path) as conn:
         cursor = conn.cursor()
@@ -608,3 +611,106 @@ def delete_mission(mission_id: str, db_path: Optional[str] = None) -> bool:
         cursor.execute("DELETE FROM missions WHERE id = ?", (mission_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+
+def purge_all_missions(db_path: Optional[str] = None) -> int:
+    """Delete all recorded missions, cascading to telemetry, reports, and events."""
+    init_db(db_path)
+    with get_db_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM missions")
+        conn.commit()
+        deleted_count = cursor.rowcount
+        try:
+            cursor.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except Exception:
+            pass
+        return deleted_count
+
+
+def get_database_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Get database file metrics, table row counts, and storage mode."""
+    target_path = db_path or DEFAULT_DB_PATH
+    init_db(target_path)
+    file_size_bytes = os.path.getsize(target_path) if os.path.exists(target_path) else 0
+    wal_size_bytes = os.path.getsize(target_path + "-wal") if os.path.exists(target_path + "-wal") else 0
+    shm_size_bytes = os.path.getsize(target_path + "-shm") if os.path.exists(target_path + "-shm") else 0
+
+    with get_db_connection(target_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM missions")
+        total_missions = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM telemetry_records")
+        total_packets = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM mission_events")
+        total_events = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM mission_reports")
+        total_reports = cursor.fetchone()[0]
+        cursor.execute("PRAGMA journal_mode")
+        journal_mode = cursor.fetchone()[0]
+
+    return {
+        "db_path": os.path.abspath(target_path),
+        "file_size_bytes": file_size_bytes,
+        "file_size_kb": round(file_size_bytes / 1024, 2),
+        "file_size_mb": round(file_size_bytes / (1024 * 1024), 3),
+        "wal_size_bytes": wal_size_bytes,
+        "shm_size_bytes": shm_size_bytes,
+        "total_missions": total_missions,
+        "total_telemetry_records": total_packets,
+        "total_events": total_events,
+        "total_reports": total_reports,
+        "journal_mode": str(journal_mode).upper()
+    }
+
+
+def export_mission_csv(mission_id: str, db_path: Optional[str] = None) -> Optional[str]:
+    """Export all telemetry for a mission formatted as standard CanSat CSV."""
+    records = get_mission_telemetry(mission_id, db_path=db_path)
+    if not records:
+        return None
+    output = io.StringIO()
+    fieldnames = [
+        "timestamp_iso", "met_seconds", "temp", "pressure", "altitude",
+        "gx", "gy", "gz", "ax", "ay", "az", "lat", "lon", "humidity",
+        "battery_voltage", "v_spd", "accel_mag", "pitch", "roll",
+        "air_density", "dew_point", "lapse_rate", "flight_phase",
+        "anomaly_score", "is_anomaly"
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for r in records:
+        ts_ms = r.get("timestamp_ms", 0)
+        try:
+            ts_iso = datetime.datetime.fromtimestamp(ts_ms / 1000.0, tz=datetime.timezone.utc).isoformat()
+        except Exception:
+            ts_iso = ""
+        writer.writerow({
+            "timestamp_iso": ts_iso,
+            "met_seconds": r.get("met_seconds", 0.0),
+            "temp": r.get("temp", 0.0),
+            "pressure": r.get("pressure", 0.0),
+            "altitude": r.get("altitude", 0.0),
+            "gx": r.get("gx", 0.0),
+            "gy": r.get("gy", 0.0),
+            "gz": r.get("gz", 0.0),
+            "ax": r.get("ax", 0.0),
+            "ay": r.get("ay", 0.0),
+            "az": r.get("az", 0.0),
+            "lat": r.get("lat", 0.0),
+            "lon": r.get("lon", 0.0),
+            "humidity": r.get("humidity", 0.0),
+            "battery_voltage": r.get("battery_voltage", 0.0),
+            "v_spd": r.get("v_spd", 0.0),
+            "accel_mag": r.get("accel_mag", 0.0),
+            "pitch": r.get("pitch", 0.0),
+            "roll": r.get("roll", 0.0),
+            "air_density": r.get("air_density", 0.0),
+            "dew_point": r.get("dew_point", 0.0),
+            "lapse_rate": r.get("lapse_rate", 0.0),
+            "flight_phase": r.get("flight_phase", ""),
+            "anomaly_score": r.get("anomaly_score", 0.0),
+            "is_anomaly": 1 if r.get("is_anomaly") else 0
+        })
+    return output.getvalue()
+

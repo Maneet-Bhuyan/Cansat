@@ -33,14 +33,18 @@ This directory contains the Python backend services, asynchronous hardware seria
     * `GET /api/db/missions/{mission_id}`: Retrieve detailed mission metadata.
     * `GET /api/db/missions/{mission_id}/report`: Retrieve the stored Post-Flight Review audit report.
     * `GET /api/db/missions/{mission_id}/telemetry`: Fetch full historical telemetry records for replay and analysis.
-    * `DELETE /api/db/missions/{mission_id}`: Cascade deletion of a mission and all associated records.
+    * `GET /api/db/stats`: Storage diagnostics returning database file size, WAL size, total missions, total packets, events, reports, and journal mode.
+    * `GET /api/db/download`: Direct binary stream download of `data/cansat_missions.db` with prior WAL checkpointing for external inspection.
+    * `GET /api/db/missions/{mission_id}/export/csv`: Export full 25-column mission flight telemetry in standard CanSat CSV format.
+    * `DELETE /api/db/missions`: Complete cascaded wipe and purge of all stored flight sessions and sequence tables.
+    * `DELETE /api/db/missions/{mission_id}`: Cascade deletion of a specific mission and all its telemetry, events, and reports.
   * **WebSocket Telemetry Streams**:
     * `/ws/serial`: Real-time dual-port serial bridge dispatcher (LoRa telemetry & video frame chunks).
     * `/ws/telemetry`: Simulated telemetry broadcast stream for replay and headless testing.
   * **Static File Mounts**:
     * `/reports`: Serves generated flight report PDFs (`reports/pdf/`) and high-resolution figures (`reports/figures/`).
 * **`core/`**: Core mathematical, database, and serial abstraction engines:
-  * **`database.py`**: SQLite persistent database engine operating in Write-Ahead Logging (WAL) mode with foreign keys. Manages 4 relational tables (`missions`, `telemetry_records`, `mission_reports`, `mission_events`), batch ingestion, and PFR audit metrics computation.
+  * **`database.py`**: SQLite persistent database engine operating in Write-Ahead Logging (WAL) mode with foreign keys. Manages 4 relational tables (`missions`, `telemetry_records`, `mission_reports`, `mission_events`), batch ingestion, PFR audit metrics computation, storage statistics diagnostics, full database purge, and 25-column CSV telemetry export.
   * **`serial_manager.py`**: `DualSerialManager` handling multi-port asynchronous hardware polling (COM4/COM3 LoRa @ 9600 baud and COM5 Video @ 460800 baud).
   * **`kinematics.py`**: `KinematicsEngine` providing 1D Kalman Filter state estimation ($z, v_z$), 6-DOF complementary attitude fusion, and high-G / tumble alarm triggers.
   * **`atmospheric.py`**: `AtmosphericEngine` providing hypsometric altimetry, Magnus-Tetens dew point, dry/moist air density, and Environmental Lapse Rate (ELR).

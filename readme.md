@@ -30,6 +30,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - 3D CanSat attitude visualization using Three.js with true spherical radial zoom (`+`, `−`, `RESET`), distance clamping, and complementary sensor fusion, positioned directly alongside the XYZ Gyroscope
 - Cognitive AI Intelligence Hub with 4 transparent model attributions (Random Forest phase classifier, PyOD Isolation Forest anomaly guard, Gradient Boosting Balloon Ascent & Drop Forecast, TinyLandingNet CNN) and plain-English mission summaries
 - Persistent SQLite Flight Database (WAL mode) at `data/cansat_missions.db`: real-time micro-batch telemetry streaming (10 pkts/2.5s), mission recording HUD, retroactive flight archiving, and Post-Flight Review (PFR) regulatory audit persistence
+- Ground Station Database Explorer & Mission Manager (`#dbManagerModal`): inspect database disk footprint and stored packet counts, browse flight sessions, view raw SQLite telemetry in tabular format, execute single or batch mission deletions, export 25-column flight CSVs, and download the raw `.db` file
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
 - Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
 - CanSat sensor suite ablation & evaluation notebook (`test_cases/cansat_eval_ablation.ipynb`) benchmarking touchdown prognostics under sensor dropouts (Full Suite, No IMU, No Env, GPS-Only) using MetPy physics
@@ -324,6 +325,24 @@ The backend exposes the following endpoints:
 - `GET /analytics/kinematics` — real-time 1D Kalman state, 6-DOF attitude, and safety alarms
 - `GET /analytics/sounding` — real-time dew point, air density, ELR, and ISA deviation
 - `POST /api/predict` — telemetry inference request
+- `POST /api/db/missions/start` — arm and initialize a new persistent SQLite flight mission
+- `POST /api/db/missions/telemetry` — high-frequency micro-batch telemetry packet ingestion
+- `POST /api/db/missions/{id}/events` — record discrete operational events (separation, chute, alarms)
+- `POST /api/db/missions/{id}/finish` — seal flight, calculate KPIs, and persist PFR audit report
+- `GET /api/db/missions` — list all archived flight sessions with packet counts and apogees
+- `GET /api/db/missions/{id}` — retrieve detailed mission metadata
+- `GET /api/db/missions/{id}/report` — retrieve Post-Flight Review (PFR) regulatory audit
+- `GET /api/db/missions/{id}/telemetry` — fetch full historical telemetry records for replay
+- `GET /api/db/missions/{id}/export/csv` — download 25-column mission telemetry as standard CSV
+- `GET /api/db/stats` — database disk footprint, WAL size, and record count metrics
+- `GET /api/db/download` — download raw `cansat_missions.db` SQLite binary file
+- `DELETE /api/db/missions/{id}` — cascade delete mission and all associated records
+- `DELETE /api/db/missions` — complete cascaded purge and wipe of all flight sessions
+- `GET /api/analysis/scenarios` — list available synthetic and recorded flight mission profiles
+- `GET /api/analysis/scenario/{name}` — fetch raw telemetry dataset for a specific scenario
+- `GET /api/analysis/ablation-data` — pre-computed multi-sensor ablation benchmarks
+- `POST /api/analysis/run-ablation` — live sensor ablation trial execution with sensor dropout
+- `GET /api/analysis/reports-zip` — download in-memory ZIP of all 10 mission flight PDF reports
 - `WS /ws/telemetry` — live telemetry stream
 - `WS /ws/serial` — background dual-port serial bridge (COM4 LoRa & COM5 Video)
 
@@ -546,6 +565,12 @@ The project includes comprehensive test suites for unit, firmware, and integrati
 python -m unittest tests/test_backend_core.py
 ```
 Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, ML model predictions, and multi-threaded serial lifecycle without hardware attached.
+
+### SQLite flight database, PFR audit & export unit tests (4 suites)
+```bash
+python -m unittest tests/test_database.py
+```
+Validates SQLite Write-Ahead Logging (WAL) initialization, 4-table relational integrity with cascading foreign keys, high-throughput micro-batch telemetry ingestion, automated Post-Flight Review (PFR) calculation, database disk and WAL storage statistics, 25-column CanSat CSV exports, binary `.db` downloads, and complete mission purges.
 
 ### Firmware protocol & ESP-NOW chunking tests (4 assertions)
 ```bash

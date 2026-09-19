@@ -144,6 +144,23 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
       * Historical PFR report browser (#db-mission-history-select) with instant markdown export and 1-click [LOAD INTO REPLAY SUITE] trajectory playback.
     - Verified with comprehensive test suite: tests/test_database.py (100% pass) and FastAPI TestClient end-to-end integration.
 
+[X] TASK DA-08: GROUND STATION DATABASE EXPLORER, MISSION DELETION & DIRECT SQL TELEMETRY ACCESS (COMPLETED)
+    - Ground Station Database Explorer Modal (#dbManagerModal in dashboard.html):
+      * Live telemetry and database metrics cards: Recorded Missions, Stored Packets, Disk Database Size (KB/MB), Storage Engine path.
+      * Multi-tab interface: Flight Sessions Explorer vs Raw SQL Telemetry Viewer.
+      * Raw SQL Telemetry Viewer: Mission selector and responsive table rendering raw rows with anomaly badges and phase indicators.
+      * Header strip shortcut ([DATABASE]) and sidebar quick-navigation item.
+    - Advanced Management & Deletion Engine:
+      * Single-mission cascaded deletion (DELETE /api/db/missions/{id}) wiping telemetry, reports, and events.
+      * In-modal inline delete buttons in flight table and Post-Flight Review modal (#pfr-del-db-btn).
+      * Nuclear database purge (DELETE /api/db/missions) resetting sqlite_sequence with operator confirmation.
+    - Direct Access & Data Portability:
+      * Raw SQLite file binary download (GET /api/db/download) with WAL checkpoint flush for external analysis (DB Browser for SQLite).
+      * Full 25-column flight telemetry CSV export (GET /api/db/missions/{id}/export/csv).
+      * Live storage health diagnostics (GET /api/db/stats).
+    - Hardened against mission ID collisions: Appended random 4-character hex suffix to MSN timestamp ID.
+    - Verified with automated tests in tests/test_database.py (4 test suites, 100% pass).
+
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
 
