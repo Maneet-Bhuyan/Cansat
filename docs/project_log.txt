@@ -1360,5 +1360,56 @@ FLIGHT DYNAMICS DEEP DIVE (analysis.html), SENSOR ABLATION & ZIP REPORT EXPORTER
 
 STATUS: TASK DA-06 (analysis.html, ABLATION MODULE & ZIP REPORTS) COMPLETED AND VERIFIED
 
+--------------------------------------------------------------------------------
+SQLITE FLIGHT DATABASE (WAL), BATCH TELEMETRY INGESTION & PFR AUDIT PERSISTENCE
+--------------------------------------------------------------------------------
 
+[2026-09-19T16:20:00Z] ACTION: Implemented embedded SQLite database engine in Write-Ahead Logging (WAL) mode for persistent CanSat flight mission logging, high-throughput batch telemetry streaming, and automated Post-Flight Review (PFR) regulatory audit reports. Integrated real-time database mission recording HUD, flight archive browser, and 3D replay suite handoff into dashboard.html and backend/app.py.
 
+1. SQLite Database Architecture (backend/core/database.py & data/cansat_missions.db):
+   - Configured with PRAGMA journal_mode=WAL and PRAGMA foreign_keys=ON with context-managed connection safety for zero file handle leaks on Windows.
+   - 4 Normalized Relational Tables:
+     * missions: Master session metadata (ID, name, callsign, operator, timestamps, status, notes).
+     * telemetry_records: High-rate sensor telemetry (timestamp, MET, altitude, pressure, temp, humidity, battery, 9-DOF IMU, GNSS, kinematics, air density, dew point, lapse rate, flight phase, anomaly flags). Performance indexed on (mission_id, timestamp_ms).
+     * mission_reports: Comprehensive Post-Flight Review audit metrics, AGL/MSL apogee, time-to-apogee, climb rate, ejection and touchdown shock G, terminal descent velocity, regulatory compliance envelope (6-11 m/s), GNSS drift distance and azimuth bearing, battery drain, and formatted markdown report.
+     * mission_events: Discrete operational events (arming, stage separation, chute deployment, safety alarms).
+
+2. FastAPI Database REST API (backend/app.py):
+   - POST /api/db/missions/start: Arms and creates a new mission session in SQLite.
+   - POST /api/db/missions/telemetry: High-frequency telemetry batch ingestion (micro-batched in chunks of 10-500 packets).
+   - POST /api/db/missions/{id}/events: Discrete operational and anomaly event logging.
+   - POST /api/db/missions/{id}/finish: Finalizes flight, seals record, and computes PFR audit report.
+   - GET /api/db/missions: Enumerates all stored missions with packet counts and apogees.
+   - GET /api/db/missions/{id}: Retrieves detailed mission metadata.
+   - GET /api/db/missions/{id}/report: Retrieves stored or on-demand generated PFR audit report.
+   - GET /api/db/missions/{id}/telemetry: Retrieves time-series packets for charting and replay.
+   - DELETE /api/db/missions/{id}: Cascading deletion of a mission and all associated records.
+
+3. Mission Control UI & Client Architecture (dashboard.html):
+   - Mission HUD Bar: Added dedicated #db-mission-badge with live indicator ('DB: STANDBY' / 'REC [DB: MSN-XXXX]') and ARM REC / FINISH toggle.
+   - Arming Modal (#startMissionModal): Operator input dialog for Mission Name, Callsign, Operator, and Notes.
+   - Client-Side Micro-Batching: In-memory dbTelemetryBuffer flushes automatically every 10 packets or 2.5s.
+   - Retroactive Flight Archiving ([SAVE FLIGHT TO DB]): 1-click archiving of current in-memory telemetry into SQLite partitioned in 200-packet chunks.
+   - Post-Flight Review Modal Integration: Added historical flight archive selector (#db-mission-history-select), PFR audit viewer, and 1-click [LOAD INTO REPLAY SUITE] streaming historical packets into 3D trajectory visualizer.
+
+AUTOMATED TEST VERIFICATION:
+  - python -m unittest tests/test_database.py tests/test_backend_core.py: 14/14 PASS
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - FastAPI TestClient E2E Lifecycle (Start, Batch Ingest, Events, Finish, Report, Telemetry, Delete): 7/7 PASS (HTTP 200)
+
+STATUS: SQLITE FLIGHT DATABASE & PFR AUDIT PERSISTENCE ENGINE FULLY OPERATIONAL AND VERIFIED
+
+2026-09-19T22:20:00.000Z — Stale Reloader Worker Cleanup & Process Management Hardening
+--------------------------------------------------------------------------------
+1. Root Cause Identification:
+   - On Windows, uvicorn with reload=True uses Python's multiprocessing.spawn to spawn worker processes.
+   - When a parent process terminates, standard PID termination leaves the multiprocessing child worker alive listening on port 8000.
+   - The stale worker (running pre-database code) served HTTP 404 for all new /api/db/* routes, causing the browser alert: "Could not save flight to database: Failed to create mission record".
+2. System Fixes Applied:
+   - Terminated all orphan zombie python worker processes holding port 8000.
+   - Enhanced launch.py: Upgraded taskkill from /F /PID to /F /T /PID to recursively terminate entire process trees, added verification poll loop before binding, and configured explicit reload_dirs.
+   - Enhanced dashboard.html: Upgraded error handlers in saveCurrentTelemetryToDb and confirmStartMission with HTTP status code inspection and actionable error notifications.
+3. Verification:
+   - End-to-end Python simulation of frontend JSON payloads verified 100% against live daemon server (HTTP 200 on /api/db/missions/start, telemetry batch ingestion, and PFR finalization).
+   - All 18 unit and core tests passing cleanly.

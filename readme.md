@@ -29,7 +29,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
 - 3D CanSat attitude visualization using Three.js with true spherical radial zoom (`+`, `−`, `RESET`), distance clamping, and complementary sensor fusion, positioned directly alongside the XYZ Gyroscope
 - Cognitive AI Intelligence Hub with 4 transparent model attributions (Random Forest phase classifier, PyOD Isolation Forest anomaly guard, Gradient Boosting Balloon Ascent & Drop Forecast, TinyLandingNet CNN) and plain-English mission summaries
-- Synchronized multi-chart crosshair inspection projected across all 7 telemetry plots
+- Persistent SQLite Flight Database (WAL mode) at `data/cansat_missions.db`: real-time micro-batch telemetry streaming (10 pkts/2.5s), mission recording HUD, retroactive flight archiving, and Post-Flight Review (PFR) regulatory audit persistence
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
 - Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
 - CanSat sensor suite ablation & evaluation notebook (`test_cases/cansat_eval_ablation.ipynb`) benchmarking touchdown prognostics under sensor dropouts (Full Suite, No IMU, No Env, GPS-Only) using MetPy physics
@@ -53,6 +53,7 @@ Python Backend Core (backend/core/):
   - DualSerialManager: Asynchronous multi-port listener & auto-reconnect
   - KinematicsEngine: 1D Kalman Filter (alt, v_z) & 6-DOF IMU attitude fusion
   - AtmosphericEngine: Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+  - database.py: SQLite WAL flight engine (missions, telemetry, PFR audits, events)
                                 |
                                 v
 FastAPI Telemetry & Inference Server (backend/app.py):
@@ -61,6 +62,7 @@ FastAPI Telemetry & Inference Server (backend/app.py):
   - /hardware/ports & /hardware/tare: Serial port manager & gyro tare
   - /api/predict: Random Forest phase classifier & Isolation Forest anomaly detector
   - /api/analysis/*: Scenarios, raw telemetry, ablation benchmarks & 1-click reports ZIP bundle
+  - /api/db/*: Mission arming, batch streaming, PFR report generation, flight archive API
                                 |
                                 v
 Mission Control Web UI Suite:

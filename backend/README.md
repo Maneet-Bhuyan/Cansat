@@ -1,6 +1,6 @@
 # Backend Services & Telemetry Processing Engines
 
-This directory contains the Python backend services, asynchronous hardware serial dispatchers, mathematical signal processing engines, and REST/WebSocket API endpoints.
+This directory contains the Python backend services, asynchronous hardware serial dispatchers, mathematical signal processing engines, persistent SQLite flight database, and REST/WebSocket API endpoints.
 
 ## Architecture & Components
 
@@ -24,12 +24,23 @@ This directory contains the Python backend services, asynchronous hardware seria
     * `GET /api/analysis/ablation-data`: Pre-computed multi-sensor ablation benchmarks across all 10 profiles and 4 sensor configurations (`ml/ablation_benchmarks.json`).
     * `POST /api/analysis/run-ablation`: Live sensor ablation trial execution evaluating custom dropped sensor subsets on flight datasets.
     * `GET /api/analysis/reports-zip`: In-memory ZIP archive packaging all 10 mission flight PDF reports and `reports/all_missions_summary.csv`.
+  * **Flight Database (SQLite WAL) & Post-Flight Review (PFR) Persistence Endpoints**:
+    * `POST /api/db/missions/start`: Arm and initialize a new flight mission session in SQLite (`data/cansat_missions.db`).
+    * `POST /api/db/missions/telemetry`: High-frequency batch packet streaming (up to 500 pkts/batch).
+    * `POST /api/db/missions/{mission_id}/events`: Record discrete flight events (stage separation, parachute deployment, alarms).
+    * `POST /api/db/missions/{mission_id}/finish`: Seal flight, compute kinematic KPIs, and generate automated PFR audit report.
+    * `GET /api/db/missions`: List all archived missions with status, duration, apogee, and packet count.
+    * `GET /api/db/missions/{mission_id}`: Retrieve detailed mission metadata.
+    * `GET /api/db/missions/{mission_id}/report`: Retrieve the stored Post-Flight Review audit report.
+    * `GET /api/db/missions/{mission_id}/telemetry`: Fetch full historical telemetry records for replay and analysis.
+    * `DELETE /api/db/missions/{mission_id}`: Cascade deletion of a mission and all associated records.
   * **WebSocket Telemetry Streams**:
     * `/ws/serial`: Real-time dual-port serial bridge dispatcher (LoRa telemetry & video frame chunks).
     * `/ws/telemetry`: Simulated telemetry broadcast stream for replay and headless testing.
   * **Static File Mounts**:
     * `/reports`: Serves generated flight report PDFs (`reports/pdf/`) and high-resolution figures (`reports/figures/`).
-* **`core/`**: Core mathematical and serial abstraction engines:
+* **`core/`**: Core mathematical, database, and serial abstraction engines:
+  * **`database.py`**: SQLite persistent database engine operating in Write-Ahead Logging (WAL) mode with foreign keys. Manages 4 relational tables (`missions`, `telemetry_records`, `mission_reports`, `mission_events`), batch ingestion, and PFR audit metrics computation.
   * **`serial_manager.py`**: `DualSerialManager` handling multi-port asynchronous hardware polling (COM4/COM3 LoRa @ 9600 baud and COM5 Video @ 460800 baud).
   * **`kinematics.py`**: `KinematicsEngine` providing 1D Kalman Filter state estimation ($z, v_z$), 6-DOF complementary attitude fusion, and high-G / tumble alarm triggers.
   * **`atmospheric.py`**: `AtmosphericEngine` providing hypsometric altimetry, Magnus-Tetens dew point, dry/moist air density, and Environmental Lapse Rate (ELR).
@@ -41,10 +52,4 @@ From the repository root with the active virtual environment:
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
-```
-
-Or using the unified launcher:
-
-```powershell
-python launch.py
 ```

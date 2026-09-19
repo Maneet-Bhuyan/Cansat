@@ -126,6 +126,24 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
     - Embedded into backend/app.py before results.html (/analysis.html and /analysis routes, ZIP streamer, and ablation endpoints).
     - Synchronized site-wide navigation across all 6 pages (index, tinyml, dashboard, models, analysis, results).
 
+[X] TASK DA-07: SQLITE FLIGHT DATABASE (WAL), BATCH TELEMETRY INGESTION & PFR AUDIT ENGINE (COMPLETED)
+    - Architected persistent SQLite database in Write-Ahead Logging (WAL) mode at data/cansat_missions.db with foreign key enforcement and Windows-safe connection pooling.
+    - 4 normalized relational tables:
+      * missions: Master flight metadata, mission duration, operator callsign, and flight state transitions.
+      * telemetry_records: High-rate 9-DOF IMU, barometric altimetry, and GNSS kinematic records with composite indexing on (mission_id, timestamp_ms).
+      * mission_reports: Post-Flight Review (PFR) regulatory audit reports, AGL/MSL apogees, max shock G, terminal descent velocities, compliance envelope checks (6-11 m/s), horizontal drift coordinates, and battery discharge metrics.
+      * mission_events: Operational event logging for stage separation, parachute deployment, and anomaly warnings.
+    - Implemented REST API in backend/app.py:
+      * POST /api/db/missions/start, POST /api/db/missions/telemetry, POST /api/db/missions/{id}/events, POST /api/db/missions/{id}/finish.
+      * GET /api/db/missions, GET /api/db/missions/{id}, GET /api/db/missions/{id}/report, GET /api/db/missions/{id}/telemetry, DELETE /api/db/missions/{id}.
+    - Ground Station Integration in dashboard.html:
+      * Live DB mission recording badge (#db-mission-badge) with ARM REC / FINISH toggle and active pulsing indicator.
+      * Start Mission modal (#startMissionModal) for setting mission name, callsign, and operator notes.
+      * Client-side micro-batching buffer flushing every 10 packets or 2.5 seconds.
+      * Retroactive 1-click flight archiving ([SAVE FLIGHT TO DB]) streaming existing in-memory buffers in 200-packet chunks.
+      * Historical PFR report browser (#db-mission-history-select) with instant markdown export and 1-click [LOAD INTO REPLAY SUITE] trajectory playback.
+    - Verified with comprehensive test suite: tests/test_database.py (100% pass) and FastAPI TestClient end-to-end integration.
+
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
 
