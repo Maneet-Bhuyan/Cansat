@@ -34,3 +34,11 @@ To regenerate all reports and figures from raw CSV telemetry in `test_cases/`:
 ```powershell
 .\.venv\Scripts\python.exe ml/flight_analyzer.py --all
 ```
+
+## Access via Mission Control Web UI
+
+All generated reports and high-resolution figures are integrated into the **Post-Flight Analytics & Flight Dynamics Suite** (`analysis.html`):
+* **Individual PDF Download**: Each flight scenario includes a direct download link to its publication-grade vector PDF report (served via `/reports/pdf/`).
+* **Consolidated ZIP Archive**: Users can download all 10 mission reports and the consolidated `all_missions_summary.csv` table in a single ZIP file with one click (`Download All Reports (.ZIP)`), powered by the backend endpoint `GET /api/analysis/reports-zip`.
+* **Telemetry Replay & Visualization**: Interactive Chart.js graphs allow inspection of altitude, velocity, acceleration, and atmospheric sounding profiles before downloading.
+

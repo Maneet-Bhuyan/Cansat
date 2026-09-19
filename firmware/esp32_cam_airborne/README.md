@@ -10,8 +10,8 @@
 ---
 
 ## File Manifest
-* [`esp32_cam_airborne.ino`](file:///e:/Cansat/firmware/esp32_cam_airborne/esp32_cam_airborne.ino): Main Arduino firmware sketch.
-* [`camera_pins.h`](file:///e:/Cansat/firmware/esp32_cam_airborne/camera_pins.h): Hardware pin mappings for the AI-Thinker camera interface.
+* [`esp32_cam_airborne.ino`](esp32_cam_airborne.ino): Main Arduino firmware sketch.
+* [`camera_pins.h`](camera_pins.h): Hardware pin mappings for the AI-Thinker camera interface.
 
 ---
 
