@@ -86,6 +86,7 @@ echo [i] Starting Mission Control in Native Windows Mode...
 powershell -ExecutionPolicy Bypass -File "%~dp0backend\standalone_server.ps1"
 if !errorlevel! neq 0 (
     echo [i] Launching dashboard directly in default browser...
-    start "" "%~dp0index.html"
+    start "" "%~dp0frontend\index.html"
 )
 pause
+

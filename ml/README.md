@@ -4,7 +4,7 @@ This directory contains the machine learning pipelines for real-time telemetry i
 
 ## Pipelines, Scripts & Datasets
 
-* **`train_tinyml_vision.py`**: Depthwise separable CNN (`TinyLandingNet`, 7,320 parameters) for autonomous Safe Landing Area Index (SLAI) trained on 27,000 EuroSAT Sentinel-2 aerial images. Achieved 93.80% validation accuracy and 93.21% macro F1-score across 4 SLAI tiers (`SAFE_LZ`, `OBSTACLE_CANOPY`, `CRITICAL_HAZARD`, `WATER_HAZARD`).
+* **`train_tinyml_vision.py`**: Depthwise separable CNN (`TinyLandingNet`, 7,320 parameters) for autonomous Safe Landing Area Index (SLAI) trained on 27,000 EuroSAT Sentinel-2 aerial images. Achieved **93.04% holdout test accuracy** (best validation accuracy: 93.80%) and 93.21% macro F1-score across 4 SLAI tiers (`SAFE_LZ`, `OBSTACLE_CANOPY`, `CRITICAL_HAZARD`, `WATER_HAZARD`).
 * **`export_tinyml_header.py`**: Post-training INT8 quantization and C++ flatbuffer byte array header exporter (`firmware/esp32_cam_airborne/model_data.h` and `ml/saved_models/model_data.h`). Compresses model footprint to 7.15 KB Flash ROM (< 25 KB limit).
 * **`benchmark_inference.py`**: Inference latency and edge microcontroller resource benchmarking tool (Task ML-04). Measures execution times across ONNX Runtime CPU (0.055 ms), PyTorch CUDA RTX 4060 (0.614 ms), and computes the AI-Thinker ESP32-CAM budget (~16.3 ms, 783,360 MACs). Also validates 3x3 spatial hazard grid evaluation and evasion heading derivation.
 * **`download_dataset.py`**: Automated EuroSAT aerial dataset loader and integrity validator (verifies 27,000 images across 10 classes and extracts from `data/EuroSAT_RGB.zip`).

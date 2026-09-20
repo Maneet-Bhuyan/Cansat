@@ -79,79 +79,89 @@ Mission Control Web UI Suite:
 
 ```text
 .
-├── index.html                  # CanSat Mission Overview & Interactive 3D PLA Airframe Inspector
-├── dashboard.html              # Mission Control Aerospace Telemetry HUD & Web Serial Bridge
-├── tinyml.html                 # TinyML Deep Dive, INT8 Quantization & Inference Simulator
-├── models.html                 # Machine Learning Architecture & 6-Model Comparative Analysis
-├── analysis.html               # Post-Flight Telemetry Analytics, Multi-Sensor Ablation Suite & Dropout Simulator
-├── results.html                # Research & Results Data Viewer with Scenario Charting
-├── tasks.txt                   # Master task tracker & team assignments (Maneet, Rishi, Shubham, Ganesh)
-├── START_MISSION_CONTROL.bat   # Smart self-bootstrapping Windows launcher
-├── SETUP_GPU_WORKSTATION.bat   # 1-Click autonomous bootstrapper for fresh NVIDIA GPU machines
-├── setup_gpu_workstation.ps1   # PowerShell zero-to-hero GPU environment installer
-├── launch.py                   # System launcher with port manager, auto-reload, and browser dispatch
-├── requirements.txt            # Python dependencies
-├── css/
-│   └── resend-theme.css        # Clean Obsidian dark theme (Inter, Newsreader, JetBrains Mono)
-├── js/
-│   ├── cansat-3d.js            # Three.js 3D PLA CanSat model & interactive component inspector
-│   ├── mission-slider.js       # Interactive flight timeline scrubber & nadir camera simulator
-│   ├── results-charts.js       # Research results Chart.js data visualization engine
-│   └── tinyml-demo.js          # Client-side TinyLandingNet interactive inference simulator
-├── backend/
-│   ├── app.py                 # FastAPI ML inference, HTML router & telemetry WebSocket backend
-│   ├── core/                  # Python core signal processing & ingestion engines
-│   │   ├── serial_manager.py  # DualSerialManager (COM4/COM3 LoRa @ 9600 & COM5 Video @ 460800)
-│   │   ├── kinematics.py      # 1D Kalman Filter state estimator & 6-DOF IMU attitude fusion
-│   │   └── atmospheric.py     # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
-│   └── standalone_server.ps1  # Native Windows HTTP server (.NET HttpListener)
-├── ml/
-│   ├── download_dataset.py    # Automated EuroSAT aerial dataset downloader
-│   ├── train_tinyml_vision.py # TinyLandingNet depthwise separable CNN training pipeline
-│   ├── export_tinyml_header.py# INT8 post-training quantization & C++ header exporter
+├── frontend/                   # Web presentation suite (HTML, CSS, JS)
+│   ├── index.html              # CanSat Overview & Interactive 3D PLA Airframe Inspector
+│   ├── dashboard.html          # Mission Control Aerospace Telemetry HUD & Web Serial Bridge
+│   ├── tinyml.html             # TinyML Deep Dive, INT8 Quantization & Inference Simulator
+│   ├── models.html             # Machine Learning Architecture & 6-Model Comparative Analysis
+│   ├── analysis.html           # Post-Flight Telemetry Analytics, Multi-Sensor Ablation & Simulator
+│   ├── results.html            # Research & Results Data Viewer with Scenario Charting
+│   ├── css/
+│   │   └── resend-theme.css    # Clean Obsidian dark theme (Inter, Newsreader, JetBrains Mono)
+│   ├── js/
+│   │   ├── cansat-3d.js        # Three.js 3D PLA CanSat model & component inspector
+│   │   ├── mission-slider.js   # Flight timeline scrubber & nadir camera simulator
+│   │   ├── results-charts.js   # Research results Chart.js data visualizer
+│   │   └── tinyml-demo.js      # Interactive TinyLandingNet inference simulator
+│   └── README.md               # Frontend UI architecture documentation
+├── backend/                    # FastAPI Python server, WebSocket bridges & kinematics
+│   ├── app.py                  # Telemetry streaming, ML inference & HTML routing
+│   ├── standalone_server.ps1   # Native Windows HTTP server (.NET HttpListener)
+│   ├── core/                   # Signal processing & hardware integration
+│   │   ├── serial_manager.py   # DualSerialManager (LoRa @ 9600 & Video @ 460800)
+│   │   ├── kinematics.py       # 1D Kalman Filter & 6-DOF IMU attitude fusion
+│   │   └── atmospheric.py      # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+│   └── README.md               # Backend API and WebSocket documentation
+├── ml/                         # Machine learning training, quantization & benchmarks
+│   ├── download_dataset.py     # EuroSAT aerial dataset downloader
+│   ├── train_tinyml_vision.py  # TinyLandingNet depthwise separable CNN training pipeline
+│   ├── export_tinyml_header.py # INT8 post-training quantization & C++ header exporter
 │   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
 │   ├── train_touchdown_prognostics.py # Touchdown prognostics & descent aerodynamics pipeline
-│   ├── flight_analyzer.py     # Automated post-flight telemetry analyzer & publication PDF report generator
+│   ├── flight_analyzer.py      # Automated post-flight telemetry analyzer & PDF report generator
 │   ├── ablation_benchmarks.json # Pre-computed 4-sensor ablation benchmarks across all 10 missions
-│   ├── train_models.py        # Tabular ML training pipeline
-│   ├── model_metrics.json     # Model performance summary
-│   └── saved_models/          # Trained model artifacts (.joblib, .pth, .onnx, .h)
-├── analysis/
-│   ├── Touchdown_Prognostics_and_Descent_Analytics.ipynb # Flight dynamics & descent analytics notebook
-│   └── figures/               # Correlation matrices, aerodynamic drag curves, and confusion matrices
-├── data/
-│   ├── EuroSAT_RGB.zip        # [Tracked] EuroSAT 89.9 MB aerial dataset archive
-│   └── eurosat/               # [Gitignored] 27,000 extracted Sentinel-2 images
-├── firmware/
-│   ├── esp32_cam_airborne/    # Airborne camera & TinyML vision firmware (16 MHz XCLK, 5 FPS)
-│   ├── esp32_ground_receiver/ # Ground ESP-NOW receiver node firmware (460800 baud)
-│   ├── captures/              # Wireless video frame captures & test snapshots
-│   └── ground_cam_viewer.py   # Standalone low-latency OpenCV video HUD
-├── test_cases/                # Ten mission profile CSV datasets
-│   └── cansat_eval_ablation.ipynb # Sensor suite ablation study & touchdown localization benchmarking
-├── reports/                   # Automated post-flight telemetry reports
-│   ├── README.md              # Reports documentation and batch regeneration instructions
-│   ├── all_missions_summary.csv # Consolidated flight benchmark matrix across all 10 scenarios
-│   ├── pdf/                   # Publication-grade vector PDF flight reports (10 mission profiles)
-│   └── figures/               # High-resolution 300 DPI PNG figures for papers and presentations
-├── docs/
-│   ├── README.md              # Documentation index and guides
-│   ├── architecture_and_ml.txt# Project architecture & mathematical formulations
-│   ├── project_log.txt        # Development and mission log
-│   ├── whatsapp_messages.txt  # Formatted team task briefings (Maneet, Rishi, Shubham, Ganesh)
+│   ├── train_models.py         # Tabular ML training pipeline
+│   ├── model_metrics.json      # Model performance summary
+│   ├── saved_models/           # Trained model artifacts (.joblib, .pth, .onnx, .h)
+│   └── README.md               # ML models and benchmarks documentation
+├── analysis/                   # Flight dynamics & descent analytics notebooks
+│   ├── Touchdown_Prognostics_and_Descent_Analytics.ipynb
+│   └── figures/                # Correlation matrices, aerodynamic drag curves, confusion matrices
+├── firmware/                   # Microcontroller & imaging firmware
+│   ├── esp32_cam_airborne/     # Airborne camera & TinyML vision firmware (16 MHz XCLK, 5 FPS)
+│   ├── esp32_ground_receiver/  # Ground ESP-NOW receiver node firmware (460800 baud)
+│   ├── captures/               # Wireless video frame captures & test snapshots
+│   ├── ground_cam_viewer.py    # Standalone low-latency OpenCV video HUD
+│   └── README.md               # Firmware flashing and protocol documentation
+├── data/                       # Telemetry datasets and EuroSAT archive
+│   ├── EuroSAT_RGB.zip         # [Tracked] EuroSAT 89.9 MB aerial dataset archive
+│   └── README.md               # Dataset documentation
+├── test_cases/                 # Ten mission profile CSV datasets
+│   ├── 01_nominal_sounding_flight.csv ... 10_ground_pad_static_test.csv
+│   ├── cansat_eval_ablation.ipynb # Sensor suite ablation study notebook
+│   └── README.md               # Flight scenario documentation
+├── reports/                    # Automated post-flight telemetry reports
+│   ├── all_missions_summary.csv# Master benchmark comparison matrix
+│   ├── pdf/                    # 10 publication-grade vector PDF flight reports
+│   ├── figures/                # High-resolution 300 DPI PNG figures
+│   └── README.md               # Reports documentation
+├── docs/                       # Technical architecture, manuals, logs, team task briefings
+│   ├── architecture_and_ml.txt # Project architecture & mathematical formulations
+│   ├── project_log.txt         # Chronological development and mission log
+│   ├── whatsapp_messages.txt   # Formatted team task briefings (Maneet, Rishi, Shubham, Ganesh)
 │   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
-│   └── python-ml_focused.text # Python & ML transformation master roadmap
-├── tests/
-│   ├── test_backend_core.py   # Python backend core unit test suite (12 assertions)
+│   ├── python-ml_focused.text  # Python & ML transformation master roadmap
+│   └── README.md               # Documentation index
+├── scripts/                    # Workstation setup & installation utilities
+│   ├── SETUP_GPU_WORKSTATION.bat # 1-Click autonomous bootstrapper for NVIDIA GPU machines
+│   └── setup_gpu_workstation.ps1 # PowerShell zero-to-hero GPU environment installer
+├── tests/                      # Automated self-test & verification test suites
+│   ├── test_backend_core.py    # Python backend core unit test suite (12 assertions)
 │   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
-│   ├── selftest.js            # Node.js automated unit testing suite (27 assertions)
-│   ├── selftest.ps1           # PowerShell mission verification suite (17 assertions)
-│   ├── test_sm.ps1            # Flight state machine transition checker (10 scenarios)
-│   ├── generate_test_cases.ps1# Synthetic scenario generator (PowerShell)
-│   └── generate_test_cases.js # Synthetic scenario generator (JavaScript)
-├── .gitattributes             # Accurate GitHub Linguist language classifications
-└── .gitignore
+│   ├── selftest.js             # Node.js automated unit testing suite (27 assertions)
+│   ├── selftest.ps1            # PowerShell mission verification suite (17 assertions)
+│   ├── test_sm.ps1             # Flight state machine transition checker (10 scenarios)
+│   └── README.md               # Testing guide
+├── drivers/                    # USB CP210x hardware drivers
+├── START_MISSION_CONTROL.bat   # 1-Click Windows system launcher
+├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
+├── requirements.txt            # Python dependencies
+├── tasks.txt                   # Master team task tracker
+├── readme.md                   # Comprehensive project documentation
+├── .gitattributes              # GitHub Linguist language classifications
+└── .gitignore                  # Git ignore rules
 ```
+
 
 
 ## Key technologies
@@ -244,13 +254,13 @@ powershell -ExecutionPolicy Bypass -File .\backend\standalone_server.ps1
 To open the ground station dashboard directly in your browser:
 
 ```powershell
-start index.html
+start frontend/index.html
 ```
 
 Or serve locally with Python:
 
 ```powershell
-python -m http.server 8000
+python -m http.server 8000 --directory frontend
 ```
 
 Then browse to:
@@ -641,9 +651,9 @@ The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry
 | Model Architecture | Task | Input Vector | Performance Metric |
 | :--- | :--- | :--- | :--- |
 | Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
-| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
+| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.56% Accuracy (Weighted F1: 0.985; Macro F1: 0.902) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
-| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
+| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | R²: 0.9951, RMSE: ±24.2 m |
 | Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
 | Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
 | TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |

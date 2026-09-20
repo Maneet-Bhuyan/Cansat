@@ -4,6 +4,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $RootDir = Split-Path -Parent $ScriptDir
+$FrontendDir = Join-Path $RootDir "frontend"
 $Port = 8000
 
 Write-Host "===============================================================================" -ForegroundColor Cyan
@@ -34,7 +35,7 @@ try {
     $Listener.Start()
 } catch {
     Write-Host "[!] Could not bind to port $Port. Opening dashboard file directly in browser..." -ForegroundColor Yellow
-    Start-Process (Join-Path $RootDir "index.html")
+    Start-Process (Join-Path $FrontendDir "index.html")
     exit 0
 }
 
@@ -76,7 +77,7 @@ try {
         }
 
         if ([string]::IsNullOrEmpty($RawPath) -or $RawPath -eq "index.html") {
-            $FilePath = Join-Path $RootDir "index.html"
+            $FilePath = Join-Path $FrontendDir "index.html"
             $ContentType = "text/html; charset=utf-8"
         } elseif ($RawPath -eq "api/health") {
             $Json = '{"status":"standby","models_loaded":false,"engine":"standalone_windows"}'
@@ -87,7 +88,10 @@ try {
             $Response.Close()
             continue
         } else {
-            $FilePath = Join-Path $RootDir $RawPath
+            $FilePath = Join-Path $FrontendDir $RawPath
+            if (-not (Test-Path $FilePath -PathType Leaf)) {
+                $FilePath = Join-Path $RootDir $RawPath
+            }
             $Ext = [System.IO.Path]::GetExtension($FilePath).ToLower()
             $ContentType = switch ($Ext) {
                 ".html" { "text/html; charset=utf-8" }
@@ -101,6 +105,7 @@ try {
                 default { "application/octet-stream" }
             }
         }
+
 
         if (Test-Path $FilePath -PathType Leaf) {
             try {
