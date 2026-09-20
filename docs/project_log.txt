@@ -1588,3 +1588,21 @@ AUTOMATIC FLIGHT TELEMETRY RECORDING & SAFE PARSING ENGINE
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: AUTOMATIC FLIGHT TELEMETRY RECORDING OPERATIONAL AND VERIFIED
+--------------------------------------------------------------------------------
+DYNAMIC BOUNDED CHART SCALING (ALTITUDE & KINEMATICS)
+--------------------------------------------------------------------------------
+
+[2026-09-21T01:23:00Z] ACTION: Implemented dynamic bounded scales on real-time telemetry charts in frontend/dashboard.html to eliminate stationary micro-noise amplification while preserving full sensitivity to manual elevation changes (>= 1m) and rocket flight trajectories.
+
+1. Delivered Enhancements:
+   - frontend/dashboard.html:
+     * Added boundedScale(minSpan, centerZero) helper leveraging Chart.js afterDataLimits lifecycle hook.
+     * altChart: Configured with boundedScale(5.0), guaranteeing a minimum 5.0m vertical window. Stationary sensor/draft noise (0.15m to 0.25m) occupies < 4% of the canvas height, rendering as a calm, stable line. Real physical elevation changes (e.g. 1.0m manual lift) occupy 20% of the canvas height and are clearly distinguished.
+     * vSpeedChart: Configured with boundedScale(4.0, true), enforcing a minimum [-2.0 m/s, +2.0 m/s] window centered on 0.0 m/s at rest.
+     * orientChart & gyroChart: Applied boundedScale(20.0, true) and boundedScale(10.0, true) respectively to eliminate resting jitter while auto-scaling dynamically during motion.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: BOUNDED CHART SCALING OPERATIONAL AND VERIFIED

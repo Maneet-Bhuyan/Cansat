@@ -2610,6 +2610,25 @@
     data: [], pointRadius: 0, tension: 0.2
   });
 
+  function boundedScale(minSpan, centerZero = false) {
+    return {
+      afterDataLimits: (scale) => {
+        if (centerZero) {
+          const maxAbs = Math.max(Math.abs(scale.max || 0), Math.abs(scale.min || 0), minSpan / 2);
+          scale.min = -maxAbs;
+          scale.max = maxAbs;
+        } else {
+          const currentSpan = (scale.max || 0) - (scale.min || 0);
+          if (currentSpan < minSpan) {
+            const mid = ((scale.max || 0) + (scale.min || 0)) / 2;
+            scale.min = mid - minSpan / 2;
+            scale.max = mid + minSpan / 2;
+          }
+        }
+      }
+    };
+  }
+
   const accelChart = initLineChart('chart-accel', [ds('ax (g)', '#EF4444'), ds('ay (g)', '#EAB308'), ds('az (g)', '#06B6D4')], {
     scales: {
       y: {
@@ -2621,38 +2640,38 @@
   });
   const orientChart = initLineChart('chart-orient', [ds('Pitch (°)', '#EF4444'), ds('Roll (°)', '#06B6D4')], {
     scales: {
-      y: {
+      y: Object.assign({
         ticks: { precision: 1 },
         title: { display: true, text: 'ANGLE (°)', color: '#a1a1aa', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: '5%'
-      }
+      }, boundedScale(20.0, true))
     }
   });
   const vSpeedChart = initLineChart('chart-vspd', [ds('vz (m/s)', '#10B981')], {
     scales: {
-      y: {
+      y: Object.assign({
         ticks: { precision: 1 },
         title: { display: true, text: 'V-SPEED (m/s)', color: '#a1a1aa', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
-        grace: 1
-      }
+        grace: 0.5
+      }, boundedScale(4.0, true))
     }
   });
   const altChart = initLineChart('chart-alt', [ds('Altitude (m)', '#38BDF8')], {
     scales: {
-      y: {
+      y: Object.assign({
         ticks: { precision: 1 },
         title: { display: true, text: 'ALTITUDE (m)', color: '#a1a1aa', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
-        grace: 1
-      }
+        grace: 0.5
+      }, boundedScale(5.0))
     }
   });
   const gyroChart = initLineChart('chart-gyro', [ds('gx (°/s)', '#EF4444'), ds('gy (°/s)', '#EAB308'), ds('gz (°/s)', '#06B6D4')], {
     scales: {
-      y: {
+      y: Object.assign({
         ticks: { precision: 1 },
         title: { display: true, text: 'GYRO (°/s)', color: '#a1a1aa', font: { family: 'JetBrains Mono', size: 9, weight: '600' } },
         grace: '5%'
-      }
+      }, boundedScale(10.0, true))
     }
   });
   const humChart = initLineChart('chart-hum', [ds('Humidity (%)', '#06B6D4')], {
