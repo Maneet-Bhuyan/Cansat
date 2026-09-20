@@ -695,12 +695,18 @@
         <div class="flex items-center space-x-2">
           <!-- Mission Database Persistence Status & Arm Button -->
           <div id="db-mission-badge" class="px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#111111] text-zinc-300" title="SQLite Persistent Flight Database & PFR Audits">
-            <span id="db-status-dot" class="led-dot bg-zinc-500"></span>
-            <span id="db-status-text">DB: STANDBY</span>
+            <span id="db-status-dot" class="led-dot bg-emerald-500/80"></span>
+            <span id="db-status-text">DB: AUTO-STANDBY</span>
             <button type="button" id="db-record-btn" onclick="toggleMissionRecording()" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1f1f1f] hover:bg-[#2d2d2d] text-white border border-[#3e3e3e] transition flex items-center gap-1" title="Arm or Finalize Mission in SQLite Database">
               <span>ARM REC</span>
             </button>
           </div>
+
+          <!-- Auto-Recording Toggle Button -->
+          <button type="button" id="db-autorec-btn" onclick="toggleAutoRecord()" class="px-2 py-1 rounded-full text-[11px] font-mono border border-emerald-800/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50 transition flex items-center gap-1" title="Toggle automatic flight telemetry recording when packets arrive">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span id="db-autorec-text">AUTO-REC: ON</span>
+          </button>
 
           <!-- Database Explorer & Mission Records Manager Action -->
           <button type="button" onclick="openDatabaseManager()" class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#171717] hover:bg-[#242424] border border-[#2e2e2e] text-cyan-200 hover:text-white flex items-center gap-1.5 transition-all" title="Open Flight Database Explorer & Records Manager">
@@ -1553,6 +1559,9 @@
   let isViewingHistoricalReport = false;
   let currentHistoricalReportData = null;
   let cachedPfrMarkdown = '';
+  let autoRecordEnabled = true;
+  let autoArmInProgress = false;
+  let autoArmCooldownUntil = 0;
   
   // Connections
   let isDemo = false;
@@ -1821,8 +1830,16 @@
   let currentAnomalyCode = 'NOMINAL';
   let currentAnomalyScore = 0;
 
-  // --- PYTHON MACHINE LEARNING BACKEND BRIDGE ---
-  const ML_SERVER_URL = '';
+  // --- API BASE & SERVER RESOLUTION ---
+  function getApiUrl(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const isLocalFile = window.location.protocol === 'file:';
+    const isOtherPort = window.location.port && window.location.port !== '8000';
+    const base = (isLocalFile || isOtherPort) ? 'http://127.0.0.1:8000' : '';
+    return base + (path.startsWith('/') ? path : '/' + path);
+  }
+  const ML_SERVER_URL = getApiUrl('');
   let mlServerOnline = false;
   let mlLastPrediction = null;
   let mlInferenceInFlight = false;
@@ -3509,8 +3526,12 @@
     const count = telemetryHistory.length;
     if (row.altitude > apogee) apogee = row.altitude;
 
-    // Database Streaming Buffer (when mission recording is active)
-    if (activeDbMissionId) {
+    // Database Streaming & Auto-Recording Buffer
+    if (activeDbMissionId || (autoRecordEnabled && !isViewingHistoricalReport && !replayPlaying && Date.now() > autoArmCooldownUntil)) {
+      if (!activeDbMissionId && !autoArmInProgress) {
+        autoArmInProgress = true;
+        autoStartFlightMission();
+      }
       dbTelemetryBuffer.push({
         timestamp_ms: row.timestamp ? (Date.parse(row.timestamp) || Date.now()) : Date.now(),
         met_seconds: (count - 1) * (DEMO_DT_MS / 1000.0),
@@ -3518,10 +3539,11 @@
         pressure: row.pressure,
         temp: row.temp,
         humidity: row.humidity,
-        battery_voltage: row.batteryVoltage,
+        battery_voltage: (typeof row.batteryVoltage !== 'undefined' && row.batteryVoltage !== null ? row.batteryVoltage : 4.2),
         ax: row.ax, ay: row.ay, az: row.az,
         gx: row.gx, gy: row.gy, gz: row.gz,
-        lat: row.lat, lon: row.lon,
+        lat: (typeof row.lat !== 'undefined' && row.lat !== null ? row.lat : 0.0),
+        lon: (typeof row.lon !== 'undefined' && row.lon !== null ? row.lon : 0.0),
         v_spd: row.vSpd || 0.0,
         accel_mag: row.accelMag || 1.0,
         pitch: row.pitch || 0.0,
@@ -3533,7 +3555,7 @@
         anomaly_score: (typeof currentAnomalyScore !== 'undefined' ? currentAnomalyScore : 0.0),
         is_anomaly: (typeof currentAnomalyCode !== 'undefined' && currentAnomalyCode !== 'NOMINAL')
       });
-      if (dbTelemetryBuffer.length >= 10) {
+      if (activeDbMissionId && dbTelemetryBuffer.length >= 10) {
         flushDbTelemetryBuffer();
       }
     }
@@ -4514,7 +4536,7 @@
 
   // --- DATABASE MISSION RECORDING & FLIGHT ARCHIVE PERSISTENCE ---
 
-  function updateDbBadgeUI(recording, missionId) {
+  function updateDbBadgeUI(recording, missionId, isAuto) {
     const badge = document.getElementById('db-mission-badge');
     const dot = document.getElementById('db-status-dot');
     const text = document.getElementById('db-status-text');
@@ -4524,17 +4546,76 @@
     if (recording) {
       badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-rose-600/70 bg-rose-950/60 text-rose-300';
       dot.className = 'led-dot bg-rose-500 led-pulse';
-      text.innerText = 'REC [DB: ' + (missionId ? missionId.substring(0, 8) : 'ACTIVE') + ']';
+      text.innerText = 'REC [' + (isAuto ? 'AUTO: ' : 'DB: ') + (missionId ? missionId.substring(0, 8) : 'ACTIVE') + ']';
       btn.innerHTML = '<span>FINISH</span>';
       btn.className = 'ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-700 hover:bg-rose-600 text-white border border-rose-500 transition flex items-center gap-1';
       btn.title = 'Finalize active flight and compute PFR report in SQLite';
     } else {
       badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#111111] text-zinc-300';
-      dot.className = 'led-dot bg-zinc-500';
-      text.innerText = 'DB: STANDBY';
+      dot.className = autoRecordEnabled ? 'led-dot bg-emerald-500/80' : 'led-dot bg-zinc-500';
+      text.innerText = autoRecordEnabled ? 'DB: AUTO-STANDBY' : 'DB: STANDBY';
       btn.innerHTML = '<span>ARM REC</span>';
       btn.className = 'ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1f1f1f] hover:bg-[#2d2d2d] text-white border border-[#3e3e3e] transition flex items-center gap-1';
       btn.title = 'Arm flight mission logging in SQLite';
+    }
+  }
+
+  function toggleAutoRecord() {
+    autoRecordEnabled = !autoRecordEnabled;
+    const btn = document.getElementById('db-autorec-btn');
+    const txt = document.getElementById('db-autorec-text');
+    if (autoRecordEnabled) {
+      if (btn) btn.className = 'px-2 py-1 rounded-full text-[11px] font-mono border border-emerald-800/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50 transition flex items-center gap-1';
+      if (txt) txt.innerText = 'AUTO-REC: ON';
+    } else {
+      if (btn) btn.className = 'px-2 py-1 rounded-full text-[11px] font-mono border border-zinc-700 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 transition flex items-center gap-1';
+      if (txt) txt.innerText = 'AUTO-REC: OFF';
+    }
+    if (!activeDbMissionId) {
+      updateDbBadgeUI(false);
+    }
+  }
+
+  async function autoStartFlightMission() {
+    try {
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+      const missionName = 'Auto Flight ' + dateStr + '_' + timeStr;
+
+      const resp = await fetch(getApiUrl('/api/db/missions/start'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: missionName,
+          callsign: 'CANSAT-1',
+          operator: 'Autonomous Ground Station',
+          notes: 'Automatic flight recording initialized on telemetry reception.'
+        })
+      });
+
+      if (!resp.ok) {
+        console.warn('Auto flight start returned HTTP ' + resp.status);
+        autoArmInProgress = false;
+        return;
+      }
+
+      const data = await resp.json();
+      activeDbMissionId = data.mission_id;
+      activeDbMissionName = missionName;
+      autoArmInProgress = false;
+
+      updateDbBadgeUI(true, activeDbMissionId, true);
+
+      if (dbFlushInterval) clearInterval(dbFlushInterval);
+      dbFlushInterval = setInterval(flushDbTelemetryBuffer, 2000);
+
+      // Flush whatever packets arrived during mission provisioning
+      await flushDbTelemetryBuffer();
+      console.log('[Database] Auto-recording initialized. Active mission:', activeDbMissionId);
+    } catch (err) {
+      console.warn('[Database] Could not auto-start flight mission:', err);
+      autoArmInProgress = false;
     }
   }
 
@@ -4560,7 +4641,7 @@
     const notes = notesInput ? notesInput.value.trim() : '';
 
     try {
-      const resp = await fetch('/api/db/missions/start', {
+      const resp = await fetch(getApiUrl('/api/db/missions/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4583,14 +4664,14 @@
       dbTelemetryBuffer = [];
 
       closeModal('startMissionModal');
-      updateDbBadgeUI(true, activeDbMissionId);
+      updateDbBadgeUI(true, activeDbMissionId, false);
 
       if (dbFlushInterval) clearInterval(dbFlushInterval);
-      dbFlushInterval = setInterval(flushDbTelemetryBuffer, 2500);
+      dbFlushInterval = setInterval(flushDbTelemetryBuffer, 2000);
 
       // If we already have buffered in-memory points from the current flight, queue them
       if (telemetryHistory.length > 0) {
-        const historySlice = telemetryHistory.slice(-20);
+        const historySlice = telemetryHistory.slice(-50);
         historySlice.forEach(function (row, idx) {
           dbTelemetryBuffer.push({
             timestamp_ms: row.timestamp ? (Date.parse(row.timestamp) || Date.now()) : Date.now(),
@@ -4599,10 +4680,11 @@
             pressure: row.pressure,
             temp: row.temp,
             humidity: row.humidity,
-            battery_voltage: row.batteryVoltage,
+            battery_voltage: (typeof row.batteryVoltage !== 'undefined' && row.batteryVoltage !== null ? row.batteryVoltage : 4.2),
             ax: row.ax, ay: row.ay, az: row.az,
             gx: row.gx, gy: row.gy, gz: row.gz,
-            lat: row.lat, lon: row.lon,
+            lat: (typeof row.lat !== 'undefined' && row.lat !== null ? row.lat : 0.0),
+            lon: (typeof row.lon !== 'undefined' && row.lon !== null ? row.lon : 0.0),
             v_spd: row.vSpd || 0.0,
             accel_mag: row.accelMag || 1.0,
             pitch: row.pitch || 0.0,
@@ -4627,7 +4709,7 @@
     if (!activeDbMissionId || dbTelemetryBuffer.length === 0) return;
     const batch = dbTelemetryBuffer.splice(0, dbTelemetryBuffer.length);
     try {
-      const resp = await fetch('/api/db/missions/telemetry', {
+      const resp = await fetch(getApiUrl('/api/db/missions/telemetry'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4659,7 +4741,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions/' + targetMissionId + '/finish', {
+      const resp = await fetch(getApiUrl('/api/db/missions/' + targetMissionId + '/finish'), {
         method: 'POST'
       });
       if (!resp.ok) {
@@ -4669,6 +4751,7 @@
       const data = await resp.json();
       activeDbMissionId = null;
       activeDbMissionName = '';
+      autoArmCooldownUntil = Date.now() + 10000; // 10 second cooldown on auto-arm after manual finish
       updateDbBadgeUI(false);
 
       refreshDbMissionsList();
@@ -4712,7 +4795,7 @@
       }
 
       // 1. Start Mission
-      const startResp = await fetch('/api/db/missions/start', {
+      const startResp = await fetch(getApiUrl('/api/db/missions/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4745,10 +4828,11 @@
             pressure: row.pressure,
             temp: row.temp,
             humidity: row.humidity,
-            battery_voltage: row.batteryVoltage,
+            battery_voltage: (typeof row.batteryVoltage !== 'undefined' && row.batteryVoltage !== null ? row.batteryVoltage : 4.2),
             ax: row.ax, ay: row.ay, az: row.az,
             gx: row.gx, gy: row.gy, gz: row.gz,
-            lat: row.lat, lon: row.lon,
+            lat: (typeof row.lat !== 'undefined' && row.lat !== null ? row.lat : 0.0),
+            lon: (typeof row.lon !== 'undefined' && row.lon !== null ? row.lon : 0.0),
             v_spd: row.vSpd || 0.0,
             accel_mag: row.accelMag || 1.0,
             pitch: row.pitch || 0.0,
@@ -4762,7 +4846,7 @@
           };
         });
 
-        const ingestResp = await fetch('/api/db/missions/telemetry', {
+        const ingestResp = await fetch(getApiUrl('/api/db/missions/telemetry'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4777,7 +4861,7 @@
       }
 
       // 3. Finalize mission and generate PFR audit report
-      const finResp = await fetch('/api/db/missions/' + missionId + '/finish', {
+      const finResp = await fetch(getApiUrl('/api/db/missions/' + missionId + '/finish'), {
         method: 'POST'
       });
       if (!finResp.ok) {
@@ -4816,7 +4900,7 @@
     if (!select) return;
 
     try {
-      const resp = await fetch('/api/db/missions');
+      const resp = await fetch(getApiUrl('/api/db/missions'));
       if (!resp.ok) return;
       const data = await resp.json();
       const currentVal = select.value;
@@ -4858,7 +4942,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions/' + missionId + '/report');
+      const resp = await fetch(getApiUrl('/api/db/missions/' + missionId + '/report'));
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || ('HTTP ' + resp.status));
@@ -5020,7 +5104,7 @@
 
   async function loadHistoricalTelemetryToReplay(missionId) {
     try {
-      const resp = await fetch('/api/db/missions/' + missionId + '/telemetry');
+      const resp = await fetch(getApiUrl('/api/db/missions/' + missionId + '/telemetry'));
       if (!resp.ok) throw new Error('Failed to fetch telemetry records');
       const data = await resp.json();
       if (!data.records || data.records.length === 0) {
@@ -5095,7 +5179,7 @@
   async function loadDatabaseManagerData() {
     // 1. Fetch DB Stats
     try {
-      const statsResp = await fetch('/api/db/stats');
+      const statsResp = await fetch(getApiUrl('/api/db/stats'));
       if (statsResp.ok) {
         const statsData = await statsResp.json();
         const s = statsData.stats || {};
@@ -5122,7 +5206,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions');
+      const resp = await fetch(getApiUrl('/api/db/missions'));
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
       cachedDbMissions = data.missions || [];
@@ -5225,7 +5309,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions/' + missionId + '/telemetry?limit=500');
+      const resp = await fetch(getApiUrl('/api/db/missions/' + missionId + '/telemetry?limit=500'));
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
       const records = data.records || [];
@@ -5276,7 +5360,7 @@
 
   function downloadMissionCsv(missionId) {
     if (!missionId) return;
-    const url = '/api/db/missions/' + missionId + '/export/csv';
+    const url = getApiUrl('/api/db/missions/' + missionId + '/export/csv');
     const a = document.createElement('a');
     a.href = url;
     a.download = missionId + '_telemetry.csv';
@@ -5286,7 +5370,7 @@
   }
 
   function downloadDatabaseFile() {
-    const url = '/api/db/download';
+    const url = getApiUrl('/api/db/download');
     const a = document.createElement('a');
     a.href = url;
     a.download = 'cansat_missions.db';
@@ -5312,7 +5396,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions/' + missionId, { method: 'DELETE' });
+      const resp = await fetch(getApiUrl('/api/db/missions/' + missionId), { method: 'DELETE' });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || ('HTTP ' + resp.status));
@@ -5352,7 +5436,7 @@
     }
 
     try {
-      const resp = await fetch('/api/db/missions', { method: 'DELETE' });
+      const resp = await fetch(getApiUrl('/api/db/missions'), { method: 'DELETE' });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || ('HTTP ' + resp.status));
@@ -5369,8 +5453,30 @@
         onSelectHistoricalMission('');
       }
     } catch (e) {
-      console.error('Error purging database:', e);
-      alert('Could not purge database: ' + e.message);
+      console.error('Error purging database missions:', e);
+      alert('Could not purge missions: ' + e.message);
+    }
+  }
+
+  async function checkActiveMissionOnLoad() {
+    try {
+      const resp = await fetch(getApiUrl('/api/db/missions'));
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.missions && data.missions.length > 0) {
+        const active = data.missions.find(function (m) { return m.status === 'ACTIVE_FLIGHT'; });
+        if (active && !activeDbMissionId) {
+          activeDbMissionId = active.id;
+          activeDbMissionName = active.name;
+          const isAuto = active.name && active.name.startsWith('Auto Flight');
+          updateDbBadgeUI(true, activeDbMissionId, isAuto);
+          if (dbFlushInterval) clearInterval(dbFlushInterval);
+          dbFlushInterval = setInterval(flushDbTelemetryBuffer, 2000);
+          console.log('[Database] Reconnected to existing active mission on load:', activeDbMissionId);
+        }
+      }
+    } catch (e) {
+      // Backend offline / standby
     }
   }
 
@@ -5450,6 +5556,17 @@
       marker.setLatLng(HOME);
       map.setView(HOME, 16);
     }
+
+    autoArmCooldownUntil = 0;
+    autoArmInProgress = false;
+    activeDbMissionId = null;
+    activeDbMissionName = '';
+    dbTelemetryBuffer = [];
+    if (dbFlushInterval) {
+      clearInterval(dbFlushInterval);
+      dbFlushInterval = null;
+    }
+    updateDbBadgeUI(false);
 
     tareAttitude();
     setBatteryUi(4.20, 100);
@@ -5762,6 +5879,8 @@
     init3D();
     initMap();
     resizeVisibleCharts();
+    checkActiveMissionOnLoad();
+    refreshDbMissionsList();
   });
 
   window.addEventListener('resize', function () {

@@ -423,8 +423,8 @@ The Cognitive CanSat system features an embedded SQLite database engine operatin
  ┌────────────────────────────────────────────────────────────────────────┐
  │                  GROUND STATION WEB HUD (dashboard.html)               │
  │  - Real-Time 3D Attitude, Charts & Sensor Processing Engine            │
- │  - Client-Side Micro-Batching Buffer (flushes 10 pkts or every 2.5s)   │
- │  - Live Recording Controller: [ARM REC] / [FINISH] / [SAVE FLIGHT]     │
+ │  - Client-Side Micro-Batching Buffer (flushes 10 pkts or every 2.0s)   │
+ │  - Live Recording: [AUTO-REC: ON] / [ARM REC] / [FINISH] / [SAVE]     │
  └───────────────────────────────────┬────────────────────────────────────┘
                                      │ JSON REST API (HTTP POST)
                                      ▼
@@ -673,6 +673,12 @@ The Ground Station (`dashboard.html`) embeds an interactive aerospace Database E
    - **`[CSV]` Export**: Exports 25 telemetry columns including raw sensor data, derived kinematics, and ML labels.
    - **`[PURGE ALL]`**: Executes cascaded atomic wipe of all flight sessions (`DELETE /api/db/missions`) and resets auto-increment sequences.
    - **PFR Deletion Action**: Added a red **`[DELETE MISSION]`** button in the Post-Flight Review modal header when viewing historical records.
+
+4. **Automatic Flight Telemetry Recording**:
+   - **Zero-Configuration Logging**: As soon as valid telemetry packets arrive from the CanSat via direct USB Web Serial or the Python WebSocket bridge, the ground station automatically provisions a new mission session (`Auto Flight YYYY-MM-DD_HHMMSS`) in SQLite.
+   - **Zero Packet Loss**: Incoming packets during initial mission creation are buffered client-side and flushed immediately upon session allocation.
+   - **Auto-Recording Toggle**: The top HUD features an `[AUTO-REC: ON]` button allowing operators to toggle between automatic logging and manual arming (`[ARM REC]`).
+   - **Post-Flight Cooldown**: Finalizing a flight introduces a 10-second cooldown to prevent stationary landed packets from inadvertently creating duplicate missions.
 
 ---
 

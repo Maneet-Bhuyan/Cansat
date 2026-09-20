@@ -1557,3 +1557,34 @@ SHUBHAM MERGE REQUEST: DOCKER DEPLOYMENT, DYNAMIC HOST RESOLUTION & BATCH TESTIN
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: SHUBHAM MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
+--------------------------------------------------------------------------------
+AUTOMATIC FLIGHT TELEMETRY RECORDING & SAFE PARSING ENGINE
+--------------------------------------------------------------------------------
+
+[2026-09-21T01:10:00Z] ACTION: Implemented automatic flight telemetry recording by default into the persistent SQLite database (cansat_missions.db). Hardened database ingestion with safe numeric converters and camelCase key mapping.
+
+1. Delivered Enhancements:
+   - frontend/dashboard.html:
+     * Enabled automatic flight recording by default (autoRecordEnabled = true).
+     * Implemented autoStartFlightMission() to dynamically provision a timestamped mission session (Auto Flight YYYY-MM-DD_HHMMSS) the moment telemetry packets start streaming via direct USB Web Serial or WebSocket bridge.
+     * Added packet buffering during mission provisioning to prevent initial packet loss (packets 0..N preserved).
+     * Added HUD Auto-Recording toggle button (#db-autorec-btn) and dynamic badge indicators (REC [AUTO: MSN-...]).
+     * Added 10-second post-finish cooldown (autoArmCooldownUntil) preventing landed stationary CanSat packets from accidentally spinning up duplicate missions immediately after finalization.
+     * Implemented getApiUrl(path) helper dynamically resolving http://127.0.0.1:8000 when opened from file:/// or non-8000 ports (e.g. Live Server).
+     * Added checkActiveMissionOnLoad() reconnecting to any running ACTIVE_FLIGHT mission if the page is refreshed during a flight.
+   - backend/core/database.py:
+     * Added _safe_float and _safe_int helper functions preventing TypeError on None or NaN values during initial GPS acquisition or sensor warm-up.
+     * Mapped both snake_case and camelCase keys transparently in insert_telemetry_batch (battery_voltage / batteryVoltage, v_spd / vSpd, etc.).
+   - backend/core/kinematics.py:
+     * Wrapped joblib import in try-except with None fallback, allowing backend.core to import cleanly in lightweight test environments without joblib installed.
+   - tests/test_database.py:
+     * Added test_telemetry_batch_safe_parsing_and_camel_case verifying None values, NaN, and camelCase keys are handled gracefully.
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 5/5 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: AUTOMATIC FLIGHT TELEMETRY RECORDING OPERATIONAL AND VERIFIED
