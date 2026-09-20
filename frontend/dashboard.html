@@ -1822,7 +1822,7 @@
   let currentAnomalyScore = 0;
 
   // --- PYTHON MACHINE LEARNING BACKEND BRIDGE ---
-  const ML_SERVER_URL = 'http://127.0.0.1:8000';
+  const ML_SERVER_URL = '';
   let mlServerOnline = false;
   let mlLastPrediction = null;
   let mlInferenceInFlight = false;
@@ -3693,8 +3693,8 @@
 
     setConnectionState(true, 'CONNECTING BRIDGE...');
     try {
-      const host = location.hostname || '127.0.0.1';
-      const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + ':8000/ws/serial';
+      const host = location.host || '127.0.0.1:8000';
+      const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + '/ws/serial';
       bridgeSocket = new WebSocket(wsUrl);
       bridgeSocket.onopen = function () {
         setConnectionState(true, 'ONLINE (DUAL BRIDGE: COM4 LoRa + COM5 Cam)');

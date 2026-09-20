@@ -269,6 +269,23 @@ Then browse to:
 http://localhost:8000/
 ```
 
+### 4. Docker container deployment (Render, Hugging Face Spaces, Local Docker)
+
+To deploy the entire ground station with its machine learning server and telemetry bridge in a lightweight, self-contained container:
+
+```bash
+# Build the Docker image
+docker build -t cansat-ground-station .
+
+# Run the container (binds to host port 8000)
+docker run -p 8000:8000 cansat-ground-station
+```
+
+To bind to a custom port or deploy on cloud platforms providing dynamic `$PORT`:
+```bash
+docker run -e PORT=8080 -p 8080:8080 cansat-ground-station
+```
+
 ## Atmospheric physics and kinematic formulation
 
 The ground station performs real-time mathematical derivations on incoming telemetry packets:
@@ -881,6 +898,13 @@ Executes batch kinematics reconstruction, Savitzky-Golay smoothing, G-shock tran
 python -m jupyter nbconvert --to notebook --execute test_cases/cansat_eval_ablation.ipynb
 ```
 Executes the sensor ablation pipeline across all 10 flight scenarios, validates MetPy atmospheric potential temperature calculations, trains touchdown regressors across 4 sensor configurations, and plots prediction error comparison charts.
+
+### Batch ML API & WebSocket stress testing
+```bash
+python tests/batch_test_ml.py
+python tests/batch_test_ws.py
+```
+Validates real-time inference latency and throughput across 100 simulated telemetry packets, and tests the full-duplex WebSocket serial bridge under 500 rapid packets at 100 Hz.
 
 ## Project status
 

@@ -1531,3 +1531,29 @@ RISHI MERGE REQUEST: SQLITE FLIGHT DATABASE & RECORDS MANAGER INTEGRATION
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: RISHI MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
+--------------------------------------------------------------------------------
+SHUBHAM MERGE REQUEST: DOCKER DEPLOYMENT, DYNAMIC HOST RESOLUTION & BATCH TESTING
+--------------------------------------------------------------------------------
+
+[2026-09-20T19:00:00Z] ACTION: Validated and merged Shubham's deliverables (shubham/web-testing). Integrated production Docker container configuration, dynamic host and port resolution in frontend/dashboard.html, and batch stress-testing scripts in tests/.
+
+1. Delivered Production Deployment Assets:
+   - Dockerfile: Multi-stage lightweight Python 3.12-slim container with headless graphics (libgl1, libglib2.0-0, libgomp1), non-root execution user (UID 1000 for Hugging Face Spaces & Render), and dynamic $PORT override.
+   - .dockerignore: Optimized build context excluding firmware binaries, raw media, training caches, and local databases while preserving required models, test cases, and application code.
+   - frontend/dashboard.html: Updated ML_SERVER_URL to '' (relative path) and wsUrl to use location.host, enabling seamless operation under containerized reverse proxies, cloud domains, and custom ports.
+   - tests/batch_test_ml.py: Automated 100-packet batch inference latency and throughput benchmark with built-in standard library urllib fallback.
+   - tests/batch_test_ws.py: WebSocket serial bridge stress-test script streaming 500 rapid telemetry packets at 100 Hz.
+   - readme.md: Added Docker Container Deployment section and batch testing commands in Verification section.
+   - docs/README.md: Updated test directory inventory.
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 4/4 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - python -m py_compile tests/batch_test_ml.py tests/batch_test_ws.py: PASS (0 syntax/import errors)
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: SHUBHAM MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
