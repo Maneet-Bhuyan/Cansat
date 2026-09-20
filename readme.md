@@ -366,9 +366,9 @@ The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry
 | Model Architecture | Task | Input Vector | Performance Metric |
 | :--- | :--- | :--- | :--- |
 | Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
-| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
+| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.56% Accuracy (Weighted F1: 0.985; Macro F1: 0.902) |
 | PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
-| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
+| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | R²: 0.9951, RMSE: ±24.2 m |
 | Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
 | Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
 | TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |

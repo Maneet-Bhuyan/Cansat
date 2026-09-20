@@ -377,10 +377,10 @@
 <span class="code-keyword">#include</span> <span class="code-string">"esp_camera.h"</span>
 
 <span class="code-keyword">void</span> <span class="code-function">on_descent_frame</span>(camera_fb_t *fb) {
-  <span class="code-comment">// 1. Downsample 64x48 tensor directly in internal SRAM</span>
-  tensor_t input = <span class="code-function">preprocess_optical_frame</span>(fb->buf, <span class="code-number">64</span>, <span class="code-number">48</span>);
+  <span class="code-comment">// 1. Camera captures at QVGA; crop &amp; resize frame to 64x64 for model input</span>
+  tensor_t input = <span class="code-function">preprocess_optical_frame</span>(fb->buf, <span class="code-number">64</span>, <span class="code-number">64</span>);
 
-  <span class="code-comment">// 2. Execute INT8 quantized CNN (38ms execution cycle)</span>
+  <span class="code-comment">// 2. Execute INT8 quantized CNN (~16.3ms estimated edge latency)</span>
   hazard_grid_t grid = TinyLandingNet::<span class="code-function">infer</span>(input);
 
   <span class="code-comment">// 3. Center Nadir Sector [1,1] Hazard Verification</span>
@@ -463,10 +463,10 @@
           </p>
         </div>
 
-        <!-- Card 3: Precision Environmental Droplibs -->
+        <!-- Card 3: Precision Environmental Dropsondes -->
         <div class="resend-card">
           <div class="card-badge" style="color: var(--accent-green); width: fit-content; margin-bottom: 0.75rem;">Ecological Sounding</div>
-          <h3 class="card-title" style="margin-bottom: 0.75rem;">Precision Environmental Droplibs</h3>
+          <h3 class="card-title" style="margin-bottom: 0.75rem;">Precision Environmental Dropsondes</h3>
           <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
             Targeted sensor deployment into dense forest canopies, arctic tundras, or rugged mountain ranges for localized ecological data gathering.
           </p>
@@ -967,10 +967,10 @@
 <span class="code-keyword">#include</span> <span class="code-string">"esp_camera.h"</span>
 
 <span class="code-keyword">void</span> <span class="code-function">on_descent_frame</span>(camera_fb_t *fb) {
-  <span class="code-comment">// 1. Downsample 64x48 tensor directly in internal SRAM</span>
-  tensor_t input = <span class="code-function">preprocess_optical_frame</span>(fb->buf, <span class="code-number">64</span>, <span class="code-number">48</span>);
+  <span class="code-comment">// 1. Camera captures at QVGA; crop &amp; resize frame to 64x64 for model input</span>
+  tensor_t input = <span class="code-function">preprocess_optical_frame</span>(fb->buf, <span class="code-number">64</span>, <span class="code-number">64</span>);
 
-  <span class="code-comment">// 2. Execute INT8 quantized CNN (38ms execution cycle)</span>
+  <span class="code-comment">// 2. Execute INT8 quantized CNN (~16.3ms estimated edge latency)</span>
   hazard_grid_t grid = TinyLandingNet::<span class="code-function">infer</span>(input);
 
   <span class="code-comment">// 3. Center Nadir Sector [1,1] Hazard Verification</span>

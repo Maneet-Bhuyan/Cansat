@@ -66,7 +66,7 @@
       accel: 1.01,
       packetType: 'DUAL-LINK: LoRa Telemetry + ESP-NOW 3x3 Hazard Vector',
       cameraState: 'TINYML_ACTIVE_GRID',
-      cameraDesc: 'OV3660 captures 64x48 frames at 10 FPS. TinyLandingNet classifies 3x3 sectors: Center=HAZARD, commands EVADE 090.',
+      cameraDesc: 'OV3660 captures QVGA (320x240) frames at 10 FPS; each sector tile is cropped and resized to 64x64 for TinyLandingNet. Classifies 3x3 sectors: Center=HAZARD, commands EVADE 090.',
       eventLog: 'T+ 02:00.0 - Altitude < 500m. Edge TinyML active. Obstacle detected in center nadir sector. Evasion vector calculated.'
     },
     {
