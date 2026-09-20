@@ -280,46 +280,87 @@ class TestCanSatDatabase(unittest.TestCase):
         self.assertEqual(stats_after["total_telemetry_records"], 0)
 
     def test_api_db_endpoints(self):
-        from fastapi.testclient import TestClient
-        from backend.app import app
-        client = TestClient(app)
+        try:
+            from fastapi.testclient import TestClient
+            from backend.app import app
+            client = TestClient(app)
+            use_client = True
+        except (ImportError, RuntimeError):
+            use_client = False
+            from backend.app import (
+                start_db_mission, get_db_stats, ingest_mission_telemetry,
+                export_mission_telemetry_csv, delete_db_mission,
+                MissionStartRequest, TelemetryBatchRequest
+            )
 
-        # 1. Stats
-        resp = client.get("/api/db/stats")
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("stats", resp.json())
+        if use_client:
+            # 1. Stats
+            resp = client.get("/api/db/stats")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("stats", resp.json())
 
-        # 2. Download
-        resp = client.get("/api/db/download")
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("application/x-sqlite3", resp.headers["content-type"])
+            # 2. Download
+            resp = client.get("/api/db/download")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("application/x-sqlite3", resp.headers["content-type"])
 
-        # 3. Create, Ingest, CSV Export & Delete
-        s_resp = client.post("/api/db/missions/start", json={"name": "API Test Flight"})
-        self.assertEqual(s_resp.status_code, 200)
-        m_id = s_resp.json()["mission_id"]
+            # 3. Create, Ingest, CSV Export & Delete
+            s_resp = client.post("/api/db/missions/start", json={"name": "API Test Flight"})
+            self.assertEqual(s_resp.status_code, 200)
+            m_id = s_resp.json()["mission_id"]
 
-        t_resp = client.post("/api/db/missions/telemetry", json={
-            "mission_id": m_id,
-            "records": [{
-                "timestamp_ms": 1000, "met_seconds": 0.1, "altitude": 75.0,
-                "pressure": 1010.0, "temp": 21.0, "humidity": 45.0, "battery_voltage": 4.15,
-                "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0,
-                "lat": 12.9, "lon": 77.5, "v_spd": 8.0, "accel_mag": 1.0,
-                "pitch": 0.0, "roll": 0.0, "air_density": 1.2, "dew_point": 10.0,
-                "lapse_rate": 0.65, "flight_phase": "ASCENT"
-            }]
-        })
-        self.assertEqual(t_resp.status_code, 200)
+            t_resp = client.post("/api/db/missions/telemetry", json={
+                "mission_id": m_id,
+                "records": [{
+                    "timestamp_ms": 1000, "met_seconds": 0.1, "altitude": 75.0,
+                    "pressure": 1010.0, "temp": 21.0, "humidity": 45.0, "battery_voltage": 4.15,
+                    "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0,
+                    "lat": 12.9, "lon": 77.5, "v_spd": 8.0, "accel_mag": 1.0,
+                    "pitch": 0.0, "roll": 0.0, "air_density": 1.2, "dew_point": 10.0,
+                    "lapse_rate": 0.65, "flight_phase": "ASCENT"
+                }]
+            })
+            self.assertEqual(t_resp.status_code, 200)
 
-        csv_resp = client.get(f"/api/db/missions/{m_id}/export/csv")
-        self.assertEqual(csv_resp.status_code, 200)
-        self.assertIn("text/csv", csv_resp.headers["content-type"])
-        self.assertIn("75.0", csv_resp.text)
+            csv_resp = client.get(f"/api/db/missions/{m_id}/export/csv")
+            self.assertEqual(csv_resp.status_code, 200)
+            self.assertIn("text/csv", csv_resp.headers["content-type"])
+            self.assertIn("75.0", csv_resp.text)
 
-        d_resp = client.delete(f"/api/db/missions/{m_id}")
-        self.assertEqual(d_resp.status_code, 200)
-        self.assertTrue(d_resp.json()["deleted"])
+            d_resp = client.delete(f"/api/db/missions/{m_id}")
+            self.assertEqual(d_resp.status_code, 200)
+            self.assertTrue(d_resp.json()["deleted"])
+        else:
+            # 1. Stats
+            stats_resp = get_db_stats()
+            self.assertEqual(stats_resp["status"], "success")
+            self.assertIn("stats", stats_resp)
+
+            # 2. Create, Ingest, CSV Export & Delete
+            s_resp = start_db_mission(MissionStartRequest(name="API Test Flight"))
+            self.assertEqual(s_resp["status"], "success")
+            m_id = s_resp["mission_id"]
+
+            t_resp = ingest_mission_telemetry(TelemetryBatchRequest(
+                mission_id=m_id,
+                records=[{
+                    "timestamp_ms": 1000, "met_seconds": 0.1, "altitude": 75.0,
+                    "pressure": 1010.0, "temp": 21.0, "humidity": 45.0, "battery_voltage": 4.15,
+                    "ax": 0.0, "ay": 0.0, "az": 1.0, "gx": 0.0, "gy": 0.0, "gz": 0.0,
+                    "lat": 12.9, "lon": 77.5, "v_spd": 8.0, "accel_mag": 1.0,
+                    "pitch": 0.0, "roll": 0.0, "air_density": 1.2, "dew_point": 10.0,
+                    "lapse_rate": 0.65, "flight_phase": "ASCENT"
+                }]
+            ))
+            self.assertEqual(t_resp["status"], "success")
+
+            csv_resp = export_mission_telemetry_csv(m_id)
+            self.assertEqual(csv_resp.media_type, "text/csv")
+            self.assertIn("75.0", csv_resp.body.decode("utf-8"))
+
+            d_resp = delete_db_mission(m_id)
+            self.assertEqual(d_resp["status"], "success")
+            self.assertTrue(d_resp["deleted"])
 
 
 if __name__ == "__main__":

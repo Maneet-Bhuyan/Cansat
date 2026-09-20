@@ -1507,3 +1507,27 @@ GANESH MERGE REQUEST: QA AUDIT, RESEARCH PAPER DRAFT & METRIC ACCURACY FIXES
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: GANESH MERGE REQUEST INTEGRATED AND VERIFIED
+--------------------------------------------------------------------------------
+RISHI MERGE REQUEST: SQLITE FLIGHT DATABASE & RECORDS MANAGER INTEGRATION
+--------------------------------------------------------------------------------
+
+[2026-09-20T16:05:00Z] ACTION: Validated and merged Rishi's branch (rishi/analytics). Integrated persistent SQLite Write-Ahead Logging (WAL) flight database engine, automated Post-Flight Review (PFR) audit persistence, Ground Station Database Explorer modal (#dbManagerModal), raw SQL telemetry viewer, and database/CSV export endpoints into main.
+
+1. Delivered Database & Telemetry Persistence Engine:
+   - backend/core/database.py: 4-table relational SQLite schema (missions, telemetry_records, mission_reports, mission_events) operating in WAL mode with cascading foreign keys and transaction timeout handling.
+   - backend/app.py: Added REST endpoints for starting missions, micro-batch telemetry ingestion, operational event logging, PFR finalization, single/bulk mission deletion, raw database binary download (GET /api/db/download), and 25-column CSV export (GET /api/db/missions/{id}/export/csv).
+   - frontend/dashboard.html: Integrated live DB status badge, mission arming modal (#startMissionModal), Ground Station Database Explorer (#dbManagerModal) with dual tabs (Flight Sessions vs Raw SQL Telemetry Viewer), and retroactive in-memory flight archiving.
+   - frontend/results.html: Team member initials and names aligned (Gurbashish Nayak, Shubham Sharma, Ganesh Vallabh).
+   - launch.py: Hardened process tree cleanup (taskkill /F /T /PID) and reload directory resolution to prevent stale worker zombies.
+   - tests/test_database.py: Comprehensive 4-suite unit tests verifying WAL mode, mission lifecycle, PFR audits, database stats, CSV export, and API endpoints (with graceful fallback for environments without optional httpx).
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 4/4 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: RISHI MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
