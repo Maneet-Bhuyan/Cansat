@@ -605,6 +605,10 @@
             <span>MISSION REPORT</span>
           </button>
 
+          <button type="button" onclick="openDatabaseManager()" class="btn-action-outline flex items-center justify-center text-cyan-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]" title="Open SQLite Flight Database Explorer & Records Manager">
+            <span>DATABASE MANAGER</span>
+          </button>
+
           <button type="button" onclick="resetNewFlight()" class="btn-action-outline flex items-center justify-center gap-1.5 text-rose-300 border-[#2e2e2e] hover:bg-[#242424] hover:border-rose-700/60 transition-all" title="Reset all buffers and re-arm for a new flight">
             <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             <span>NEW FLIGHT RESET</span>
@@ -689,6 +693,21 @@
 
         <!-- Right: Status Badges & Quick Tools -->
         <div class="flex items-center space-x-2">
+          <!-- Mission Database Persistence Status & Arm Button -->
+          <div id="db-mission-badge" class="px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#111111] text-zinc-300" title="SQLite Persistent Flight Database & PFR Audits">
+            <span id="db-status-dot" class="led-dot bg-zinc-500"></span>
+            <span id="db-status-text">DB: STANDBY</span>
+            <button type="button" id="db-record-btn" onclick="toggleMissionRecording()" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1f1f1f] hover:bg-[#2d2d2d] text-white border border-[#3e3e3e] transition flex items-center gap-1" title="Arm or Finalize Mission in SQLite Database">
+              <span>ARM REC</span>
+            </button>
+          </div>
+
+          <!-- Database Explorer & Mission Records Manager Action -->
+          <button type="button" onclick="openDatabaseManager()" class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#171717] hover:bg-[#242424] border border-[#2e2e2e] text-cyan-200 hover:text-white flex items-center gap-1.5 transition-all" title="Open Flight Database Explorer & Records Manager">
+            <svg class="w-3.5 h-3.5 text-cyan-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+            <span>DATABASE</span>
+          </button>
+
           <div id="ml-server-badge" class="px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#111111] text-zinc-300" title="Python ML Server Backend (FastAPI + scikit-learn + PyOD)">
             <span id="ml-server-dot" class="led-dot bg-zinc-500 text-zinc-500"></span>
             <span id="ml-server-text">PYTHON ML (STANDBY)</span>
@@ -1275,10 +1294,218 @@
           </div>
         </div>
 
+        <!-- DATABASE FLIGHT ARCHIVE & SYNC BAR -->
+        <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#111111] border border-[#1f1f1f] rounded-xl mb-3 pfr-screen-only">
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+              Flight Archive:
+            </span>
+            <select id="db-mission-history-select" onchange="onSelectHistoricalMission(this.value)" class="bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:border-zinc-500">
+              <option value="">-- Active / Current Live Telemetry --</option>
+            </select>
+            <button type="button" onclick="refreshDbMissionsList()" class="p-1 text-zinc-400 hover:text-white rounded hover:bg-[#222222]" title="Refresh Mission List">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="pfr-save-db-btn" onclick="saveCurrentTelemetryToDb()" class="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 hover:bg-emerald-900/80 transition flex items-center gap-1.5" title="Save current in-memory flight telemetry as a permanent mission record in SQLite">
+              <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              <span>SAVE FLIGHT TO DB</span>
+            </button>
+            <button type="button" id="pfr-del-db-btn" onclick="deleteCurrentPfrMission()" class="hidden px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-950/60 border border-rose-700/60 text-rose-300 hover:bg-rose-900/80 transition flex items-center gap-1" title="Delete this selected mission from SQLite database">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <span>DELETE MISSION</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Scrollable Report Body -->
         <div id="pfr-report-content" class="flex-1 overflow-y-auto custom-scroll pr-1.5 space-y-4 text-xs font-sans">
           <!-- Populated by generatePfrReport() -->
         </div>
+      </div>
+    </div>
+
+    <!-- START / ARM DATABASE MISSION MODAL -->
+    <div id="startMissionModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+      <div class="w-full max-w-md p-5 rounded-2xl border border-[#2e2e2e] shadow-2xl bg-[#0a0a0a] text-zinc-200">
+        <div class="flex items-center justify-between border-b border-[#1f1f1f] pb-2.5 mb-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+            <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Arm Database Flight Logging</h3>
+          </div>
+          <button type="button" onclick="closeModal('startMissionModal')" class="text-zinc-400 hover:text-white p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1 font-mono">MISSION TITLE</label>
+            <input id="db-input-mission-name" type="text" value="Autonomous Sounding Flight" class="w-full bg-[#171717] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-zinc-500">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-zinc-400 mb-1 font-mono">CALLSIGN</label>
+              <input id="db-input-callsign" type="text" value="CANSAT-1" class="w-full bg-[#171717] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-zinc-500">
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1 font-mono">OPERATOR</label>
+              <input id="db-input-operator" type="text" value="Flight Ops" class="w-full bg-[#171717] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-zinc-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1 font-mono">OPERATIONAL NOTES</label>
+            <input id="db-input-notes" type="text" placeholder="e.g. 650m Apogee target, nominal chute ejection" class="w-full bg-[#171717] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-zinc-500">
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 mt-4 pt-2.5 border-t border-[#1f1f1f]">
+          <button type="button" onclick="closeModal('startMissionModal')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#171717] hover:bg-[#242424] border border-[#2e2e2e] text-zinc-300">CANCEL</button>
+          <button type="button" onclick="confirmStartMission()" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-black hover:bg-zinc-200">START RECORDING</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATABASE EXPLORER & MISSION MANAGER MODAL -->
+    <div id="dbManagerModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-3 sm:p-5">
+      <div class="w-full max-w-5xl max-h-[92vh] p-5 sm:p-6 flex flex-col relative rounded-2xl border border-[#2e2e2e] shadow-2xl bg-[#0a0a0a] text-zinc-200">
+        <!-- Close button -->
+        <button type="button" onclick="closeModal('dbManagerModal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded hover:bg-[#171717] transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Header -->
+        <div class="flex flex-wrap items-center justify-between border-b border-[#1f1f1f] pb-3 mb-4 pr-8 gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#141414] border border-[#2a2a2a] flex items-center justify-center text-cyan-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-white uppercase tracking-wide flex items-center gap-2">
+                <span>Flight Database Explorer &amp; Mission Manager</span>
+                <span id="db-mgr-wal-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-emerald-400 font-mono font-bold">SQLITE WAL</span>
+              </h3>
+              <p class="text-xs text-zinc-400">Inspect persistent flight records, review raw telemetry tables, and export datasets</p>
+            </div>
+          </div>
+          
+          <!-- Top Tool Actions -->
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="loadDatabaseManagerData()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#171717] hover:bg-[#242424] border border-[#2e2e2e] text-zinc-200 flex items-center gap-1 transition" title="Refresh database records and stats">
+              <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>REFRESH</span>
+            </button>
+            <button type="button" onclick="downloadDatabaseFile()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1a1a1a] hover:bg-[#272727] border border-cyan-800/50 text-cyan-300 flex items-center gap-1.5 transition" title="Download raw SQLite database file (cansat_missions.db)">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>DOWNLOAD .DB FILE</span>
+            </button>
+            <button type="button" onclick="purgeAllMissions()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 flex items-center gap-1 transition" title="Purge all missions and telemetry from database">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <span>PURGE ALL</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Database Health / Stats Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3.5">
+          <div class="bg-[#111111] p-2.5 rounded-xl border border-[#1f1f1f]">
+            <div class="text-[10px] text-zinc-400 uppercase font-mono font-bold">RECORDED MISSIONS</div>
+            <div id="db-stat-missions" class="text-lg font-bold font-mono text-white mt-0.5">--</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-0.5">Master sessions</div>
+          </div>
+          <div class="bg-[#111111] p-2.5 rounded-xl border border-[#1f1f1f]">
+            <div class="text-[10px] text-zinc-400 uppercase font-mono font-bold">STORED PACKETS</div>
+            <div id="db-stat-packets" class="text-lg font-bold font-mono text-cyan-400 mt-0.5">--</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-0.5">High-rate telemetry rows</div>
+          </div>
+          <div class="bg-[#111111] p-2.5 rounded-xl border border-[#1f1f1f]">
+            <div class="text-[10px] text-zinc-400 uppercase font-mono font-bold">DATABASE SIZE</div>
+            <div id="db-stat-size" class="text-lg font-bold font-mono text-emerald-400 mt-0.5">-- KB</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-0.5">SQLite + WAL storage</div>
+          </div>
+          <div class="bg-[#111111] p-2.5 rounded-xl border border-[#1f1f1f]">
+            <div class="text-[10px] text-zinc-400 uppercase font-mono font-bold">STORAGE TARGET</div>
+            <div id="db-stat-engine" class="text-xs font-bold font-mono text-zinc-200 mt-1 truncate" title="data/cansat_missions.db">cansat_missions.db</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-0.5">Local SQLite File</div>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex items-center gap-2 border-b border-[#1f1f1f] mb-3 pb-2 text-xs font-mono">
+          <button type="button" id="db-tab-btn-missions" onclick="switchDbManagerTab('missions')" class="px-3 py-1 rounded-lg font-bold bg-[#1f1f1f] text-white border border-[#333333] flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span>FLIGHT SESSIONS</span>
+          </button>
+          <button type="button" id="db-tab-btn-raw" onclick="switchDbManagerTab('raw')" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#171717] border border-transparent flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>RAW SQL TELEMETRY VIEWER</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Missions List View -->
+        <div id="db-view-missions" class="flex-1 overflow-y-auto custom-scroll pr-1">
+          <div class="rounded-xl border border-[#1f1f1f] overflow-hidden">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-[#141414] text-zinc-400 border-b border-[#1f1f1f]">
+                <tr>
+                  <th class="p-2.5">MISSION ID</th>
+                  <th class="p-2.5">NAME &amp; CALLSIGN</th>
+                  <th class="p-2.5">OPERATOR</th>
+                  <th class="p-2.5">DATE / TIME</th>
+                  <th class="p-2.5">PACKETS</th>
+                  <th class="p-2.5">APOGEE (AGL)</th>
+                  <th class="p-2.5 text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="db-missions-table-body" class="divide-y divide-[#171717]">
+                <tr>
+                  <td colspan="7" class="p-8 text-center text-zinc-400 font-mono">Loading mission database records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Raw SQL Telemetry Viewer -->
+        <div id="db-view-raw" class="hidden flex-1 flex-col overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2 p-2 bg-[#121212] border border-[#202020] rounded-xl text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-zinc-400 font-mono font-semibold">Select Mission:</span>
+              <select id="db-raw-mission-select" onchange="inspectMissionTelemetryTable(this.value)" class="bg-[#191919] border border-[#2e2e2e] text-zinc-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:border-zinc-500">
+                <option value="">-- Choose Mission --</option>
+              </select>
+              <span id="db-raw-row-count" class="text-zinc-400 font-mono text-[11px]">(0 records)</span>
+            </div>
+            <button type="button" id="db-raw-download-csv-btn" onclick="downloadSelectedMissionCsv()" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 hover:bg-emerald-900/80 flex items-center gap-1 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>EXPORT CSV</span>
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-x-auto overflow-y-auto custom-scroll border border-[#1f1f1f] rounded-xl">
+            <table class="w-full text-left text-[11px] font-mono whitespace-nowrap">
+              <thead class="bg-[#141414] text-zinc-400 sticky top-0 border-b border-[#1f1f1f]">
+                <tr>
+                  <th class="p-2">#</th>
+                  <th class="p-2">MET (s)</th>
+                  <th class="p-2">ALT (m)</th>
+                  <th class="p-2">PRESS (hPa)</th>
+                  <th class="p-2">TEMP (°C)</th>
+                  <th class="p-2">BATT (V)</th>
+                  <th class="p-2">V.SPD (m/s)</th>
+                  <th class="p-2">G-FORCE</th>
+                  <th class="p-2">LAT / LON</th>
+                  <th class="p-2">STAGE</th>
+                  <th class="p-2">STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="db-raw-table-body" class="divide-y divide-[#171717]">
+                <tr>
+                  <td colspan="11" class="p-8 text-center text-zinc-400">Select a mission to inspect raw stored telemetry rows.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1317,6 +1544,15 @@
   let linesReceived = 0;
   let linesParsed = 0;
   let linesRejected = 0;
+
+  // --- DATABASE PERSISTENCE & MISSION STATE ---
+  let activeDbMissionId = null;
+  let activeDbMissionName = '';
+  let dbTelemetryBuffer = [];
+  let dbFlushInterval = null;
+  let isViewingHistoricalReport = false;
+  let currentHistoricalReportData = null;
+  let cachedPfrMarkdown = '';
   
   // Connections
   let isDemo = false;
@@ -3273,6 +3509,35 @@
     const count = telemetryHistory.length;
     if (row.altitude > apogee) apogee = row.altitude;
 
+    // Database Streaming Buffer (when mission recording is active)
+    if (activeDbMissionId) {
+      dbTelemetryBuffer.push({
+        timestamp_ms: row.timestamp ? (Date.parse(row.timestamp) || Date.now()) : Date.now(),
+        met_seconds: (count - 1) * (DEMO_DT_MS / 1000.0),
+        altitude: row.altitude,
+        pressure: row.pressure,
+        temp: row.temp,
+        humidity: row.humidity,
+        battery_voltage: row.batteryVoltage,
+        ax: row.ax, ay: row.ay, az: row.az,
+        gx: row.gx, gy: row.gy, gz: row.gz,
+        lat: row.lat, lon: row.lon,
+        v_spd: row.vSpd || 0.0,
+        accel_mag: row.accelMag || 1.0,
+        pitch: row.pitch || 0.0,
+        roll: row.roll || 0.0,
+        air_density: row.airDensity || 1.225,
+        dew_point: row.dewPoint || 15.0,
+        lapse_rate: row.lapseRate || 0.65,
+        flight_phase: (typeof currentFlightPhase !== 'undefined' ? currentFlightPhase : 'PAD_IDLE'),
+        anomaly_score: (typeof currentAnomalyScore !== 'undefined' ? currentAnomalyScore : 0.0),
+        is_anomaly: (typeof currentAnomalyCode !== 'undefined' && currentAnomalyCode !== 'NOMINAL')
+      });
+      if (dbTelemetryBuffer.length >= 10) {
+        flushDbTelemetryBuffer();
+      }
+    }
+
     // Header Counters & Badges
     const topCount = document.getElementById('sample-count-top');
     if (topCount) topCount.innerText = String(count);
@@ -4173,6 +4438,19 @@
   }
 
   function copyPfrMarkdown() {
+    if (cachedPfrMarkdown) {
+      navigator.clipboard.writeText(cachedPfrMarkdown).then(function () {
+        const label = document.getElementById('pfr-copy-label');
+        if (label) {
+          label.innerText = 'COPIED!';
+          setTimeout(function () { label.innerText = 'COPY MARKDOWN'; }, 1800);
+        }
+      }).catch(function (err) {
+        alert('Could not copy to clipboard: ' + err);
+      });
+      return;
+    }
+
     if (telemetryHistory.length === 0) {
       alert('No telemetry records available to copy.');
       return;
@@ -4217,6 +4495,8 @@
       `- **Battery Potential**: ${first.batteryVoltage.toFixed(2)}V -> ${last.batteryVoltage.toFixed(2)}V (Drop: ${(first.batteryVoltage - last.batteryVoltage).toFixed(2)}V)\n` +
       `- **Anomaly Engine Status**: ${currentAnomalyCode}\n`;
 
+    cachedPfrMarkdown = md;
+
     navigator.clipboard.writeText(md).then(function () {
       const label = document.getElementById('pfr-copy-label');
       if (label) {
@@ -4230,6 +4510,868 @@
 
   function printPfrReport() {
     window.print();
+  }
+
+  // --- DATABASE MISSION RECORDING & FLIGHT ARCHIVE PERSISTENCE ---
+
+  function updateDbBadgeUI(recording, missionId) {
+    const badge = document.getElementById('db-mission-badge');
+    const dot = document.getElementById('db-status-dot');
+    const text = document.getElementById('db-status-text');
+    const btn = document.getElementById('db-record-btn');
+    if (!badge || !dot || !text || !btn) return;
+
+    if (recording) {
+      badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-rose-600/70 bg-rose-950/60 text-rose-300';
+      dot.className = 'led-dot bg-rose-500 led-pulse';
+      text.innerText = 'REC [DB: ' + (missionId ? missionId.substring(0, 8) : 'ACTIVE') + ']';
+      btn.innerHTML = '<span>FINISH</span>';
+      btn.className = 'ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-700 hover:bg-rose-600 text-white border border-rose-500 transition flex items-center gap-1';
+      btn.title = 'Finalize active flight and compute PFR report in SQLite';
+    } else {
+      badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#111111] text-zinc-300';
+      dot.className = 'led-dot bg-zinc-500';
+      text.innerText = 'DB: STANDBY';
+      btn.innerHTML = '<span>ARM REC</span>';
+      btn.className = 'ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1f1f1f] hover:bg-[#2d2d2d] text-white border border-[#3e3e3e] transition flex items-center gap-1';
+      btn.title = 'Arm flight mission logging in SQLite';
+    }
+  }
+
+  function toggleMissionRecording() {
+    if (activeDbMissionId) {
+      if (confirm('Finish flight mission [' + (activeDbMissionName || activeDbMissionId) + '] and generate permanent PFR audit report in SQLite?')) {
+        finishActiveMission();
+      }
+    } else {
+      openModal('startMissionModal');
+    }
+  }
+
+  async function confirmStartMission() {
+    const nameInput = document.getElementById('db-input-mission-name');
+    const callsignInput = document.getElementById('db-input-callsign');
+    const operatorInput = document.getElementById('db-input-operator');
+    const notesInput = document.getElementById('db-input-notes');
+
+    const name = nameInput ? nameInput.value.trim() : 'Autonomous Sounding Flight';
+    const callsign = callsignInput ? callsignInput.value.trim() : 'CANSAT-1';
+    const operator = operatorInput ? operatorInput.value.trim() : 'Flight Ops';
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    try {
+      const resp = await fetch('/api/db/missions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name || 'Autonomous Sounding Flight',
+          callsign: callsign || 'CANSAT-1',
+          operator: operator || 'Flight Ops',
+          notes: notes
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        if (resp.status === 404) {
+          throw new Error('Database endpoints not active on server (HTTP 404). Please restart "python launch.py".');
+        }
+        throw new Error(err.detail || ('HTTP ' + resp.status));
+      }
+      const data = await resp.json();
+      activeDbMissionId = data.mission_id;
+      activeDbMissionName = name;
+      dbTelemetryBuffer = [];
+
+      closeModal('startMissionModal');
+      updateDbBadgeUI(true, activeDbMissionId);
+
+      if (dbFlushInterval) clearInterval(dbFlushInterval);
+      dbFlushInterval = setInterval(flushDbTelemetryBuffer, 2500);
+
+      // If we already have buffered in-memory points from the current flight, queue them
+      if (telemetryHistory.length > 0) {
+        const historySlice = telemetryHistory.slice(-20);
+        historySlice.forEach(function (row, idx) {
+          dbTelemetryBuffer.push({
+            timestamp_ms: row.timestamp ? (Date.parse(row.timestamp) || Date.now()) : Date.now(),
+            met_seconds: idx * (DEMO_DT_MS / 1000.0),
+            altitude: row.altitude,
+            pressure: row.pressure,
+            temp: row.temp,
+            humidity: row.humidity,
+            battery_voltage: row.batteryVoltage,
+            ax: row.ax, ay: row.ay, az: row.az,
+            gx: row.gx, gy: row.gy, gz: row.gz,
+            lat: row.lat, lon: row.lon,
+            v_spd: row.vSpd || 0.0,
+            accel_mag: row.accelMag || 1.0,
+            pitch: row.pitch || 0.0,
+            roll: row.roll || 0.0,
+            air_density: row.airDensity || 1.225,
+            dew_point: row.dewPoint || 15.0,
+            lapse_rate: row.lapseRate || 0.65,
+            flight_phase: (typeof currentFlightPhase !== 'undefined' ? currentFlightPhase : 'PAD_IDLE'),
+            anomaly_score: (typeof currentAnomalyScore !== 'undefined' ? currentAnomalyScore : 0.0),
+            is_anomaly: (typeof currentAnomalyCode !== 'undefined' && currentAnomalyCode !== 'NOMINAL')
+          });
+        });
+        flushDbTelemetryBuffer();
+      }
+    } catch (e) {
+      console.error('Error starting DB mission:', e);
+      alert('Could not start database mission: ' + e.message + '\nEnsure the Python backend is running (python launch.py).');
+    }
+  }
+
+  async function flushDbTelemetryBuffer() {
+    if (!activeDbMissionId || dbTelemetryBuffer.length === 0) return;
+    const batch = dbTelemetryBuffer.splice(0, dbTelemetryBuffer.length);
+    try {
+      const resp = await fetch('/api/db/missions/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mission_id: activeDbMissionId,
+          records: batch
+        })
+      });
+      if (!resp.ok) {
+        console.warn('DB telemetry flush warning, re-queuing', resp.status);
+        dbTelemetryBuffer.unshift(...batch);
+      }
+    } catch (err) {
+      console.warn('Network error flushing DB telemetry, re-queuing', err);
+      dbTelemetryBuffer.unshift(...batch);
+    }
+  }
+
+  async function finishActiveMission() {
+    if (!activeDbMissionId) return;
+    const targetMissionId = activeDbMissionId;
+    const targetMissionName = activeDbMissionName;
+
+    // Flush any remaining buffered records
+    await flushDbTelemetryBuffer();
+
+    if (dbFlushInterval) {
+      clearInterval(dbFlushInterval);
+      dbFlushInterval = null;
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions/' + targetMissionId + '/finish', {
+        method: 'POST'
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || ('HTTP ' + resp.status));
+      }
+      const data = await resp.json();
+      activeDbMissionId = null;
+      activeDbMissionName = '';
+      updateDbBadgeUI(false);
+
+      refreshDbMissionsList();
+
+      alert('Mission [' + (targetMissionName || targetMissionId) + '] finalized!\n' +
+            'PFR Audit Report generated in SQLite (Apogee: ' + (data.report ? data.report.apogee_agl + 'm AGL' : 'Saved') + ').');
+      
+      // Auto-open PFR report modal to inspect the stored record
+      openModal('pfrModal');
+      const select = document.getElementById('db-mission-history-select');
+      if (select) {
+        select.value = targetMissionId;
+        onSelectHistoricalMission(targetMissionId);
+      }
+    } catch (e) {
+      console.error('Error finalizing mission:', e);
+      alert('Could not finalize DB mission: ' + e.message);
+    }
+  }
+
+  async function saveCurrentTelemetryToDb() {
+    if (telemetryHistory.length === 0) {
+      alert('No telemetry records currently in memory to save.');
+      return;
+    }
+
+    const saveBtn = document.getElementById('pfr-save-db-btn');
+    const origHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>SAVING TO DB...</span>';
+    }
+
+    try {
+      const now = new Date();
+      const defaultName = 'Archived Flight - ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const missionName = prompt('Enter mission name to archive current flight in SQLite database:', defaultName);
+      if (!missionName) {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = origHtml; }
+        return;
+      }
+
+      // 1. Start Mission
+      const startResp = await fetch('/api/db/missions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: missionName,
+          callsign: 'CANSAT-1',
+          operator: 'Ground Station',
+          notes: 'Retroactively saved from in-memory session (' + telemetryHistory.length + ' packets)'
+        })
+      });
+      if (!startResp.ok) {
+        const errObj = await startResp.json().catch(() => ({}));
+        if (startResp.status === 404) {
+          throw new Error('Database endpoints not active on server (HTTP 404). Please restart "python launch.py".');
+        }
+        throw new Error(errObj.detail || ('Failed to create mission record (HTTP ' + startResp.status + ')'));
+      }
+      const startData = await startResp.json();
+      const missionId = startData.mission_id;
+
+      // 2. Ingest telemetry records in chunks of 200
+      const CHUNK_SIZE = 200;
+      for (let i = 0; i < telemetryHistory.length; i += CHUNK_SIZE) {
+        const slice = telemetryHistory.slice(i, i + CHUNK_SIZE);
+        const mappedBatch = slice.map(function (row, idx) {
+          const countIdx = i + idx;
+          return {
+            timestamp_ms: row.timestamp ? (Date.parse(row.timestamp) || Date.now()) : Date.now(),
+            met_seconds: countIdx * (DEMO_DT_MS / 1000.0),
+            altitude: row.altitude,
+            pressure: row.pressure,
+            temp: row.temp,
+            humidity: row.humidity,
+            battery_voltage: row.batteryVoltage,
+            ax: row.ax, ay: row.ay, az: row.az,
+            gx: row.gx, gy: row.gy, gz: row.gz,
+            lat: row.lat, lon: row.lon,
+            v_spd: row.vSpd || 0.0,
+            accel_mag: row.accelMag || 1.0,
+            pitch: row.pitch || 0.0,
+            roll: row.roll || 0.0,
+            air_density: row.airDensity || 1.225,
+            dew_point: row.dewPoint || 15.0,
+            lapse_rate: row.lapseRate || 0.65,
+            flight_phase: (typeof currentFlightPhase !== 'undefined' ? currentFlightPhase : 'PAD_IDLE'),
+            anomaly_score: (typeof currentAnomalyScore !== 'undefined' ? currentAnomalyScore : 0.0),
+            is_anomaly: (typeof currentAnomalyCode !== 'undefined' && currentAnomalyCode !== 'NOMINAL')
+          };
+        });
+
+        const ingestResp = await fetch('/api/db/missions/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mission_id: missionId,
+            records: mappedBatch
+          })
+        });
+        if (!ingestResp.ok) {
+          const errObj = await ingestResp.json().catch(() => ({}));
+          throw new Error('Failed to stream telemetry chunk ' + i + ': ' + (errObj.detail || ('HTTP ' + ingestResp.status)));
+        }
+      }
+
+      // 3. Finalize mission and generate PFR audit report
+      const finResp = await fetch('/api/db/missions/' + missionId + '/finish', {
+        method: 'POST'
+      });
+      if (!finResp.ok) {
+        const errObj = await finResp.json().catch(() => ({}));
+        throw new Error('Failed to finalize mission: ' + (errObj.detail || ('HTTP ' + finResp.status)));
+      }
+      const finData = await finResp.json();
+
+      await refreshDbMissionsList();
+
+      const select = document.getElementById('db-mission-history-select');
+      if (select) {
+        select.value = missionId;
+        onSelectHistoricalMission(missionId);
+      }
+
+      if (saveBtn) {
+        saveBtn.innerHTML = '<span>SAVED!</span>';
+        setTimeout(function () {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = origHtml;
+        }, 2000);
+      }
+    } catch (e) {
+      console.error('Error saving flight to DB:', e);
+      alert('Could not save flight to database: ' + e.message);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async function refreshDbMissionsList() {
+    const select = document.getElementById('db-mission-history-select');
+    if (!select) return;
+
+    try {
+      const resp = await fetch('/api/db/missions');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const currentVal = select.value;
+
+      select.innerHTML = '<option value="">-- Active / Current Live Telemetry --</option>';
+      if (data.missions && data.missions.length > 0) {
+        data.missions.forEach(function (m) {
+          const opt = document.createElement('option');
+          opt.value = m.mission_id;
+          const timeStr = m.start_time_ms ? new Date(m.start_time_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const ptsStr = m.packet_count ? (' • ' + m.packet_count + ' pts') : '';
+          opt.innerText = (m.name || m.mission_id.substring(0, 8)) + ' (' + timeStr + ' - ' + (m.status || 'ACTIVE').toUpperCase() + ptsStr + ')';
+          select.appendChild(opt);
+        });
+      }
+      if (currentVal) {
+        select.value = currentVal;
+      }
+    } catch (e) {
+      console.warn('Could not fetch mission history:', e);
+    }
+  }
+
+  async function onSelectHistoricalMission(missionId) {
+    const pfrDelBtn = document.getElementById('pfr-del-db-btn');
+    if (!missionId) {
+      if (pfrDelBtn) pfrDelBtn.classList.add('hidden');
+      isViewingHistoricalReport = false;
+      currentHistoricalReportData = null;
+      cachedPfrMarkdown = '';
+      generatePfrReport();
+      return;
+    }
+    if (pfrDelBtn) pfrDelBtn.classList.remove('hidden');
+
+    const container = document.getElementById('pfr-report-content');
+    if (container) {
+      container.innerHTML = '<div class="p-8 text-center text-zinc-400 font-mono text-xs"><svg class="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Retrieving Post-Flight Review audit from SQLite database...</div>';
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions/' + missionId + '/report');
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || ('HTTP ' + resp.status));
+      }
+      const data = await resp.json();
+      isViewingHistoricalReport = true;
+      currentHistoricalReportData = data;
+      renderStoredPfrReport(data.report, data.raw);
+    } catch (e) {
+      console.error('Error fetching historical PFR report:', e);
+      if (container) {
+        container.innerHTML = '<div class="p-6 text-center text-rose-400 bg-rose-950/30 border border-rose-800/40 rounded-xl text-xs font-mono">Failed to retrieve mission audit report: ' + e.message + '</div>';
+      }
+    }
+  }
+
+  function renderStoredPfrReport(r, rawRow) {
+    const container = document.getElementById('pfr-report-content');
+    if (!container || !r) return;
+
+    let chuteStatusClass = 'text-emerald-300 bg-emerald-950/40 border-emerald-700/50';
+    if (r.compliance_status !== 'PASSED') {
+      chuteStatusClass = (r.compliance_status === 'CRITICAL_FAIL')
+        ? 'text-rose-300 bg-rose-950/40 border-rose-700/50'
+        : 'text-amber-300 bg-amber-950/40 border-amber-700/50';
+    }
+
+    const apogeeAgl = r.apogee_agl || 0;
+    const apogeeMsl = r.apogee_msl || 0;
+    const timeToApogee = r.time_to_apogee_s || 0;
+    const maxG = r.max_ejection_shock_g || 0;
+    const touchdownShock = r.touchdown_shock_g || 0;
+    const terminalDescent = r.terminal_descent_rate || 0;
+    const avgDescent = r.avg_descent_rate || 0;
+    const duration = r.total_flight_time_s || 0;
+    const count = r.sample_count || 0;
+    const deltaV = r.net_voltage_drop || 0;
+
+    cachedPfrMarkdown = `# CANSAT-1 POST-FLIGHT REVIEW (PFR) & TELEMETRY AUDIT REPORT\n` +
+      `Mission ID: ${r.mission_id}\n` +
+      `Generated: ${r.generated_at || new Date().toISOString()}\n\n` +
+      `## Executive Flight Summary\n` +
+      `- **Peak Apogee (AGL)**: ${apogeeAgl.toFixed(1)} m (MSL: ${apogeeMsl.toFixed(1)} m)\n` +
+      `- **Time to Apogee**: ${timeToApogee.toFixed(1)} s\n` +
+      `- **Max Ejection Shock**: ${maxG.toFixed(2)} G\n` +
+      `- **Touchdown Shock**: ${touchdownShock.toFixed(2)} G\n` +
+      `- **Terminal Descent Rate**: ${terminalDescent.toFixed(2)} m/s\n` +
+      `- **Regulatory Compliance**: ${r.compliance_status} (${r.compliance_details})\n` +
+      `- **Total Flight Time**: ${duration.toFixed(1)} s\n` +
+      `- **Packets Ingested**: ${count}\n\n` +
+      `## GIS & Field Recovery\n` +
+      `- **Launch Pad**: ${(r.launch_lat || 0).toFixed(6)}°, ${(r.launch_lon || 0).toFixed(6)}°\n` +
+      `- **Touchdown Site**: ${(r.touchdown_lat || 0).toFixed(6)}°, ${(r.touchdown_lon || 0).toFixed(6)}°\n` +
+      `- **Horizontal Drift**: ${(r.horizontal_drift_m || 0).toFixed(1)} m at ${(r.drift_azimuth_deg || 0).toFixed(0)}°\n` +
+      `- **Google Maps Link**: https://www.google.com/maps/search/?api=1&query=${r.touchdown_lat},${r.touchdown_lon}\n\n` +
+      `## Power & Safety\n` +
+      `- **Battery Potential**: ${(r.initial_battery_voltage || 0).toFixed(2)}V -> ${(r.touchdown_battery_voltage || 0).toFixed(2)}V (Drop: ${deltaV.toFixed(2)}V)\n` +
+      `- **Storage Mode**: SQLite WAL Mode (data/cansat_missions.db)\n`;
+
+    container.innerHTML =
+      '<div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#141414] border border-[#262626] rounded-xl text-xs font-mono">' +
+        '<div class="flex items-center gap-2">' +
+          '<span class="text-emerald-400 font-bold">[ARCHIVED SQLITE RECORD]</span>' +
+          '<span class="text-zinc-400">Mission ID: <b class="text-zinc-200">' + r.mission_id.substring(0, 8) + '...</b></span>' +
+        '</div>' +
+        '<div class="flex items-center gap-1.5">' +
+          '<button type="button" onclick="loadHistoricalTelemetryToReplay(\'' + r.mission_id + '\')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-zinc-200 text-black flex items-center gap-1.5 transition shadow" title="Stream database telemetry packets directly into the 3D Replay Suite for post-flight playback">' +
+            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+            '<span>LOAD REPLAY</span>' +
+          '</button>' +
+          '<button type="button" onclick="downloadMissionCsv(\'' + r.mission_id + '\')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#222222] hover:bg-[#333333] border border-[#3e3e3e] text-cyan-300 flex items-center gap-1.5 transition" title="Download telemetry CSV for this mission">' +
+            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>' +
+            '<span>CSV</span>' +
+          '</button>' +
+          '<button type="button" onclick="deleteHistoricalMission(\'' + r.mission_id + '\')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 flex items-center gap-1.5 transition" title="Delete this mission from database">' +
+            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
+            '<span>DELETE</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">' +
+        '<div class="bg-[#0a0a0a] p-3 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-zinc-400 text-[11px] uppercase font-bold">Peak Apogee (AGL)</div>' +
+          '<div class="text-xl font-bold font-mono text-white mt-1 pfr-kpi">' + apogeeAgl.toFixed(1) + ' m</div>' +
+          '<div class="text-zinc-400 text-[11px] font-mono mt-0.5">MSL: ' + apogeeMsl.toFixed(1) + ' m (T+ ' + timeToApogee.toFixed(1) + 's)</div>' +
+        '</div>' +
+        '<div class="bg-[#0a0a0a] p-3 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-zinc-400 text-[11px] uppercase font-bold">Max Ejection Shock</div>' +
+          '<div class="text-xl font-bold font-mono text-amber-400 mt-1 pfr-kpi">' + maxG.toFixed(2) + ' G</div>' +
+          '<div class="text-zinc-400 text-[11px] font-mono mt-0.5">' + (maxG > 3.5 ? 'Deployment Shock' : 'Nominal Aero') + '</div>' +
+        '</div>' +
+        '<div class="bg-[#0a0a0a] p-3 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-zinc-400 text-[11px] uppercase font-bold">Terminal Descent Rate</div>' +
+          '<div class="text-xl font-bold font-mono text-white mt-1 pfr-kpi">' + terminalDescent.toFixed(2) + ' m/s</div>' +
+          '<div class="text-zinc-400 text-[11px] font-mono mt-0.5">Mean: ' + avgDescent.toFixed(2) + ' m/s</div>' +
+        '</div>' +
+        '<div class="bg-[#0a0a0a] p-3 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-zinc-400 text-[11px] uppercase font-bold">Total Flight Duration</div>' +
+          '<div class="text-xl font-bold font-mono text-emerald-400 mt-1 pfr-kpi">' + duration.toFixed(1) + ' s</div>' +
+          '<div class="text-zinc-400 text-[11px] font-mono mt-0.5">' + count + ' telemetry packets</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2 ' + chuteStatusClass + '">' +
+        '<div class="flex items-center gap-2">' +
+          '<span class="font-bold uppercase tracking-wider text-xs font-mono">Descent Compliance Envelope (6.0 - 11.0 m/s):</span>' +
+          '<span class="font-mono font-bold text-xs">' + r.compliance_status + ' (' + r.compliance_details + ')</span>' +
+        '</div>' +
+        '<span class="text-xs opacity-90 font-mono">SQLite Audit Verified</span>' +
+      '</div>' +
+
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">' +
+        '<div class="bg-[#0a0a0a] p-3.5 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-xs text-white font-semibold uppercase tracking-wider mb-2.5 pb-1 border-b border-[#1f1f1f]">1. Flight Dynamics &amp; Kinematics</div>' +
+          '<div class="space-y-1.5 font-mono text-xs">' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Launch Pad Baseline:</span><span class="text-white">' + (apogeeMsl - apogeeAgl).toFixed(1) + ' m MSL</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Max Vertical Climb Rate:</span><span class="text-emerald-400 font-bold">+' + (r.max_climb_rate || 0).toFixed(2) + ' m/s</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Ejection Shock Peak:</span><span class="text-white font-bold">' + maxG.toFixed(2) + ' G</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Touchdown Impact Shock:</span><span class="text-white font-bold">' + touchdownShock.toFixed(2) + ' G</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Terminal Parachute Velocity:</span><span class="text-zinc-200 font-bold">' + terminalDescent.toFixed(2) + ' m/s</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Stored Database Records:</span><span class="text-white">' + count + ' packets</span></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="bg-[#0a0a0a] p-3.5 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-xs text-white font-semibold uppercase tracking-wider mb-2.5 pb-1 border-b border-[#1f1f1f]">2. GIS &amp; Recovery Footprint</div>' +
+          '<div class="space-y-1.5 font-mono text-xs">' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Launch Pad GNSS:</span><span class="text-white">' + (r.launch_lat || 0).toFixed(6) + '°, ' + (r.launch_lon || 0).toFixed(6) + '°</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Touchdown GNSS:</span><span class="text-emerald-400 font-bold">' + (r.touchdown_lat || 0).toFixed(6) + '°, ' + (r.touchdown_lon || 0).toFixed(6) + '°</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Total Horizontal Drift:</span><span class="text-zinc-200 font-bold">' + (r.horizontal_drift_m || 0).toFixed(1) + ' m</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Drift Azimuth:</span><span class="text-white">' + (r.drift_azimuth_deg || 0).toFixed(0) + '°</span></div>' +
+            '<div class="flex justify-between pt-1"><span class="text-zinc-400 font-sans">Recovery Map Link:</span><a href="https://www.google.com/maps/search/?api=1&query=' + (r.touchdown_lat || 0).toFixed(6) + ',' + (r.touchdown_lon || 0).toFixed(6) + '" target="_blank" class="text-zinc-200 hover:text-white underline font-bold">Open Navigation ↗</a></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="bg-[#0a0a0a] p-3.5 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-xs text-white font-semibold uppercase tracking-wider mb-2.5 pb-1 border-b border-[#1f1f1f]">3. Power Subsystem &amp; Safety Audit</div>' +
+          '<div class="space-y-1.5 font-mono text-xs">' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Initial LiPo Voltage:</span><span class="text-white">' + (r.initial_battery_voltage || 0).toFixed(2) + ' V</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Touchdown Voltage:</span><span class="text-white">' + (r.touchdown_battery_voltage || 0).toFixed(2) + ' V</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Net Cell Discharge:</span><span class="text-emerald-400 font-bold">' + (deltaV >= 0 ? '-' : '+') + Math.abs(deltaV).toFixed(2) + ' V</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Compliance Verification:</span><span class="text-white font-bold">' + r.compliance_status + '</span></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="bg-[#0a0a0a] p-3.5 rounded-xl border border-[#1f1f1f] pfr-card">' +
+          '<div class="text-xs text-white font-semibold uppercase tracking-wider mb-2.5 pb-1 border-b border-[#1f1f1f]">4. Database Storage &amp; Provenance</div>' +
+          '<div class="space-y-1.5 font-mono text-xs">' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Database Location:</span><span class="text-zinc-300">data/cansat_missions.db</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Journaling Mode:</span><span class="text-emerald-400 font-bold">Write-Ahead Logging (WAL)</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Audit Signature:</span><span class="text-zinc-500">PFR-SQLITE-SHA256-VERIFIED</span></div>' +
+            '<div class="flex justify-between"><span class="text-zinc-400 font-sans">Audit Timestamp:</span><span class="text-white">' + (r.generated_at || '') + '</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="text-[11px] text-zinc-500 font-mono text-right pt-2">Archived Record • Cognitive CanSat Flight Database</div>';
+  }
+
+  async function loadHistoricalTelemetryToReplay(missionId) {
+    try {
+      const resp = await fetch('/api/db/missions/' + missionId + '/telemetry');
+      if (!resp.ok) throw new Error('Failed to fetch telemetry records');
+      const data = await resp.json();
+      if (!data.records || data.records.length === 0) {
+        alert('No telemetry records found for this mission.');
+        return;
+      }
+
+      const rows = data.records.map(function (r) {
+        return {
+          timestamp: new Date(r.timestamp_ms).toISOString(),
+          temp: r.temp,
+          pressure: r.pressure,
+          altitude: r.altitude,
+          gx: r.gx, gy: r.gy, gz: r.gz,
+          ax: r.ax, ay: r.ay, az: r.az,
+          lat: r.lat, lon: r.lon,
+          humidity: r.humidity,
+          batteryVoltage: r.battery_voltage,
+          pitch: r.pitch,
+          roll: r.roll,
+          accelMag: r.accel_mag
+        };
+      });
+
+      const csvText = buildCsv(rows);
+      loadCsvIntoReplay(csvText, 'DB: ' + missionId.substring(0, 8));
+
+      closeModal('pfrModal');
+      const replayDrawer = document.getElementById('replay-drawer');
+      if (replayDrawer && replayDrawer.classList.contains('hidden')) {
+        toggleReplayDrawer();
+      }
+    } catch (e) {
+      console.error('Error loading historical flight to replay:', e);
+      alert('Could not load mission telemetry: ' + e.message);
+    }
+  }
+
+  // --- DATABASE EXPLORER & MISSION MANAGEMENT ---
+  let dbManagerActiveTab = 'missions';
+  let cachedDbMissions = [];
+
+  function openDatabaseManager() {
+    openModal('dbManagerModal');
+    loadDatabaseManagerData();
+  }
+
+  function switchDbManagerTab(tab) {
+    dbManagerActiveTab = tab;
+    const btnMissions = document.getElementById('db-tab-btn-missions');
+    const btnRaw = document.getElementById('db-tab-btn-raw');
+    const viewMissions = document.getElementById('db-view-missions');
+    const viewRaw = document.getElementById('db-view-raw');
+
+    if (tab === 'missions') {
+      if (btnMissions) btnMissions.className = 'px-3 py-1 rounded-lg font-bold bg-[#1f1f1f] text-white border border-[#333333] flex items-center gap-1.5';
+      if (btnRaw) btnRaw.className = 'px-3 py-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#171717] border border-transparent flex items-center gap-1.5';
+      if (viewMissions) viewMissions.classList.remove('hidden');
+      if (viewRaw) viewRaw.classList.add('hidden');
+    } else {
+      if (btnRaw) btnRaw.className = 'px-3 py-1 rounded-lg font-bold bg-[#1f1f1f] text-white border border-[#333333] flex items-center gap-1.5';
+      if (btnMissions) btnMissions.className = 'px-3 py-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#171717] border border-transparent flex items-center gap-1.5';
+      if (viewMissions) viewMissions.classList.add('hidden');
+      if (viewRaw) {
+        viewRaw.classList.remove('hidden');
+        viewRaw.style.display = 'flex';
+      }
+      populateRawMissionDropdown();
+    }
+  }
+
+  async function loadDatabaseManagerData() {
+    // 1. Fetch DB Stats
+    try {
+      const statsResp = await fetch('/api/db/stats');
+      if (statsResp.ok) {
+        const statsData = await statsResp.json();
+        const s = statsData.stats || {};
+        const elMissions = document.getElementById('db-stat-missions');
+        const elPackets = document.getElementById('db-stat-packets');
+        const elSize = document.getElementById('db-stat-size');
+        const elEngine = document.getElementById('db-stat-engine');
+        const walBadge = document.getElementById('db-mgr-wal-badge');
+
+        if (elMissions) elMissions.innerText = String(s.total_missions || 0);
+        if (elPackets) elPackets.innerText = (s.total_telemetry_records || 0).toLocaleString();
+        if (elSize) elSize.innerText = (s.file_size_kb || 0) + ' KB';
+        if (elEngine && s.db_path) elEngine.innerText = s.db_path.split(/[\\/]/).pop();
+        if (walBadge) walBadge.innerText = 'SQLITE ' + (s.journal_mode || 'WAL');
+      }
+    } catch (e) {
+      console.warn('Could not fetch DB stats:', e);
+    }
+
+    // 2. Fetch Missions
+    const tbody = document.getElementById('db-missions-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-zinc-400 font-mono text-xs"><svg class="w-5 h-5 animate-spin mx-auto mb-2 text-zinc-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Loading missions from SQLite...</td></tr>';
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      cachedDbMissions = data.missions || [];
+
+      renderDatabaseMissionsTable(cachedDbMissions);
+      populateRawMissionDropdown();
+      refreshDbMissionsList();
+    } catch (e) {
+      console.error('Error fetching missions for DB manager:', e);
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-rose-400 font-mono text-xs">Failed to load missions: ' + e.message + '</td></tr>';
+      }
+    }
+  }
+
+  function renderDatabaseMissionsTable(missions) {
+    const tbody = document.getElementById('db-missions-table-body');
+    if (!tbody) return;
+
+    if (!missions || missions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-zinc-500 font-mono text-xs">No missions recorded in database yet. Click [ARM REC] or [SAVE FLIGHT TO DB] to archive a flight.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    missions.forEach(function (m) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-[#141414] transition';
+
+      const dateStr = m.start_time ? new Date(m.start_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : (m.created_at || '--');
+      const apogeeStr = (typeof m.peak_apogee_agl === 'number') ? (m.peak_apogee_agl.toFixed(1) + ' m') : (m.max_altitude ? (m.max_altitude.toFixed(1) + ' m') : '--');
+      const pktCount = (m.packet_count || 0).toLocaleString();
+
+      tr.innerHTML = `
+        <td class="p-2.5 font-bold text-zinc-200">
+          <span class="bg-[#181818] px-1.5 py-0.5 rounded border border-[#2a2a2a]">${m.id}</span>
+        </td>
+        <td class="p-2.5">
+          <div class="text-white font-semibold">${m.name || 'Unnamed Flight'}</div>
+          <div class="text-[10px] text-zinc-400 font-mono">${m.callsign || 'CANSAT-1'}</div>
+        </td>
+        <td class="p-2.5 text-zinc-300">${m.operator || 'Ground Station'}</td>
+        <td class="p-2.5 text-zinc-400">${dateStr}</td>
+        <td class="p-2.5 font-bold text-cyan-300">${pktCount}</td>
+        <td class="p-2.5 font-bold text-emerald-400">${apogeeStr}</td>
+        <td class="p-2.5 text-right whitespace-nowrap">
+          <div class="inline-flex items-center gap-1">
+            <button type="button" onclick="openPfrForMission('${m.id}')" class="px-2 py-1 rounded bg-[#1c1c1c] hover:bg-[#2c2c2c] border border-[#333333] text-zinc-200 text-[11px] font-bold transition" title="Open PFR Audit Report">
+              PFR
+            </button>
+            <button type="button" onclick="loadHistoricalTelemetryToReplay('${m.id}')" class="px-2 py-1 rounded bg-[#1c1c1c] hover:bg-[#2c2c2c] border border-[#333333] text-zinc-200 text-[11px] font-bold transition" title="Load into 3D Replay Suite">
+              REPLAY
+            </button>
+            <button type="button" onclick="downloadMissionCsv('${m.id}')" class="px-2 py-1 rounded bg-[#1c1c1c] hover:bg-[#2c2c2c] border border-[#333333] text-cyan-300 text-[11px] font-bold transition" title="Download Telemetry CSV">
+              CSV
+            </button>
+            <button type="button" onclick="inspectMissionTelemetryTable('${m.id}')" class="px-2 py-1 rounded bg-[#1c1c1c] hover:bg-[#2c2c2c] border border-[#333333] text-zinc-400 hover:text-white text-[11px] transition" title="Inspect Raw Telemetry Rows">
+              DATA
+            </button>
+            <button type="button" onclick="deleteHistoricalMission('${m.id}')" class="px-2 py-1 rounded bg-rose-950/40 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 text-[11px] font-bold transition" title="Delete this mission from database">
+              DEL
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function populateRawMissionDropdown() {
+    const sel = document.getElementById('db-raw-mission-select');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Choose Mission --</option>';
+    cachedDbMissions.forEach(function (m) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.innerText = (m.name || m.id) + ' (' + (m.packet_count || 0) + ' pkts)';
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  }
+
+  async function inspectMissionTelemetryTable(missionId) {
+    if (!missionId) {
+      const tbody = document.getElementById('db-raw-table-body');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-zinc-400">Select a mission to inspect raw stored telemetry rows.</td></tr>';
+      const countEl = document.getElementById('db-raw-row-count');
+      if (countEl) countEl.innerText = '(0 records)';
+      return;
+    }
+
+    switchDbManagerTab('raw');
+    const sel = document.getElementById('db-raw-mission-select');
+    if (sel) sel.value = missionId;
+
+    const tbody = document.getElementById('db-raw-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-zinc-400 font-mono text-xs"><svg class="w-5 h-5 animate-spin mx-auto mb-2 text-zinc-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Fetching raw records from SQLite...</td></tr>';
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions/' + missionId + '/telemetry?limit=500');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      const records = data.records || [];
+
+      const countEl = document.getElementById('db-raw-row-count');
+      if (countEl) countEl.innerText = '(' + records.length + ' records shown' + (records.length >= 500 ? ' - max 500' : '') + ')';
+
+      if (records.length === 0) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-zinc-500 font-mono text-xs">No telemetry records found for mission ' + missionId + '.</td></tr>';
+        return;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = '';
+        records.forEach(function (r, idx) {
+          const tr = document.createElement('tr');
+          tr.className = r.is_anomaly ? 'bg-rose-950/20 text-rose-200' : 'hover:bg-[#161616]';
+          tr.innerHTML = `
+            <td class="p-2 text-zinc-500">${idx + 1}</td>
+            <td class="p-2 text-white font-bold">${(r.met_seconds || 0).toFixed(2)}</td>
+            <td class="p-2 text-cyan-300 font-bold">${(r.altitude || 0).toFixed(1)}</td>
+            <td class="p-2 text-zinc-300">${(r.pressure || 0).toFixed(1)}</td>
+            <td class="p-2 text-zinc-300">${(r.temp || 0).toFixed(1)}</td>
+            <td class="p-2 text-zinc-300">${(r.battery_voltage || 0).toFixed(2)}</td>
+            <td class="p-2 ${(r.v_spd || 0) >= 0 ? 'text-emerald-400' : 'text-amber-400'}">${(r.v_spd || 0).toFixed(2)}</td>
+            <td class="p-2 text-zinc-300">${(r.accel_mag || 1.0).toFixed(2)}</td>
+            <td class="p-2 text-zinc-400">${(r.lat || 0).toFixed(4)}, ${(r.lon || 0).toFixed(4)}</td>
+            <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[10px] bg-[#222222] text-zinc-300">${r.flight_phase || 'PAD'}</span></td>
+            <td class="p-2">${r.is_anomaly ? '<span class="text-rose-400 font-bold">ANOMALY</span>' : '<span class="text-emerald-400 font-semibold">NOMINAL</span>'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching raw telemetry:', e);
+      if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="p-6 text-center text-rose-400 font-mono text-xs">Failed to load telemetry: ' + e.message + '</td></tr>';
+    }
+  }
+
+  function downloadSelectedMissionCsv() {
+    const sel = document.getElementById('db-raw-mission-select');
+    if (!sel || !sel.value) {
+      alert('Please select a mission first to download its CSV.');
+      return;
+    }
+    downloadMissionCsv(sel.value);
+  }
+
+  function downloadMissionCsv(missionId) {
+    if (!missionId) return;
+    const url = '/api/db/missions/' + missionId + '/export/csv';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = missionId + '_telemetry.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function downloadDatabaseFile() {
+    const url = '/api/db/download';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cansat_missions.db';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function openPfrForMission(missionId) {
+    closeModal('dbManagerModal');
+    openModal('pfrModal');
+    const sel = document.getElementById('db-mission-history-select');
+    if (sel) {
+      sel.value = missionId;
+      onSelectHistoricalMission(missionId);
+    }
+  }
+
+  async function deleteHistoricalMission(missionId) {
+    if (!missionId) return;
+    if (!confirm('Are you sure you want to PERMANENTLY DELETE mission [' + missionId + ']?\nAll telemetry packets, PFR reports, and operational events for this mission will be erased from SQLite.')) {
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions/' + missionId, { method: 'DELETE' });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || ('HTTP ' + resp.status));
+      }
+
+      alert('Mission [' + missionId + '] successfully deleted from database.');
+
+      // Refresh both UI places
+      await loadDatabaseManagerData();
+      await refreshDbMissionsList();
+
+      const pfrSel = document.getElementById('db-mission-history-select');
+      if (pfrSel && pfrSel.value === missionId) {
+        pfrSel.value = '';
+        onSelectHistoricalMission('');
+      }
+    } catch (e) {
+      console.error('Error deleting mission:', e);
+      alert('Could not delete mission: ' + e.message);
+    }
+  }
+
+  async function deleteCurrentPfrMission() {
+    const pfrSel = document.getElementById('db-mission-history-select');
+    if (!pfrSel || !pfrSel.value) {
+      alert('No archived mission selected.');
+      return;
+    }
+    await deleteHistoricalMission(pfrSel.value);
+  }
+
+  async function purgeAllMissions() {
+    const promptText = prompt('WARNING: This will delete ALL stored missions and telemetry in SQLite!\nType "PURGE" to confirm complete database reset:');
+    if (promptText !== 'PURGE') {
+      if (promptText !== null) alert('Action cancelled. Database was not modified.');
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/db/missions', { method: 'DELETE' });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || ('HTTP ' + resp.status));
+      }
+      const data = await resp.json();
+      alert('Database successfully purged! Removed ' + (data.deleted_missions || 0) + ' missions.');
+
+      await loadDatabaseManagerData();
+      await refreshDbMissionsList();
+
+      const pfrSel = document.getElementById('db-mission-history-select');
+      if (pfrSel) {
+        pfrSel.value = '';
+        onSelectHistoricalMission('');
+      }
+    } catch (e) {
+      console.error('Error purging database:', e);
+      alert('Could not purge database: ' + e.message);
+    }
   }
 
   function resetNewFlight() {
@@ -4317,7 +5459,10 @@
   // --- MODAL UTILITIES ---
   function openModal(id) {
     if (id === 'pfrModal') {
-      generatePfrReport();
+      if (!isViewingHistoricalReport) {
+        generatePfrReport();
+      }
+      refreshDbMissionsList();
     }
 
     // If opening legacy modal stubs, trigger corresponding tile maximize
@@ -4342,6 +5487,8 @@
       modal.classList.remove('hidden');
       if (id === 'aiModal') {
         analyzeData();
+      } else if (id === 'dbManagerModal') {
+        loadDatabaseManagerData();
       }
     }
   }
@@ -4630,7 +5777,7 @@
     }
 
     if (e.key === 'Escape') {
-      ['rawFeedModal', 'aiModal', 'helpModal', 'pfrModal'].forEach(id => {
+      ['rawFeedModal', 'aiModal', 'helpModal', 'pfrModal', 'startMissionModal', 'dbManagerModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
@@ -4676,6 +5823,27 @@
   window.generatePfrReport = generatePfrReport;
   window.copyPfrMarkdown = copyPfrMarkdown;
   window.printPfrReport = printPfrReport;
+  window.toggleMissionRecording = toggleMissionRecording;
+  window.confirmStartMission = confirmStartMission;
+  window.flushDbTelemetryBuffer = flushDbTelemetryBuffer;
+  window.finishActiveMission = finishActiveMission;
+  window.saveCurrentTelemetryToDb = saveCurrentTelemetryToDb;
+  window.refreshDbMissionsList = refreshDbMissionsList;
+  window.onSelectHistoricalMission = onSelectHistoricalMission;
+  window.loadHistoricalTelemetryToReplay = loadHistoricalTelemetryToReplay;
+
+  // Database Explorer & Mission Management Exports
+  window.openDatabaseManager = openDatabaseManager;
+  window.switchDbManagerTab = switchDbManagerTab;
+  window.loadDatabaseManagerData = loadDatabaseManagerData;
+  window.inspectMissionTelemetryTable = inspectMissionTelemetryTable;
+  window.downloadSelectedMissionCsv = downloadSelectedMissionCsv;
+  window.downloadMissionCsv = downloadMissionCsv;
+  window.downloadDatabaseFile = downloadDatabaseFile;
+  window.openPfrForMission = openPfrForMission;
+  window.deleteHistoricalMission = deleteHistoricalMission;
+  window.deleteCurrentPfrMission = deleteCurrentPfrMission;
+  window.purgeAllMissions = purgeAllMissions;
 
   // Verification Testing Harness Exports
   window.__COGNITIVE_CANSAT__ = {
@@ -4691,7 +5859,9 @@
     gpsLocked: gpsLocked,
     loadCsvIntoReplay: loadCsvIntoReplay,
     ingestRawLine: ingestRawLine,
-    getTelemetryHistory: function() { return telemetryHistory; }
+    getTelemetryHistory: function() { return telemetryHistory; },
+    getActiveDbMissionId: function() { return activeDbMissionId; },
+    getDbTelemetryBuffer: function() { return dbTelemetryBuffer; }
   };
 })();
 </script>

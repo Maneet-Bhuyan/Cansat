@@ -20,9 +20,12 @@ def free_port(port):
             parts = line.strip().split()
             if len(parts) >= 5 and 'LISTENING' in parts:
                 pid = parts[-1]
-                print('[i] Terminating stale process PID ' + str(pid) + '...')
-                subprocess.call('taskkill /F /PID ' + str(pid), shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(1)
+                print('[i] Terminating stale process tree PID ' + str(pid) + '...')
+                subprocess.call('taskkill /F /T /PID ' + str(pid), shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for _ in range(10):
+            if not is_port_in_use(port):
+                break
+            time.sleep(0.3)
     except Exception as e:
         print('[!] Note on port clearing: ' + str(e))
 
@@ -36,7 +39,8 @@ def open_browser():
     webbrowser.open('http://127.0.0.1:8000/')
 
 def main():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(root_dir)
     print('=' * 79)
     print('           COGNITIVE CANSAT MISSION CONTROL - SYSTEM LAUNCHER')
     print('=' * 79)
@@ -52,13 +56,14 @@ def main():
     print('      Ground Station Dashboard : http://127.0.0.1:8000/')
     print('      WebSocket Serial Bridge  : ws://127.0.0.1:8000/ws/serial')
     print('      Machine Learning API     : http://127.0.0.1:8000/api/predict')
+    print('      Database Operations API  : http://127.0.0.1:8000/api/db/missions')
     print()
     print('      TO STOP: Press Ctrl + C anytime.')
     print('-' * 79)
     print()
 
     import uvicorn
-    uvicorn.run('backend.app:app', host='127.0.0.1', port=8000, log_level='info', reload=True)
+    uvicorn.run('backend.app:app', host='127.0.0.1', port=8000, log_level='info', reload=True, reload_dirs=[root_dir])
 
 
 if __name__ == '__main__':
