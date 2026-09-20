@@ -47,17 +47,17 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 
 | Test | Method | Result |
 |---|---|---|
-| Navigation links (all 6 pages) | Inspected `href` attributes | ✅ All links point to sibling HTML files in same directory |
-| Download CSV button | Inspected `onclick="downloadCSV()"` | ✅ Function defined in inline JS |
-| Connect/Disconnect serial | Inspected `toggleConnect()` | ✅ Defined; uses Web Serial API |
-| Demo mode toggle | Inspected `toggleDemo()` | ✅ Defined; starts synthetic data injection |
-| Replay suite | Inspected `toggleReplayDrawer()` | ✅ Drawer toggle works; scrubber defined |
-| 3D model controls | Inspected `zoom3D()`, `tareAttitude()` | ✅ Defined; direction convention needs verification (see QA-002) |
-| Google Maps recovery | Inspected `openGoogleMapsRecovery()` | ✅ Constructs maps URL from last GPS fix |
-| PFR Report modal | Inspected `openModal('pfrModal')` | ✅ Modal defined in DOM |
-| Help modal | Inspected `openModal('helpModal')` | ✅ Modal defined in DOM |
-| AI modal | Inspected `openModal('aiModal')` | ✅ Modal defined in DOM |
-| Phase classifier (backend) | Read `tests/test_backend_core.py` | ✅ Unit tests present for kinematics and atmospheric engines |
+| Navigation links (all 6 pages) | Inspected `href` attributes | [PASS] All links point to sibling HTML files in same directory |
+| Download CSV button | Inspected `onclick="downloadCSV()"` | [PASS] Function defined in inline JS |
+| Connect/Disconnect serial | Inspected `toggleConnect()` | [PASS] Defined; uses Web Serial API |
+| Demo mode toggle | Inspected `toggleDemo()` | [PASS] Defined; starts synthetic data injection |
+| Replay suite | Inspected `toggleReplayDrawer()` | [PASS] Drawer toggle works; scrubber defined |
+| 3D model controls | Inspected `zoom3D()`, `tareAttitude()` | [PASS] Defined; direction convention needs verification (see QA-002) |
+| Google Maps recovery | Inspected `openGoogleMapsRecovery()` | [PASS] Constructs maps URL from last GPS fix |
+| PFR Report modal | Inspected `openModal('pfrModal')` | [PASS] Modal defined in DOM |
+| Help modal | Inspected `openModal('helpModal')` | [PASS] Modal defined in DOM |
+| AI modal | Inspected `openModal('aiModal')` | [PASS] Modal defined in DOM |
+| Phase classifier (backend) | Read `tests/test_backend_core.py` | [PASS] Unit tests present for kinematics and atmospheric engines |
 
 ---
 
@@ -121,7 +121,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** `98.4% Accuracy (Macro F1: 0.98)` — accuracy is rounded down; F1 cited (0.98) is the weighted average, not macro (which is 0.90)
 - **Evidence:** `model_metrics.json:5` → `0.9855715871254163`; `model_metrics.json:41` → macro avg f1 = `0.9023`
 - **Recommended fix:** Correct to `98.56% Accuracy (Weighted F1: 0.985; Macro F1: 0.902)`
-- **Status:** ✅ **FIXED** (readme.md line 369)
+- **Status:** [PASS] **FIXED** (readme.md line 369)
 
 ---
 
@@ -135,7 +135,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** `RMSE: +/- 14.2 m` — understates error by ~10 m (~40%)
 - **Evidence:** `model_metrics.json:88` → `"rmse_meters": 24.167643268856494`
 - **Recommended fix:** Update to `R²: 0.9951, RMSE: ±24.2 m`
-- **Status:** ✅ **FIXED** (readme.md line 371)
+- **Status:** [PASS] **FIXED** (readme.md line 371)
 
 ---
 
@@ -149,7 +149,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** Pseudocode passed `(64, 48)` to inference; frame label said `(64x48)`; camera descriptor said "64x48 frames"
 - **Evidence:** `train_tinyml_vision.py:140` → `# Input: 64x64x3 RGB`; `model_metrics.json:121` → `"input_resolution": "64x64 RGB"`
 - **Recommended fix:** Update all pseudocode and labels to reflect 64×64 model input (camera captures at QVGA, tiles resized to 64×64)
-- **Status:** ✅ **FIXED** (index.html ×2 occurrences, tinyml.html, mission-slider.js)
+- **Status:** [PASS] **FIXED** (index.html ×2 occurrences, tinyml.html, mission-slider.js)
 
 ---
 
@@ -163,7 +163,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** `6,996 (7.15 KB INT8)` — the 7.15 KB figure belongs to the 7,320-parameter INT8 model
 - **Evidence:** `model_metrics.json:120` → `"parameter_count": 6996`; `model_metrics.json:212` → `"int8_parameter_count": 7320`
 - **Recommended fix:** Display `6,996 (float32) / 7,320 (INT8, 7.15 KB Flash)`
-- **Status:** ✅ **FIXED** (models.html line 234)
+- **Status:** [PASS] **FIXED** (models.html line 234)
 
 ---
 
@@ -177,7 +177,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** "Achieved 93.80% validation accuracy" as the lead metric with no test accuracy stated
 - **Evidence:** `model_metrics.json:123` → `"test_accuracy_pct": 93.04`; `tasks.txt:282` → distinguishes the two correctly
 - **Recommended fix:** Lead with holdout test accuracy (93.04%) and note validation (93.80%) separately
-- **Status:** ✅ **FIXED** (ml/README.md line 7)
+- **Status:** [PASS] **FIXED** (ml/README.md line 7)
 
 ---
 
@@ -191,7 +191,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** `Vallabhm, Ganesh` — missing space between `Vallabh` and `M`
 - **Evidence:** `results.html:585`; `tasks.txt:16` → `@ganeshvallabhm` (GitHub handle confirms name structure)
 - **Recommended fix:** Change to `Vallabh M, Ganesh`
-- **Status:** ✅ **FIXED** (results.html line 585)
+- **Status:** [PASS] **FIXED** (results.html line 585)
 
 ---
 
@@ -205,7 +205,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** "Droplibs" — appears only in `index.html`, absent from all technical documentation
 - **Evidence:** grep result: 2 matches in `index.html` only; no match in README, docs, firmware, or backend
 - **Recommended fix:** Change to "Precision Environmental Dropsondes"
-- **Status:** ✅ **FIXED** (index.html lines 466, 469)
+- **Status:** [PASS] **FIXED** (index.html lines 466, 469)
 
 ---
 
@@ -219,7 +219,7 @@ This QA report covers the following areas of the Cognitive CanSat repository:
 - **Actual:** Confirmed intentional — documented in `docs/project_log.txt:14` and **asserted by `tests/selftest.js:102`**. Changing it would break the automated test suite.
 - **Evidence:** `docs/project_log.txt:14` → `Title: Ground Station - UNIVERSE TELEMETRY`; `tests/selftest.js:102` → assertion for exact string
 - **Recommended fix:** No change. Previous classification as bug was incorrect.
-- **Status:** ⛔ **NOT FIXED** — intentional; protected by test assertion
+- **Status:** [BLOCK] **NOT FIXED** — intentional; protected by test assertion
 
 ---
 
@@ -260,13 +260,13 @@ All findings were reproduced by:
 
 | ID | Status | Priority |
 |---|---|---|
-| QA-004 | ✅ Fixed | P1 |
-| QA-005 | ✅ Fixed | P1 |
-| QA-006 | ✅ Fixed | P1 |
-| QA-007 | ✅ Fixed | P2 |
-| QA-008 | ✅ Fixed | P2 |
-| QA-009 | ✅ Fixed | P2 |
-| QA-010 | ✅ Fixed | P2 |
+| QA-004 | [PASS] Fixed | P1 |
+| QA-005 | [PASS] Fixed | P1 |
+| QA-006 | [PASS] Fixed | P1 |
+| QA-007 | [PASS] Fixed | P2 |
+| QA-008 | [PASS] Fixed | P2 |
+| QA-009 | [PASS] Fixed | P2 |
+| QA-010 | [PASS] Fixed | P2 |
 | QA-001 | Open | P3 |
 | QA-002 | Open (requires live test) | P3 |
 | QA-003 | Open (known limitation) | P3 |

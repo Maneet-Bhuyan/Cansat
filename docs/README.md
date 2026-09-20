@@ -10,6 +10,9 @@ This directory contains the engineering manuals, technical architecture formulat
 * **[`project_log.txt`](project_log.txt)**: Chronological mission and development journal recording all implemented milestones, 3D PLA kit modeling, nadir camera orientation, side GPS bracket, blinking beacon highlight, `models.html` creation, `analysis.html` post-flight telemetry and sensor ablation suite, bugs resolved, and verification results.
 * **[`whatsapp_messages.txt`](whatsapp_messages.txt)**: Formatted role-specific task briefings for team members (Maneet, Rishi, Shubham, Ganesh), including Rishi's analysis deep dive page (`analysis.html`) and Shubham's production deployment and batch testing deliverables.
 * **[`tasks.txt`](../tasks.txt)**: Master task tracker with assigned deliverables, status badges, and milestone checklists (includes completed `TASK DA-06`).
+* **[`QA_REPORT.md`](QA_REPORT.md)**: Comprehensive Quality Assurance and verification report auditing code, metrics, and documentation consistency.
+* **[`audit_report.md`](audit_report.md)**: Systematic repository audit covering logic, data inconsistencies, priority classifications, and paper readiness.
+* **[`research_paper_draft.md`](research_paper_draft.md)**: IEEE format research paper draft ("Autonomous Landing Site Selection for Sounding Pico-Satellites Using Quantized Edge TinyML") synthesizing the project's architecture, ML models, and experimental methodology.
 
 ## Repository Organization
 

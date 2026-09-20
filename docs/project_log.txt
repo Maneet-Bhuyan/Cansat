@@ -1389,3 +1389,32 @@ REPOSITORY REORGANIZATION & CODEBASE CLEANUP
    - Python py_compile on backend/app.py: PASS (0 syntax/import errors)
 
 STATUS: REPOSITORY REORGANIZATION, DOCUMENTATION OVERHAUL, AND VERIFICATION COMPLETE
+--------------------------------------------------------------------------------
+GANESH MERGE REQUEST: QA AUDIT, RESEARCH PAPER DRAFT & METRIC ACCURACY FIXES
+--------------------------------------------------------------------------------
+
+[2026-09-20T06:20:00Z] ACTION: Validated and merged Ganesh's merge request (ganesh/paper-docs). Integrated comprehensive QA and audit reports, research paper draft, and factual machine learning benchmark metric corrections.
+
+1. Delivered Documentation Assets:
+   - docs/QA_REPORT.md: Exhaustive quality assurance audit documenting code consistency, metric alignments, and paper readiness across the repository.
+   - docs/audit_report.md: Systematic repository audit identifying data inconsistencies, prioritizing remediation tasks, and confirming paper-worthy technical contributions.
+   - docs/research_paper_draft.md: Initial draft of the academic paper ("Autonomous Landing Site Selection for Sounding Pico-Satellites Using Quantized Edge TinyML") synthesizing the project's dual-tier architecture, ML pipelines, and experimental methodology.
+
+2. Benchmark Metric Alignments & Terminology Corrections:
+   - readme.md: Corrected Random Forest Classifier accuracy to 98.56% (Weighted F1: 0.985, Macro F1: 0.902) and Gradient Boosting Regressor apogee RMSE to R² = 0.9951, RMSE = ±24.2 m, precisely matching ml/model_metrics.json.
+   - ml/README.md: Added holdout test accuracy of 93.04% alongside best validation accuracy of 93.80% for TinyLandingNet.
+   - frontend/index.html: Corrected "Droplibs" to "Dropsondes", aligned optical frame downsampling comments (QVGA cropped/resized to 64x64), and refined estimated edge latency (~16.3 ms).
+   - frontend/js/mission-slider.js: Aligned optical frame resolution description to QVGA (320x240) cropped/resized to 64x64.
+   - frontend/models.html: Clarified parameter count distinction between float32 (6,996) and INT8 quantized (7,320, 7.15 KB Flash).
+   - frontend/results.html: Fixed BibTeX author entry formatting to "Vallabh M, Ganesh".
+   - frontend/tinyml.html: Updated raw downlinked frame label to reflect QVGA to 64x64 model input pipeline.
+
+3. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: GANESH MERGE REQUEST INTEGRATED AND VERIFIED
