@@ -1316,5 +1316,218 @@ AUTOMATED TEST VERIFICATION:
   - python -m py_compile backend/app.py ml/flight_analyzer.py: PASS (0 syntax/import errors)
 
 STATUS: PROJECT CLEANUP, DOCS UPDATES, AND TEAM TASK ASSIGNMENTS COMPLETED
+--------------------------------------------------------------------------------
+FLIGHT DYNAMICS DEEP DIVE (analysis.html), SENSOR ABLATION & ZIP REPORT EXPORTER
+--------------------------------------------------------------------------------
 
+[2026-09-19T14:40:00Z] ACTION: Implemented dedicated Flight Dynamics & Post-Flight Telemetry Analysis page (analysis.html), interactive flight_analyzer module with 10 mission profiles, interactive cansat_eval_ablation module with training/testing data toggles and sensor dropout simulator, backend ZIP report exporter, and synchronized site-wide navigation.
 
+1. Flight Dynamics Deep Dive Page (analysis.html):
+   - Authored in Resend.com pure jet-black (#000000) aerospace styling with Newsreader serif headings, Inter UI, and JetBrains Mono typography.
+   - Rigorous mathematical and physical formalizations:
+     * Savitzky-Golay numerical convolution filter (N=11, 2nd order): proves zero-phase lag noise stripping.
+     * Vertical kinematics (v_z = dz/dt) and dynamic 3D resultant G-shock (|G| = sqrt(ax^2+ay^2+az^2)).
+     * Environmental Lapse Rate (ELR) and MetPy Poisson adiabatic potential temperature (theta = T * (P0/P)^(Rd/cp)).
+     * Terminal velocity under canopy and multi-quantile touchdown prognostics (P10, P50, P90 confidence bounds).
+
+2. Interactive flight_analyzer Module:
+   - 10-profile selector dropdown with instant KPI telemetry updates (Peak Altitude, Time-to-Apogee, Ascent/Descent Velocity, G-Shock).
+   - Multi-tab responsive Chart.js visualizer:
+     * Altitude Profile: Raw barometric altitude vs Savitzky-Golay smoothed trajectory.
+     * Kinematics Dynamics: Vertical velocity dz/dt alongside dual-axis resultant G-shock.
+     * Atmospheric Sounding: Temperature, MetPy potential temperature, and barometric pressure lapse.
+   - Individual PDF and 4-panel publication figure links for every flight scenario.
+   - Direct ZIP Report Downloader: Streams all 10 verified PDF reports and all_missions_summary.csv in one archive.
+
+3. Interactive cansat_eval_ablation Module:
+   - Benchmarks 4 sensor suites: Full_Suite (7 features), No_IMU (6 features), No_Env_Sensors (4 features), GPS_Only (3 features).
+   - Grouped interactive bar chart with dynamic toggles:
+     * Dataset Mode: Training Benchmark Data vs Testing Evaluation Data.
+     * Units: Ground Impact Error (Meters) vs Angular Drift (Degrees).
+   - Live Dropout Simulator: Allows operator to pick a scenario and sensor dropout, calling backend /api/analysis/run-ablation to evaluate out-of-sample resilience.
+
+4. Backend Integration (backend/app.py):
+   - Embedded @app.get("/models.html") and @app.get("/analysis.html") before @app.get("/results.html").
+   - Mounted static /reports directory for browser PDF/figure viewing.
+   - Endpoints: GET /api/analysis/reports-zip, GET /api/analysis/ablation-data, GET /api/analysis/scenarios, GET /api/analysis/scenario/{name}, and POST /api/analysis/run-ablation.
+
+5. Navigation Synchronization & Automated Verification:
+   - Synchronized navigation bars and footers across all 6 pages: index.html, tinyml.html, dashboard.html, models.html, analysis.html, results.html.
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python scratch/test_analysis_api.py: 7/7 PASS (All analysis endpoints verified)
+
+STATUS: TASK DA-06 (analysis.html, ABLATION MODULE & ZIP REPORTS) COMPLETED AND VERIFIED
+--------------------------------------------------------------------------------
+REPOSITORY REORGANIZATION & CODEBASE CLEANUP
+--------------------------------------------------------------------------------
+
+[2026-09-19T16:15:00Z] ACTION: Reorganized entire repository to eliminate root clutter, centralizing web surfaces in frontend/ and GPU setup scripts in scripts/. Updated backend routing, launchers, test suites, and documentation.
+
+1. Directory Reorganization:
+   - Created frontend/: Moved all 6 HTML pages (index.html, dashboard.html, tinyml.html, models.html, analysis.html, results.html), styles (css/resend-theme.css), and scripts (js/cansat-3d.js, js/mission-slider.js, js/results-charts.js, js/tinyml-demo.js). Added frontend/README.md.
+   - Created scripts/: Moved GPU workstation setup utilities (SETUP_GPU_WORKSTATION.bat, setup_gpu_workstation.ps1).
+   - Root directory now exclusively holds mission launchers (START_MISSION_CONTROL.bat, launch.py), environment specs (requirements.txt), and documentation/tracking files (readme.md, tasks.txt, .gitattributes, .gitignore).
+
+2. Backend & Launcher Updates:
+   - backend/app.py: Updated FRONTEND_DIR = os.path.join(BASE_DIR, "frontend"); all HTML route handlers and static mounts (/css, /js) now serve directly from frontend/.
+   - backend/standalone_server.ps1: Set $FrontendDir = Join-Path $RootDir "frontend"; updated file resolution and browser launch path.
+   - START_MISSION_CONTROL.bat: Updated browser fallback path to %~dp0frontend\index.html.
+   - tests/selftest.js: Updated dashboard.html file read path to frontend/dashboard.html.
+   - tests/selftest.ps1: Updated $htmlPath to frontend/dashboard.html.
+   - .gitattributes: Updated linguist vendoring patterns to frontend/*, frontend/**/*.html, frontend/**/*.css, frontend/**/*.js.
+   - readme.md: Updated repository directory tree and local launch commands (start frontend/index.html and python -m http.server 8000 --directory frontend).
+   - docs/README.md: Added repository structure breakdown.
+
+3. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Python py_compile on backend/app.py: PASS (0 syntax/import errors)
+
+STATUS: REPOSITORY REORGANIZATION, DOCUMENTATION OVERHAUL, AND VERIFICATION COMPLETE
+
+--------------------------------------------------------------------------------
+SQLITE FLIGHT DATABASE (WAL), BATCH TELEMETRY INGESTION & PFR AUDIT PERSISTENCE
+--------------------------------------------------------------------------------
+
+[2026-09-19T16:20:00Z] ACTION: Implemented embedded SQLite database engine in Write-Ahead Logging (WAL) mode for persistent CanSat flight mission logging, high-throughput batch telemetry streaming, and automated Post-Flight Review (PFR) regulatory audit reports. Integrated real-time database mission recording HUD, flight archive browser, and 3D replay suite handoff into dashboard.html and backend/app.py.
+
+1. SQLite Database Architecture (backend/core/database.py & data/cansat_missions.db):
+   - Configured with PRAGMA journal_mode=WAL and PRAGMA foreign_keys=ON with context-managed connection safety for zero file handle leaks on Windows.
+   - 4 Normalized Relational Tables:
+     * missions: Master session metadata (ID, name, callsign, operator, timestamps, status, notes).
+     * telemetry_records: High-rate sensor telemetry (timestamp, MET, altitude, pressure, temp, humidity, battery, 9-DOF IMU, GNSS, kinematics, air density, dew point, lapse rate, flight phase, anomaly flags). Performance indexed on (mission_id, timestamp_ms).
+     * mission_reports: Comprehensive Post-Flight Review audit metrics, AGL/MSL apogee, time-to-apogee, climb rate, ejection and touchdown shock G, terminal descent velocity, regulatory compliance envelope (6-11 m/s), GNSS drift distance and azimuth bearing, battery drain, and formatted markdown report.
+     * mission_events: Discrete operational events (arming, stage separation, chute deployment, safety alarms).
+
+2. FastAPI Database REST API (backend/app.py):
+   - POST /api/db/missions/start: Arms and creates a new mission session in SQLite.
+   - POST /api/db/missions/telemetry: High-frequency telemetry batch ingestion (micro-batched in chunks of 10-500 packets).
+   - POST /api/db/missions/{id}/events: Discrete operational and anomaly event logging.
+   - POST /api/db/missions/{id}/finish: Finalizes flight, seals record, and computes PFR audit report.
+   - GET /api/db/missions: Enumerates all stored missions with packet counts and apogees.
+   - GET /api/db/missions/{id}: Retrieves detailed mission metadata.
+   - GET /api/db/missions/{id}/report: Retrieves stored or on-demand generated PFR audit report.
+   - GET /api/db/missions/{id}/telemetry: Retrieves time-series packets for charting and replay.
+   - DELETE /api/db/missions/{id}: Cascading deletion of a mission and all associated records.
+
+3. Mission Control UI & Client Architecture (dashboard.html):
+   - Mission HUD Bar: Added dedicated #db-mission-badge with live indicator ('DB: STANDBY' / 'REC [DB: MSN-XXXX]') and ARM REC / FINISH toggle.
+   - Arming Modal (#startMissionModal): Operator input dialog for Mission Name, Callsign, Operator, and Notes.
+   - Client-Side Micro-Batching: In-memory dbTelemetryBuffer flushes automatically every 10 packets or 2.5s.
+   - Retroactive Flight Archiving ([SAVE FLIGHT TO DB]): 1-click archiving of current in-memory telemetry into SQLite partitioned in 200-packet chunks.
+   - Post-Flight Review Modal Integration: Added historical flight archive selector (#db-mission-history-select), PFR audit viewer, and 1-click [LOAD INTO REPLAY SUITE] streaming historical packets into 3D trajectory visualizer.
+
+AUTOMATED TEST VERIFICATION:
+  - python -m unittest tests/test_database.py tests/test_backend_core.py: 14/14 PASS
+  - node tests/selftest.js: 27/27 PASS
+  - powershell tests/selftest.ps1: 17/17 PASS
+  - FastAPI TestClient E2E Lifecycle (Start, Batch Ingest, Events, Finish, Report, Telemetry, Delete): 7/7 PASS (HTTP 200)
+
+STATUS: SQLITE FLIGHT DATABASE & PFR AUDIT PERSISTENCE ENGINE FULLY OPERATIONAL AND VERIFIED
+
+2026-09-19T22:20:00.000Z — Stale Reloader Worker Cleanup & Process Management Hardening
+--------------------------------------------------------------------------------
+1. Root Cause Identification:
+   - On Windows, uvicorn with reload=True uses Python's multiprocessing.spawn to spawn worker processes.
+   - When a parent process terminates, standard PID termination leaves the multiprocessing child worker alive listening on port 8000.
+   - The stale worker (running pre-database code) served HTTP 404 for all new /api/db/* routes, causing the browser alert: "Could not save flight to database: Failed to create mission record".
+2. System Fixes Applied:
+   - Terminated all orphan zombie python worker processes holding port 8000.
+   - Enhanced launch.py: Upgraded taskkill from /F /PID to /F /T /PID to recursively terminate entire process trees, added verification poll loop before binding, and configured explicit reload_dirs.
+   - Enhanced dashboard.html: Upgraded error handlers in saveCurrentTelemetryToDb and confirmStartMission with HTTP status code inspection and actionable error notifications.
+3. Verification:
+   - End-to-end Python simulation of frontend JSON payloads verified 100% against live daemon server (HTTP 200 on /api/db/missions/start, telemetry batch ingestion, and PFR finalization).
+   - All 18 unit and core tests passing cleanly.
+
+--------------------------------------------------------------------------------
+DATABASE EXPLORER, MISSION DELETION & DIRECT TELEMETRY ACCESS ENGINE
+--------------------------------------------------------------------------------
+
+[2026-09-19T22:35:00Z] ACTION: Designed, implemented, and verified Ground Station Database Explorer & Mission Manager (#dbManagerModal) with dual-tab interface (Flight Sessions Explorer vs Raw SQL Telemetry Viewer), cascading mission deletion, raw database download, 25-column CanSat CSV export, database storage diagnostics, and complete database purging.
+
+1. Database Storage & Export Capabilities (backend/core/database.py & backend/app.py):
+   - Storage Diagnostics (GET /api/db/stats): Exposes database file size on disk, WAL file size, journal mode, total missions, total packets, total events, and total reports.
+   - Raw SQLite Binary File Download (GET /api/db/download): Checkpoints WAL via PRAGMA wal_checkpoint(TRUNCATE) and streams data/cansat_missions.db as application/x-sqlite3 for inspection in tools like DB Browser for SQLite.
+   - 25-Column Flight CSV Export (GET /api/db/missions/{id}/export/csv): Streams comprehensive CSV telemetry containing all 13 sensor fields, derived kinematics (v_spd, accel_mag, pitch, roll), sounding parameters (air_density, dew_point, lapse_rate), and ML classifications (flight_phase, anomaly_score).
+   - Mission Deletion (DELETE /api/db/missions/{id}): Cascading deletion wiping master mission, telemetry packets, operational events, and PFR reports.
+   - Database Purge (DELETE /api/db/missions): Atomic wipe of all tables and sqlite_sequence reset.
+   - Primary Key Collision Protection: Hardened create_mission() with a 4-hex random suffix (MSN-YYYYMMDD-HHMMSS-XXXX), eliminating collision risks during rapid testing.
+
+2. Ground Station Database Explorer Interface (dashboard.html):
+   - Navigation Shortcuts: Added quick-access [DATABASE] button in top header strip and 'DATABASE MANAGER' in left sidebar.
+   - 4 Live Storage Telemetry Cards: Displays Recorded Missions, Stored Packets, Disk DB Size (KB/MB), and active SQLite storage engine path.
+   - Action Toolbar: [REFRESH], [DOWNLOAD .DB FILE], and [PURGE ALL].
+   - Tab 1 ('FLIGHT SESSIONS'): Interactive table of all recorded missions with badge indicators and inline action buttons:
+     * [PFR]: Inspect post-flight audit report in modal.
+     * [REPLAY]: Load flight into 3D trajectory visualizer and map.
+     * [CSV]: Download 25-column flight CSV.
+     * [DATA]: Switch directly to Tab 2 and inspect raw SQLite rows.
+     * [DEL]: Delete flight with instant UI refresh.
+   - Tab 2 ('RAW SQL TELEMETRY VIEWER'): Mission dropdown selector with responsive scrollable table displaying actual raw database records (MET, Altitude, Pressure, Temp, Battery, IMU, Phase, Anomaly).
+   - Post-Flight Review Modal Integration: Added dynamic [DELETE MISSION] button (#pfr-del-db-btn) and [CSV] export button when browsing historical flight records.
+
+3. Automated Verification:
+   - tests/test_database.py: 4/4 test suites PASS (WAL mode, lifecycle & PFR, stats & export & purge, API endpoints).
+   - tests/selftest.js: 27/27 PASS.
+   - Full discovery (python -m unittest discover tests): 20/20 test cases PASS.
+
+STATUS: DATABASE EXPLORER, MISSION DELETION & DIRECT ACCESS ENGINE FULLY OPERATIONAL AND VERIFIED
+
+--------------------------------------------------------------------------------
+GANESH MERGE REQUEST: QA AUDIT, RESEARCH PAPER DRAFT & METRIC ACCURACY FIXES
+--------------------------------------------------------------------------------
+
+[2026-09-20T06:20:00Z] ACTION: Validated and merged Ganesh's merge request (ganesh/paper-docs). Integrated comprehensive QA and audit reports, research paper draft, and factual machine learning benchmark metric corrections.
+
+1. Delivered Documentation Assets:
+   - docs/QA_REPORT.md: Exhaustive quality assurance audit documenting code consistency, metric alignments, and paper readiness across the repository.
+   - docs/audit_report.md: Systematic repository audit identifying data inconsistencies, prioritizing remediation tasks, and confirming paper-worthy technical contributions.
+   - docs/research_paper_draft.md: Initial draft of the academic paper ("Autonomous Landing Site Selection for Sounding Pico-Satellites Using Quantized Edge TinyML") synthesizing the project's dual-tier architecture, ML pipelines, and experimental methodology.
+
+2. Benchmark Metric Alignments & Terminology Corrections:
+   - readme.md: Corrected Random Forest Classifier accuracy to 98.56% (Weighted F1: 0.985, Macro F1: 0.902) and Gradient Boosting Regressor apogee RMSE to R² = 0.9951, RMSE = ±24.2 m, precisely matching ml/model_metrics.json.
+   - ml/README.md: Added holdout test accuracy of 93.04% alongside best validation accuracy of 93.80% for TinyLandingNet.
+   - frontend/index.html: Corrected "Droplibs" to "Dropsondes", aligned optical frame downsampling comments (QVGA cropped/resized to 64x64), and refined estimated edge latency (~16.3 ms).
+   - frontend/js/mission-slider.js: Aligned optical frame resolution description to QVGA (320x240) cropped/resized to 64x64.
+   - frontend/models.html: Clarified parameter count distinction between float32 (6,996) and INT8 quantized (7,320, 7.15 KB Flash).
+   - frontend/results.html: Fixed BibTeX author entry formatting to "Vallabh M, Ganesh".
+   - frontend/tinyml.html: Updated raw downlinked frame label to reflect QVGA to 64x64 model input pipeline.
+
+3. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: GANESH MERGE REQUEST INTEGRATED AND VERIFIED
+--------------------------------------------------------------------------------
+RISHI MERGE REQUEST: SQLITE FLIGHT DATABASE & RECORDS MANAGER INTEGRATION
+--------------------------------------------------------------------------------
+
+[2026-09-20T16:05:00Z] ACTION: Validated and merged Rishi's branch (rishi/analytics). Integrated persistent SQLite Write-Ahead Logging (WAL) flight database engine, automated Post-Flight Review (PFR) audit persistence, Ground Station Database Explorer modal (#dbManagerModal), raw SQL telemetry viewer, and database/CSV export endpoints into main.
+
+1. Delivered Database & Telemetry Persistence Engine:
+   - backend/core/database.py: 4-table relational SQLite schema (missions, telemetry_records, mission_reports, mission_events) operating in WAL mode with cascading foreign keys and transaction timeout handling.
+   - backend/app.py: Added REST endpoints for starting missions, micro-batch telemetry ingestion, operational event logging, PFR finalization, single/bulk mission deletion, raw database binary download (GET /api/db/download), and 25-column CSV export (GET /api/db/missions/{id}/export/csv).
+   - frontend/dashboard.html: Integrated live DB status badge, mission arming modal (#startMissionModal), Ground Station Database Explorer (#dbManagerModal) with dual tabs (Flight Sessions vs Raw SQL Telemetry Viewer), and retroactive in-memory flight archiving.
+   - frontend/results.html: Team member initials and names aligned (Gurbashish Nayak, Shubham Sharma, Ganesh Vallabh).
+   - launch.py: Hardened process tree cleanup (taskkill /F /T /PID) and reload directory resolution to prevent stale worker zombies.
+   - tests/test_database.py: Comprehensive 4-suite unit tests verifying WAL mode, mission lifecycle, PFR audits, database stats, CSV export, and API endpoints (with graceful fallback for environments without optional httpx).
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 4/4 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: RISHI MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN

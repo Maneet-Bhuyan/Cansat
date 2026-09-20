@@ -106,14 +106,60 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
     - Engineered Touchdown Prognostics pipeline: GradientBoostingRegressor with quantile loss (10th, median, 90th percentile TTD) and aerodynamic descent regime classifier (ml/train_touchdown_prognostics.py, analysis/).
     - Sensor suite ablation study notebook: test_cases/cansat_eval_ablation.ipynb.
 
-[ ] TASK DA-06: FLIGHT DYNAMICS & POST-FLIGHT ANALYSIS DEEP DIVE PAGE (analysis.html)
-    - Author a dedicated educational and technical page positioned immediately after ML Models in the navigation sequence.
-    - Explain in clear, plain English (accessible to non-specialists) how telemetry data analysis works alongside rigorous aerospace formulations:
-      * Savitzky-Golay filtering: explain how it strips sensor noise without introducing phase delay.
-      * Vertical descent velocity & dynamic G-shock profiling: how impacts and separation shocks are isolated.
-      * Environmental Lapse Rate (ELR) & atmospheric sounding: barometric altimetry, temperature lapse, and potential temperature.
-      * Aerodynamic descent regimes: terminal velocity, parachute drag coefficients, and touchdown prognostics.
-    - Wire interactive analysis charts, flight profile selector, and publication figure visualizers.
+[X] TASK DA-06: FLIGHT DYNAMICS & POST-FLIGHT ANALYSIS DEEP DIVE PAGE (analysis.html) (COMPLETED)
+    - Authored analysis.html in Resend pure jet-black design system positioned directly after ML Models and before Research & Results.
+    - Explained in clear, plain English alongside rigorous aerospace formulations:
+      * Savitzky-Golay polynomial convolution (N=11, 2nd order): zero-phase numerical filtering without delay.
+      * Vertical kinematics (dz/dt) and dynamic resultant G-shock profiling (|G| = sqrt(ax^2+ay^2+az^2)).
+      * Atmospheric sounding & MetPy Poisson adiabatic potential temperature (theta = T * (P0/P)^(Rd/cp)).
+      * Aerodynamic descent regimes & multi-quantile touchdown prognostics (v_term = sqrt(2mg / (rho * Cd * A))).
+    - Interactive flight_analyzer module:
+      * 10-scenario dropdown selector with instant KPI telemetry readouts (Apogee, Ascent/Descent speeds, G-shock).
+      * Multi-tab responsive Chart.js visualizer (Altitude Trajectory, Velocity & G-Shock, Atmospheric Sounding).
+      * Direct links to high-res 4-panel publication figures and individual vector PDF flight reports.
+      * One-click "Download All 10 Reports (.ZIP)" via /api/analysis/reports-zip.
+    - Interactive cansat_eval_ablation module:
+      * Evaluates 4 sensor suites (Full_Suite, No_IMU, No_Env_Sensors, GPS_Only).
+      * Interactive grouped bar charts with Training Benchmark Data vs Testing Evaluation Data toggles.
+      * Distance error (meters) and angular error (degrees) units.
+      * Live Testing Data Deployment & Sensor Dropout Simulator calling /api/analysis/run-ablation.
+    - Embedded into backend/app.py before results.html (/analysis.html and /analysis routes, ZIP streamer, and ablation endpoints).
+    - Synchronized site-wide navigation across all 6 pages (index, tinyml, dashboard, models, analysis, results).
+
+[X] TASK DA-07: SQLITE FLIGHT DATABASE (WAL), BATCH TELEMETRY INGESTION & PFR AUDIT ENGINE (COMPLETED)
+    - Architected persistent SQLite database in Write-Ahead Logging (WAL) mode at data/cansat_missions.db with foreign key enforcement and Windows-safe connection pooling.
+    - 4 normalized relational tables:
+      * missions: Master flight metadata, mission duration, operator callsign, and flight state transitions.
+      * telemetry_records: High-rate 9-DOF IMU, barometric altimetry, and GNSS kinematic records with composite indexing on (mission_id, timestamp_ms).
+      * mission_reports: Post-Flight Review (PFR) regulatory audit reports, AGL/MSL apogees, max shock G, terminal descent velocities, compliance envelope checks (6-11 m/s), horizontal drift coordinates, and battery discharge metrics.
+      * mission_events: Operational event logging for stage separation, parachute deployment, and anomaly warnings.
+    - Implemented REST API in backend/app.py:
+      * POST /api/db/missions/start, POST /api/db/missions/telemetry, POST /api/db/missions/{id}/events, POST /api/db/missions/{id}/finish.
+      * GET /api/db/missions, GET /api/db/missions/{id}, GET /api/db/missions/{id}/report, GET /api/db/missions/{id}/telemetry, DELETE /api/db/missions/{id}.
+    - Ground Station Integration in dashboard.html:
+      * Live DB mission recording badge (#db-mission-badge) with ARM REC / FINISH toggle and active pulsing indicator.
+      * Start Mission modal (#startMissionModal) for setting mission name, callsign, and operator notes.
+      * Client-side micro-batching buffer flushing every 10 packets or 2.5 seconds.
+      * Retroactive 1-click flight archiving ([SAVE FLIGHT TO DB]) streaming existing in-memory buffers in 200-packet chunks.
+      * Historical PFR report browser (#db-mission-history-select) with instant markdown export and 1-click [LOAD INTO REPLAY SUITE] trajectory playback.
+    - Verified with comprehensive test suite: tests/test_database.py (100% pass) and FastAPI TestClient end-to-end integration.
+
+[X] TASK DA-08: GROUND STATION DATABASE EXPLORER, MISSION DELETION & DIRECT SQL TELEMETRY ACCESS (COMPLETED)
+    - Ground Station Database Explorer Modal (#dbManagerModal in dashboard.html):
+      * Live telemetry and database metrics cards: Recorded Missions, Stored Packets, Disk Database Size (KB/MB), Storage Engine path.
+      * Multi-tab interface: Flight Sessions Explorer vs Raw SQL Telemetry Viewer.
+      * Raw SQL Telemetry Viewer: Mission selector and responsive table rendering raw rows with anomaly badges and phase indicators.
+      * Header strip shortcut ([DATABASE]) and sidebar quick-navigation item.
+    - Advanced Management & Deletion Engine:
+      * Single-mission cascaded deletion (DELETE /api/db/missions/{id}) wiping telemetry, reports, and events.
+      * In-modal inline delete buttons in flight table and Post-Flight Review modal (#pfr-del-db-btn).
+      * Nuclear database purge (DELETE /api/db/missions) resetting sqlite_sequence with operator confirmation.
+    - Direct Access & Data Portability:
+      * Raw SQLite file binary download (GET /api/db/download) with WAL checkpoint flush for external analysis (DB Browser for SQLite).
+      * Full 25-column flight telemetry CSV export (GET /api/db/missions/{id}/export/csv).
+      * Live storage health diagnostics (GET /api/db/stats).
+    - Hardened against mission ID collisions: Appended random 4-character hex suffix to MSN timestamp ID.
+    - Verified with automated tests in tests/test_database.py (4 test suites, 100% pass).
 
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING

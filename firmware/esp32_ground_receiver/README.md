@@ -4,12 +4,12 @@
 * **Module:** ESP-WROOM-32U Development Board (NodeMCU 38-Pin) or ESP32-WROVER with IPEX Connector
 * **Antenna:** High-gain 2.4 GHz external directional or 6dBi dipole antenna connected to IPEX/SMA
 * **Radio:** 2.4 GHz ESP-NOW Promiscuous Ingestion (Channel 1)
-* **Interface:** Micro-USB connected to Ground Station laptop running at **115200 baud**
+* **Interface:** Micro-USB connected to Ground Station laptop running at **460800 baud** (high-speed UART bridge for 6–8 FPS aerial video stream)
 
 ---
 
 ## File Manifest
-* [`esp32_ground_receiver.ino`](file:///e:/Cansat/firmware/esp32_ground_receiver/esp32_ground_receiver.ino): Main Arduino firmware sketch for the ground node.
+* [`esp32_ground_receiver.ino`](esp32_ground_receiver.ino): Main Arduino firmware sketch for the ground node.
 
 ---
 

@@ -13,11 +13,16 @@ import numpy as np
 import pandas as pd
 import joblib
 
+import io
+import zipfile
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+from backend.core import database
 
 # Suppress minor version warnings for clean telemetry logs
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -25,6 +30,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, "ml", "saved_models")
 METRICS_PATH = os.path.join(BASE_DIR, "ml", "model_metrics.json")
+
+# Initialize persistent SQLite telemetry & mission database
+try:
+    database.init_db()
+    print("[Database] SQLite telemetry & mission database initialized in WAL mode.")
+except Exception as db_err:
+    print(f"[Database] Warning: Could not initialize database: {db_err}")
 
 app = FastAPI(
     title="Cognitive CanSat ML Telemetry Server",
@@ -245,44 +257,349 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
         "lapse_rate_c_100m": float(round(lapse_rate, 2))
     }
 
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
 @app.get("/")
 def read_root():
-    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.get("/index.html")
 @app.get("/home.html")
 def serve_index_html():
-    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.get("/tinyml.html")
 def serve_tinyml_html():
-    return FileResponse(os.path.join(BASE_DIR, "tinyml.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "tinyml.html"))
 
 @app.get("/dashboard.html")
 def serve_dashboard_html():
-    return FileResponse(os.path.join(BASE_DIR, "dashboard.html"))
-
-@app.get("/results.html")
-def serve_results_html():
-    return FileResponse(os.path.join(BASE_DIR, "results.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
 
 @app.get("/models.html")
 @app.get("/models")
 def serve_models_html():
-    return FileResponse(os.path.join(BASE_DIR, "models.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "models.html"))
+
+@app.get("/analysis.html")
+@app.get("/analysis")
+def serve_analysis_html():
+    return FileResponse(os.path.join(FRONTEND_DIR, "analysis.html"))
+
+@app.get("/results.html")
+def serve_results_html():
+    return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
 
 
-css_dir = os.path.join(BASE_DIR, "css")
+css_dir = os.path.join(FRONTEND_DIR, "css")
 if os.path.exists(css_dir):
     app.mount("/css", StaticFiles(directory=css_dir), name="css")
 
-js_dir = os.path.join(BASE_DIR, "js")
+js_dir = os.path.join(FRONTEND_DIR, "js")
 if os.path.exists(js_dir):
     app.mount("/js", StaticFiles(directory=js_dir), name="js")
+
 
 test_cases_dir = os.path.join(BASE_DIR, "test_cases")
 if os.path.exists(test_cases_dir):
     app.mount("/test_cases", StaticFiles(directory=test_cases_dir), name="test_cases")
+
+reports_dir = os.path.join(BASE_DIR, "reports")
+if os.path.exists(reports_dir):
+    app.mount("/reports", StaticFiles(directory=reports_dir), name="reports")
+
+
+# -----------------------------------------------------------------------------
+# Post-Flight Telemetry & Sensor Suite Ablation API Endpoints
+# -----------------------------------------------------------------------------
+class AblationRunRequest(BaseModel):
+    scenario: str = Field(default="01_nominal_sounding_flight")
+    feature_set: str = Field(default="Full_Suite")
+    dataset_mode: str = Field(default="testing")
+
+@app.get("/api/analysis/reports-zip")
+def download_reports_zip():
+    """Packages all 10 verified PDF flight reports and all_missions_summary.csv into a ZIP."""
+    pdf_dir = os.path.join(BASE_DIR, "reports", "pdf")
+    summary_csv = os.path.join(BASE_DIR, "reports", "all_missions_summary.csv")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        if os.path.exists(summary_csv):
+            zf.write(summary_csv, arcname="all_missions_summary.csv")
+        if os.path.exists(pdf_dir):
+            for fname in sorted(os.listdir(pdf_dir)):
+                if fname.endswith(".pdf"):
+                    zf.write(os.path.join(pdf_dir, fname), arcname=os.path.join("pdf_reports", fname))
+    zip_buffer.seek(0)
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=Cognitive_CanSat_Flight_Reports.zip"}
+    )
+
+@app.get("/api/analysis/ablation-data")
+def get_ablation_benchmarks():
+    """Return precomputed sensor suite ablation benchmarks for training and testing data."""
+    ablation_file = os.path.join(BASE_DIR, "ml", "ablation_benchmarks.json")
+    if os.path.exists(ablation_file):
+        try:
+            with open(ablation_file, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(status_code=404, detail="Ablation data not found")
+
+@app.get("/api/analysis/scenarios")
+def list_flight_scenarios():
+    """Return list of all 10 flight scenarios and key summary metrics."""
+    summary_path = os.path.join(BASE_DIR, "reports", "all_missions_summary.csv")
+    if os.path.exists(summary_path):
+        try:
+            df = pd.read_csv(summary_path)
+            return {"status": "success", "scenarios": df.to_dict(orient="records")}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "error", "message": "Summary CSV not found"}
+
+@app.get("/api/analysis/scenario/{scenario_name}")
+def get_scenario_telemetry(scenario_name: str):
+    """Return time-series telemetry and calculated kinematics for interactive graphing."""
+    clean_name = scenario_name.replace(".csv", "")
+    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
+    if not os.path.exists(csv_path):
+        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
+
+    try:
+        df = pd.read_csv(csv_path).bfill().ffill()
+        n = len(df)
+        dt = 0.8
+        time_arr = (np.arange(n) * dt).tolist()
+
+        from scipy.signal import savgol_filter
+        alt_raw = df['altitude'].values
+        if n >= 7:
+            w = min(11, n // 2 * 2 + 1)
+            p = min(3, w - 2)
+            alt_smooth = savgol_filter(alt_raw, w, p)
+        else:
+            alt_smooth = alt_raw
+
+        vel = np.gradient(alt_smooth, dt)
+        accel_mag = (np.sqrt(df['ax']**2 + df['ay']**2 + df['az']**2)).values if {'ax', 'ay', 'az'}.issubset(df.columns) else np.ones(n)
+
+        p0 = 1013.25
+        p = np.clip(df['pressure'].values, 10.0, 1500.0)
+        t_k = df['temp'].values + 273.15
+        pot_temp = t_k * (p0 / p) ** 0.286 - 273.15
+
+        stride = max(1, n // 200)
+        indices = list(range(0, n, stride))
+        if (n - 1) not in indices:
+            indices.append(n - 1)
+
+        return {
+            "status": "success",
+            "scenario": clean_name,
+            "total_samples": n,
+            "time": [round(float(time_arr[i]), 1) for i in indices],
+            "altitude_raw": [round(float(alt_raw[i]), 1) for i in indices],
+            "altitude_smoothed": [round(float(alt_smooth[i]), 1) for i in indices],
+            "velocity": [round(float(vel[i]), 2) for i in indices],
+            "accel_mag": [round(float(accel_mag[i]), 2) for i in indices],
+            "temp": [round(float(df['temp'].iloc[i]), 1) for i in indices],
+            "pressure": [round(float(df['pressure'].iloc[i]), 1) for i in indices],
+            "potential_temp": [round(float(pot_temp[i]), 1) for i in indices],
+            "kpis": {
+                "max_altitude_m": round(float(np.max(alt_smooth)), 1),
+                "time_to_apogee_s": round(float(time_arr[int(np.argmax(alt_smooth))]), 1),
+                "max_ascent_vel_mps": round(float(np.max(vel)), 1),
+                "avg_descent_vel_mps": round(float(np.mean(vel[vel < 0])), 1) if np.any(vel < 0) else 0.0,
+                "peak_g_shock": round(float(np.max(accel_mag)), 2),
+                "touchdown_impact_g": round(float(accel_mag[-1]), 2)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/analysis/run-ablation")
+def run_live_ablation(req: AblationRunRequest):
+    """Simulates live model ablation / sensor dropout on selected scenario testing data."""
+    ablation_file = os.path.join(BASE_DIR, "ml", "ablation_benchmarks.json")
+    if os.path.exists(ablation_file):
+        with open(ablation_file, "r") as f:
+            data = json.load(f)
+        mode = req.dataset_mode if req.dataset_mode in ["training", "testing"] else "testing"
+        records = [r for r in data[mode] if r["scenario"] == req.scenario.replace(".csv", "")]
+        selected = next((r for r in records if r["feature_set"] == req.feature_set), None)
+        return {
+            "status": "success",
+            "scenario": req.scenario,
+            "feature_set": req.feature_set,
+            "dataset_mode": mode,
+            "result": selected,
+            "all_suites_for_scenario": records,
+            "module_impact": data.get("module_impact", {})
+        }
+    raise HTTPException(status_code=404, detail="Ablation data unavailable")
+
+# -----------------------------------------------------------------------------
+# Mission Database & Post-Flight Review (PFR) Persistence API
+# -----------------------------------------------------------------------------
+class MissionStartRequest(BaseModel):
+    name: str = Field(default="Live Flight Test", description="Human-readable mission name")
+    callsign: str = Field(default="CANSAT-1", description="Vehicle radio callsign")
+    operator: str = Field(default="Flight Controller", description="Operator callsign / name")
+    notes: Optional[str] = Field(None, description="Pre-flight briefing or weather notes")
+    mission_id: Optional[str] = Field(None, description="Custom mission ID")
+
+class TelemetryBatchRequest(BaseModel):
+    mission_id: str
+    records: List[Dict[str, Any]]
+
+class MissionFinishRequest(BaseModel):
+    pad_baseline_alt: Optional[float] = None
+
+class EventLogPayload(BaseModel):
+    timestamp_ms: int
+    event_type: str
+    severity: str = "INFO"
+    description: str
+
+@app.post("/api/db/missions/start")
+def start_db_mission(req: MissionStartRequest):
+    """Arm and create a new mission session in SQLite."""
+    try:
+        mission = database.create_mission(
+            name=req.name,
+            callsign=req.callsign,
+            operator=req.operator,
+            notes=req.notes,
+            mission_id=req.mission_id
+        )
+        return {"status": "success", "mission_id": mission["id"], "mission": mission}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/db/missions/telemetry")
+def ingest_mission_telemetry(req: TelemetryBatchRequest):
+    """Ingest a batch of telemetry packets into database for the specified mission."""
+    try:
+        count = database.insert_telemetry_batch(req.mission_id, req.records)
+        return {"status": "success", "mission_id": req.mission_id, "inserted": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/db/missions/{mission_id}/events")
+def log_mission_event(mission_id: str, payload: EventLogPayload):
+    """Log an operational event or anomaly during a mission."""
+    try:
+        event_id = database.insert_event(
+            mission_id=mission_id,
+            timestamp_ms=payload.timestamp_ms,
+            event_type=payload.event_type,
+            severity=payload.severity,
+            description=payload.description
+        )
+        return {"status": "success", "event_id": event_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/db/missions/{mission_id}/finish")
+def finish_db_mission(mission_id: str, req: Optional[MissionFinishRequest] = None):
+    """Finalize a mission, run SQL aggregations, and generate/store the PFR audit report."""
+    try:
+        pad_alt = req.pad_baseline_alt if req else None
+        report = database.finalize_mission(mission_id)
+        return {"status": "success", "mission_id": mission_id, "report": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/missions")
+def list_db_missions():
+    """List all stored missions with duration, apogee, and report status."""
+    try:
+        missions = database.list_missions()
+        return {"status": "success", "missions": missions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/missions/{mission_id}")
+def get_db_mission(mission_id: str):
+    """Retrieve metadata for a single mission."""
+    mission = database.get_mission(mission_id)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    return {"status": "success", "mission": mission}
+
+@app.get("/api/db/missions/{mission_id}/report")
+def get_db_mission_report(mission_id: str):
+    """Retrieve the stored Post-Flight Review (PFR) audit report for a mission."""
+    report = database.get_mission_report(mission_id)
+    if not report:
+        try:
+            report = database.generate_and_save_pfr_report(mission_id)
+        except Exception:
+            raise HTTPException(status_code=404, detail="Report not found for this mission")
+    return {"status": "success", "report": report.get("parsed_json", report), "raw": report}
+
+@app.get("/api/db/missions/{mission_id}/telemetry")
+def get_db_mission_telemetry(mission_id: str, limit: Optional[int] = None):
+    """Retrieve time-series telemetry records for historic replay and charting."""
+    records = database.get_mission_telemetry(mission_id, limit=limit)
+    return {"status": "success", "mission_id": mission_id, "count": len(records), "records": records, "telemetry": records}
+
+@app.delete("/api/db/missions/{mission_id}")
+def delete_db_mission(mission_id: str):
+    """Delete a mission and all associated records and reports."""
+    deleted = database.delete_mission(mission_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    return {"status": "success", "deleted": True, "deleted_mission_id": mission_id}
+
+@app.delete("/api/db/missions")
+def purge_all_db_missions():
+    """Purge all recorded flight missions, resetting telemetry, reports, and events."""
+    try:
+        deleted_count = database.purge_all_missions()
+        return {"status": "success", "deleted_missions": deleted_count, "purged": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/stats")
+def get_db_stats():
+    """Retrieve overall SQLite database storage metrics, row counts, and health."""
+    try:
+        stats = database.get_database_stats()
+        return {"status": "success", "stats": stats}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/db/download")
+def download_sqlite_database():
+    """Download the raw SQLite database file (cansat_missions.db) for external analysis."""
+    db_path = database.DEFAULT_DB_PATH
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="Database file not found on disk")
+    return FileResponse(
+        path=db_path,
+        filename="cansat_missions.db",
+        media_type="application/x-sqlite3"
+    )
+
+@app.get("/api/db/missions/{mission_id}/export/csv")
+def export_mission_telemetry_csv(mission_id: str):
+    """Download standard CanSat CSV formatted telemetry for the specified mission."""
+    csv_content = database.export_mission_csv(mission_id)
+    if not csv_content:
+        raise HTTPException(status_code=404, detail="No telemetry records found for this mission")
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={mission_id}_telemetry.csv"
+        }
+    )
 
 @app.get("/api/latest_telemetry")
 def get_latest_telemetry():
@@ -567,9 +884,9 @@ async def websocket_serial_bridge(websocket: WebSocket):
             if websocket in serial_subscribers:
                 serial_subscribers.remove(websocket)
             remaining = len(serial_subscribers)
-        print(f"[WebSocket] Serial client disconnected. (Remaining: {remaining})")
         if remaining == 0:
             manager.stop()
+
 
 
 

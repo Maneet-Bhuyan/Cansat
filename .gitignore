@@ -23,3 +23,7 @@ drivers/
 scratch/
 tests/scratch/
 *.backup.*
+*.db
+*.sqlite
+*.sqlite3
+*.stl
