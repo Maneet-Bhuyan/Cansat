@@ -22,6 +22,8 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from backend.core.telemetry_analyzer import TelemetryQualityAnalyzer
+
 # Suppress minor version warnings for clean telemetry logs
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -433,6 +435,34 @@ def run_live_ablation(req: AblationRunRequest):
             "module_impact": data.get("module_impact", {})
         }
     raise HTTPException(status_code=404, detail="Ablation data unavailable")
+
+class TelemetryQualityRequest(BaseModel):
+    csv_content: str = Field(..., description="Raw CSV string content of flight telemetry")
+    nominal_interval_sec: Optional[float] = Field(0.8, description="Expected sampling interval in seconds")
+    gap_threshold_sec: Optional[float] = Field(2.0, description="Outage duration threshold in seconds")
+
+@app.get("/api/analysis/quality/{scenario_name}")
+def get_scenario_quality(scenario_name: str, nominal_dt: float = 0.8, gap_threshold: float = 2.0):
+    """Analyze telemetry data quality, packet completeness, and temporal reliability for a scenario."""
+    clean_name = scenario_name.replace(".csv", "")
+    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
+    if not os.path.exists(csv_path):
+        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
+    analyzer = TelemetryQualityAnalyzer(nominal_interval_sec=nominal_dt, gap_threshold_sec=gap_threshold)
+    report = analyzer.analyze_file(csv_path)
+    data = report.to_dict()
+    data["scenario"] = clean_name
+    return data
+
+@app.post("/api/analysis/quality/analyze-csv")
+def analyze_custom_csv_quality(req: TelemetryQualityRequest):
+    """Analyze data quality and integrity on custom uploaded flight CSV content."""
+    analyzer = TelemetryQualityAnalyzer(
+        nominal_interval_sec=req.nominal_interval_sec or 0.8,
+        gap_threshold_sec=req.gap_threshold_sec or 2.0
+    )
+    report = analyzer.analyze_csv_string(req.csv_content)
+    return report.to_dict()
 
 @app.get("/api/latest_telemetry")
 def get_latest_telemetry():
