@@ -750,6 +750,8 @@ Tile 12 and the OpenCV viewer (`firmware/ground_cam_viewer.py`) evaluate aerial 
 
    $$\theta_{\text{evade}} = \left(\arctan2(dx, -dy) \times \frac{180}{\pi} + 360\right) \pmod{360} \quad [^\circ]$$
 
+   *Note: The current flight unit operates with a passive recovery parachute, downlinking the computed EVADE advisory vector to the ground station in real-time. Active aerodynamic actuation via steerable ram-air parafoils and micro-servo winches is structured as a future iteration research concept.*
+
 4. **Visible Atmospheric Resistant Index (VARI)**:
    A remote sensing index estimating vegetative surface health while minimizing aerosol scattering:
 

@@ -1606,3 +1606,26 @@ DYNAMIC BOUNDED CHART SCALING (ALTITUDE & KINEMATICS)
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: BOUNDED CHART SCALING OPERATIONAL AND VERIFIED
+--------------------------------------------------------------------------------
+MISSION TERMINOLOGY & ADVISORY EVASION RECOVERY ARCHITECTURE REFINEMENT
+--------------------------------------------------------------------------------
+
+[2026-09-21T06:05:00Z] ACTION: Synchronized documentation and frontend presentations with operational flight reality. Refined flight phase terminology from rigid booster-specific phrasing to general atmospheric sounding/ascent kinematics, and explicitly documented that the current flight unit operates with a passive recovery parachute downlinking advisory evasion vectors, while active parafoil winching remains a future concept.
+
+1. Delivered Enhancements:
+   - frontend/analysis.html, models.html, results.html, tinyml.html, index.html:
+     * Updated terminology across mission overview, model descriptions, and results to emphasize general sounding ascent, atmospheric drops, and landing safety assessments.
+     * Clarified that TinyLandingNet downlinks real-time advisory evasion headings rather than driving active airborne steering servos on the current physical unit.
+     * Explicitly marked steerable ram-air parafoil actuation with micro-servo winches as a future research iteration.
+   - frontend/js/mission-slider.js & frontend/js/tinyml-demo.js:
+     * Aligned mission scrubber phase names and event log strings ("Pre-Launch & Ascent", "Apogee Separation & Chute Deploy").
+     * Updated decision badges to reflect advisory evasion headings (e.g. "CRITICAL HAZARD - ADVISORY EVADE 090 DEG TOWARD OPEN SECTOR").
+   - readme.md:
+     * Added architectural clarification under SLAI section noting passive parachute operation and real-time advisory vector downlink to ground station.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - python -m unittest tests/test_database.py: 5/5 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: DOCUMENTATION & FRONTEND TERMINOLOGY SYNCHRONIZED
