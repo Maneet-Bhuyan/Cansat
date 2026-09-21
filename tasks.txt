@@ -126,6 +126,41 @@ profiles, sensor accuracy auditing, and statistical post-flight analysis.
     - Embedded into backend/app.py before results.html (/analysis.html and /analysis routes, ZIP streamer, and ablation endpoints).
     - Synchronized site-wide navigation across all 6 pages (index, tinyml, dashboard, models, analysis, results).
 
+[X] TASK DA-07: SQLITE FLIGHT DATABASE (WAL), BATCH TELEMETRY INGESTION & PFR AUDIT ENGINE (COMPLETED)
+    - Architected persistent SQLite database in Write-Ahead Logging (WAL) mode at data/cansat_missions.db with foreign key enforcement and Windows-safe connection pooling.
+    - 4 normalized relational tables:
+      * missions: Master flight metadata, mission duration, operator callsign, and flight state transitions.
+      * telemetry_records: High-rate 9-DOF IMU, barometric altimetry, and GNSS kinematic records with composite indexing on (mission_id, timestamp_ms).
+      * mission_reports: Post-Flight Review (PFR) regulatory audit reports, AGL/MSL apogees, max shock G, terminal descent velocities, compliance envelope checks (6-11 m/s), horizontal drift coordinates, and battery discharge metrics.
+      * mission_events: Operational event logging for stage separation, parachute deployment, and anomaly warnings.
+    - Implemented REST API in backend/app.py:
+      * POST /api/db/missions/start, POST /api/db/missions/telemetry, POST /api/db/missions/{id}/events, POST /api/db/missions/{id}/finish.
+      * GET /api/db/missions, GET /api/db/missions/{id}, GET /api/db/missions/{id}/report, GET /api/db/missions/{id}/telemetry, DELETE /api/db/missions/{id}.
+    - Ground Station Integration in dashboard.html:
+      * Live DB mission recording badge (#db-mission-badge) with ARM REC / FINISH toggle and active pulsing indicator.
+      * Start Mission modal (#startMissionModal) for setting mission name, callsign, and operator notes.
+      * Client-side micro-batching buffer flushing every 10 packets or 2.5 seconds.
+      * Retroactive 1-click flight archiving ([SAVE FLIGHT TO DB]) streaming existing in-memory buffers in 200-packet chunks.
+      * Historical PFR report browser (#db-mission-history-select) with instant markdown export and 1-click [LOAD INTO REPLAY SUITE] trajectory playback.
+    - Verified with comprehensive test suite: tests/test_database.py (100% pass) and FastAPI TestClient end-to-end integration.
+
+[X] TASK DA-08: GROUND STATION DATABASE EXPLORER, MISSION DELETION & DIRECT SQL TELEMETRY ACCESS (COMPLETED)
+    - Ground Station Database Explorer Modal (#dbManagerModal in dashboard.html):
+      * Live telemetry and database metrics cards: Recorded Missions, Stored Packets, Disk Database Size (KB/MB), Storage Engine path.
+      * Multi-tab interface: Flight Sessions Explorer vs Raw SQL Telemetry Viewer.
+      * Raw SQL Telemetry Viewer: Mission selector and responsive table rendering raw rows with anomaly badges and phase indicators.
+      * Header strip shortcut ([DATABASE]) and sidebar quick-navigation item.
+    - Advanced Management & Deletion Engine:
+      * Single-mission cascaded deletion (DELETE /api/db/missions/{id}) wiping telemetry, reports, and events.
+      * In-modal inline delete buttons in flight table and Post-Flight Review modal (#pfr-del-db-btn).
+      * Nuclear database purge (DELETE /api/db/missions) resetting sqlite_sequence with operator confirmation.
+    - Direct Access & Data Portability:
+      * Raw SQLite file binary download (GET /api/db/download) with WAL checkpoint flush for external analysis (DB Browser for SQLite).
+      * Full 25-column flight telemetry CSV export (GET /api/db/missions/{id}/export/csv).
+      * Live storage health diagnostics (GET /api/db/stats).
+    - Hardened against mission ID collisions: Appended random 4-character hex suffix to MSN timestamp ID.
+    - Verified with automated tests in tests/test_database.py (4 test suites, 100% pass).
+
 ================================================================================
 3. SHUBHAM — WEB DEVELOPMENT, DASHBOARD PROCESSES & BATCH TESTING
 

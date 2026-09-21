@@ -129,7 +129,10 @@ class AltitudeKalmanFilter:
 
 
 import os
-import joblib
+try:
+    import joblib
+except ImportError:
+    joblib = None
 from typing import Dict, Any, Optional, Tuple, List
 
 
@@ -164,7 +167,7 @@ class KinematicsEngine:
         try:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             model_path = os.path.join(base_dir, "ml", "saved_models", "sensor_calibrator.joblib")
-            if os.path.exists(model_path):
+            if joblib is not None and os.path.exists(model_path):
                 artifact = joblib.load(model_path)
                 if isinstance(artifact, dict) and "pipeline" in artifact:
                     self.ml_pipeline = artifact["pipeline"]

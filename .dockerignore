@@ -1,0 +1,79 @@
+# ==============================================================================
+# Hardware Firmware & Embedded Assets
+# ==============================================================================
+**/*.ino
+**/*.hex
+**/*.bin
+**/*.elf
+**/*.c
+**/*.cpp
+**/*.h
+model_data.h
+firmware/
+hardware/
+.pio/
+.arduino15/
+
+# ==============================================================================
+# Heavy Training Datasets, Checkpoints & Raw Media
+# ==============================================================================
+**/*.csv
+!test_cases/*.csv
+**/*.parquet
+**/*.h5
+**/*.hdf5
+**/*.pt
+**/*.pth
+**/*.ckpt
+**/*.onnx
+ml/training/
+ml/raw_data/
+datasets/
+recordings/
+*.mp4
+*.avi
+*.mkv
+*.bag
+
+# ==============================================================================
+# Local Databases & Runtime States
+# ==============================================================================
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/*.log
+logs/
+.coverage
+htmlcov/
+
+# ==============================================================================
+# Git, Environments & IDE Caches
+# ==============================================================================
+.git
+.gitignore
+.gitattributes
+.github/
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ==============================================================================
+# Documentation, Diagrams & OS Metadata
+# ==============================================================================
+cansat_gitdiagram.jpg
+*.png
+*.jpg
+*.jpeg
+*.drawio
+.DS_Store
+Thumbs.db
