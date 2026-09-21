@@ -128,7 +128,7 @@
       </h1>
 
       <p class="hero-subtitle" style="font-size: 1.05rem; line-height: 1.7;">
-        A high-speed rocket flight produces noisy, fluctuating sensor data. Instead of relying on rigid hardcoded formulas or slow human commands from the ground, the Cognitive CanSat utilizes an integrated suite of six specialized machine learning models. Together, they give the probe real-time sight, spatial reflexes, self-calibration, and predictive landing safety.
+        Atmospheric sounding flights and rapid descents produce noisy, fluctuating sensor data. Instead of relying on rigid hardcoded formulas or slow human commands from the ground, the Cognitive CanSat utilizes an integrated suite of six specialized machine learning models. Together, they give the probe real-time terrain perception, rapid hazard evaluation, self-calibration, and predictive landing safety.
       </p>
 
       <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
@@ -160,7 +160,7 @@
           <div class="card-badge" style="color: var(--accent-cyan); width: fit-content; margin-bottom: 0.75rem;">Domain 1 // In The Air</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Onboard Edge Microcontroller (ESP32-CAM)</h3>
           <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">
-            Runs ultra-compact neural networks directly inside 520 KB of internal chip memory at 240 MHz. Because there is no internet connection and no time to wait for a radio signal, this model acts like the human spinal reflex: it sees danger and steers instantly in 38 milliseconds.
+            Runs ultra-compact neural networks directly inside 520 KB of internal chip memory at 240 MHz. Because there is no internet connection and no time to wait for a radio signal, this model acts like an airborne reflex: it identifies ground hazards and computes evasion vectors instantly in 38 milliseconds.
           </p>
           <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-cyan);">
             Primary Model: TinyLandingNet (Hazard Vision)
@@ -206,7 +206,7 @@
           
           <div class="analogy-box">
             <div class="analogy-title">Plain English Analogy</div>
-            The CanSat's eyes and visual reflexes. Like looking out of a falling plane, recognizing whether you are over trees, roads, or grass, and pointing the steering parachute toward safe grass before you hit the ground.
+            The CanSat's downward eyes and visual perception. Like looking out during descent, recognizing whether the terrain beneath is trees, roads, or open grass, and evaluating safe landing areas before touchdown.
           </div>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
@@ -221,7 +221,7 @@
           </ul>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            <strong>What it predicts:</strong> The safest landing sector and an evasion heading angle (e.g. 315&deg; northwest) to steer the parachute lines autonomously.
+            <strong>What it predicts:</strong> The safest landing sector and an evasion heading angle (e.g. 315&deg; northwest) to determine the optimal evasion vector and downlink landing safety advisories.
           </p>
 
           <div class="model-spec-list">
@@ -255,7 +255,7 @@
 
           <div class="analogy-box">
             <div class="analogy-title">Plain English Analogy</div>
-            The automated flight director. Rocket launches happen too quickly for humans to press buttons. This model watches all sensors at once like an experienced pilot to know exactly when the rocket stops climbing and starts falling.
+            The automated flight director. Sounding flights and rapid atmospheric transitions happen too quickly for manual intervention. This model watches all sensors at once to identify exactly when the CanSat transitions from ascent to apogee burst and parachute descent.
           </div>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
@@ -267,8 +267,8 @@
           </p>
 
           <ul style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.75rem 0 1rem 1.25rem; line-height: 1.6;">
-            <li><code>PAD_IDLE</code> (100% recall): Sitting on the launchpad before ignition.</li>
-            <li><code>BALLOON_ASCENT</code> (99.7% recall): High-speed climbing through the atmosphere.</li>
+            <li><code>PAD_IDLE</code> (100% recall): Stationary on the ground pad before ascent.</li>
+            <li><code>BALLOON_ASCENT</code> (99.7% recall): Ascending through the atmospheric sounding profile.</li>
             <li><code>APOGEE_BURST</code>: The precise moment upward velocity hits zero at maximum height.</li>
             <li><code>PARACHUTE_DESCENT</code> (98.1% recall): Steady downward float under canopy.</li>
             <li><code>TOUCHDOWN_RECOVERY</code> (100% recall): Impact detected and resting on the ground.</li>
@@ -400,15 +400,15 @@
 
           <div class="analogy-box">
             <div class="analogy-title">Plain English Analogy</div>
-            The altitude forecaster. Just like a basketball player knows whether a shot will reach the hoop the moment it leaves their fingers, this model watches the first few seconds of the rocket burn and calculates exactly how high it will soar before falling.
+            The altitude forecaster. Just like a basketball player knows whether a shot will reach the hoop the moment it leaves their fingers, this model watches the initial ascent dynamics and calculates exactly how high the CanSat will soar before apogee and descent.
           </div>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            <strong>What it does:</strong> Analyzes early rocket motor burn dynamics, thrust acceleration curves, and atmospheric pressure decay during the initial 5 to 10 seconds of launch.
+            <strong>What it does:</strong> Analyzes early ascent kinematics, vertical climb velocity, and atmospheric pressure decay during the initial 5 to 10 seconds of flight.
           </p>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
-            <strong>What it predicts:</strong> The maximum peak altitude (apogee in meters AGL) the rocket will attain before it starts falling. This enables mission controllers to know if the launch will clear competition flight ceilings or drift outside safety perimeters.
+            <strong>What it predicts:</strong> The maximum peak altitude (apogee in meters AGL) the CanSat will attain before descent begins. This enables mission controllers to verify whether the flight profile clears target ceilings or will drift outside recovery perimeters.
           </p>
 
           <div class="model-spec-list">
@@ -446,7 +446,7 @@
           </div>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            <strong>What it does:</strong> High-g launches can cause solder joints to fracture, parachutes to tangle, or radio packets to corrupt. Instead of requiring engineers to watch 17 graphs simultaneously, this unsupervised model continuously evaluates all telemetry in high-dimensional space.
+            <strong>What it does:</strong> High dynamic loads during ascent and parachute deployment can cause solder joints to fracture, canopies to tangle, or radio packets to corrupt. Instead of requiring engineers to watch 17 graphs simultaneously, this unsupervised model continuously evaluates all telemetry in high-dimensional space.
           </p>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-top: 0.5rem;">
@@ -537,7 +537,7 @@
               <td style="font-weight: 600; color: #ffffff;">Apogee Peak Regressor</td>
               <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
               <td>Gradient Boosting</td>
-              <td>Rocket height forecaster during early ascent</td>
+              <td>Peak apogee forecaster during early ascent</td>
               <td>Maximum altitude in meters &amp; time to apogee</td>
               <td>R² = 0.9951 (24.1m RMSE)</td>
             </tr>

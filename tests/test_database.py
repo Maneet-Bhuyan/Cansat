@@ -286,12 +286,16 @@ class TestCanSatDatabase(unittest.TestCase):
             client = TestClient(app)
             use_client = True
         except (ImportError, RuntimeError):
-            use_client = False
-            from backend.app import (
-                start_db_mission, get_db_stats, ingest_mission_telemetry,
-                export_mission_telemetry_csv, delete_db_mission,
-                MissionStartRequest, TelemetryBatchRequest
-            )
+            try:
+                from backend.app import (
+                    start_db_mission, get_db_stats, ingest_mission_telemetry,
+                    export_mission_telemetry_csv, delete_db_mission,
+                    MissionStartRequest, TelemetryBatchRequest
+                )
+                use_client = False
+            except (ImportError, RuntimeError) as e:
+                self.skipTest(f"FastAPI or backend dependencies not installed: {e}")
+                return
 
         if use_client:
             # 1. Stats
@@ -361,6 +365,73 @@ class TestCanSatDatabase(unittest.TestCase):
             d_resp = delete_db_mission(m_id)
             self.assertEqual(d_resp["status"], "success")
             self.assertTrue(d_resp["deleted"])
+ 
+    def test_telemetry_batch_safe_parsing_and_camel_case(self):
+        """Verify insert_telemetry_batch handles None values, NaN, and camelCase keys gracefully."""
+        m = create_mission(
+            name="Safe Parsing Test Flight",
+            callsign="SAFE-01",
+            db_path=self.db_path
+        )
+        mission_id = m["id"]
+
+        records = [
+            {
+                # Record with None values (e.g. before GPS lock)
+                "timestamp_ms": None,
+                "met_seconds": None,
+                "altitude": 150.5,
+                "pressure": 1005.2,
+                "temp": 22.0,
+                "humidity": None,
+                "battery_voltage": None,
+                "ax": None, "ay": None, "az": None,
+                "gx": None, "gy": None, "gz": None,
+                "lat": None, "lon": None,
+                "v_spd": None,
+                "accel_mag": None,
+                "pitch": None, "roll": None,
+                "air_density": None, "dew_point": None, "lapse_rate": None,
+                "flight_phase": None,
+                "anomaly_score": None,
+                "is_anomaly": None
+            },
+            {
+                # Record using camelCase keys (common from JS frontend)
+                "timestamp_ms": 2000,
+                "met_seconds": 1.0,
+                "altitude": 160.0,
+                "pressure": 1004.0,
+                "temp": 21.8,
+                "humidity": 55.0,
+                "batteryVoltage": 4.12,
+                "ax": 0.05, "ay": 0.02, "az": 1.01,
+                "gx": 0.1, "gy": 0.0, "gz": -0.1,
+                "lat": 28.6139, "lon": 77.2090,
+                "vSpd": 9.5,
+                "accelMag": 1.02,
+                "pitch": 1.5, "roll": -0.8,
+                "airDensity": 1.21, "dewPoint": 12.0, "lapseRate": 0.65,
+                "flightPhase": "ASCENT",
+                "anomalyScore": 0.05,
+                "isAnomaly": False
+            }
+        ]
+
+        inserted = insert_telemetry_batch(mission_id, records, db_path=self.db_path)
+        self.assertEqual(inserted, 2)
+
+        stored = get_mission_telemetry(mission_id, db_path=self.db_path)
+        self.assertEqual(len(stored), 2)
+        # Verify defaults were applied for None values
+        self.assertEqual(stored[0]["lat"], 0.0)
+        self.assertEqual(stored[0]["lon"], 0.0)
+        self.assertEqual(stored[0]["battery_voltage"], 4.2)
+        self.assertEqual(stored[0]["flight_phase"], "PAD_IDLE")
+        # Verify camelCase was mapped correctly
+        self.assertAlmostEqual(stored[1]["battery_voltage"], 4.12, places=2)
+        self.assertAlmostEqual(stored[1]["v_spd"], 9.5, places=2)
+        self.assertEqual(stored[1]["flight_phase"], "ASCENT")
 
 
 if __name__ == "__main__":

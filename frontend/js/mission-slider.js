@@ -11,15 +11,15 @@
   const PHASES = [
     {
       id: 'boost',
-      name: 'Rocket Launch & Boost',
+      name: 'Pre-Launch & Ascent',
       time: 0,
       alt: 0,
       vspd: 32.5,
       accel: 4.8,
-      packetType: 'CALIBRATION & BOOST TELEMETRY (CSV @ 9600)',
+      packetType: 'CALIBRATION & ASCENT TELEMETRY (CSV @ 9600)',
       cameraState: 'LAUNCH_PAD',
-      cameraDesc: 'Camera unpowered in launch tube. Optical aperture protected from booster particulate.',
-      eventLog: 'T+ 00:00.0 - Ground pad baseline established (1013.25 hPa). High-G booster ignition detected.'
+      cameraDesc: 'Camera initialized on pad. Sensors calibrated and armed for sounding ascent.',
+      eventLog: 'T+ 00:00.0 - Ground pad baseline established (1013.25 hPa). Flight ascent initiated.'
     },
     {
       id: 'apogee',
@@ -35,7 +35,7 @@
     },
     {
       id: 'separation',
-      name: 'Separation & Ejection Shock',
+      name: 'Apogee Separation & Chute Deploy',
       time: 50,
       alt: 1150,
       vspd: -4.2,
@@ -43,7 +43,7 @@
       packetType: 'EJECTION_SHOCK_TELEMETRY (CSV @ 9600)',
       cameraState: 'TUMBLE_HORIZON',
       cameraDesc: 'Rapid angular rotation during separation. IMU complementary filter damping attitude tumble.',
-      eventLog: 'T+ 00:50.0 - Ejection shock transient (3.6G). CanSat clears rocket airframe.'
+      eventLog: 'T+ 00:50.0 - Ejection shock transient (3.6G). Recovery parachute deployed.'
     },
     {
       id: 'descent',
@@ -66,7 +66,7 @@
       accel: 1.01,
       packetType: 'DUAL-LINK: LoRa Telemetry + ESP-NOW 3x3 Hazard Vector',
       cameraState: 'TINYML_ACTIVE_GRID',
-      cameraDesc: 'OV3660 captures QVGA (320x240) frames at 10 FPS; each sector tile is cropped and resized to 64x64 for TinyLandingNet. Classifies 3x3 sectors: Center=HAZARD, commands EVADE 090.',
+      cameraDesc: 'OV3660 captures QVGA (320x240) frames at 10 FPS; each sector tile is cropped and resized to 64x64 for TinyLandingNet. Classifies 3x3 sectors: Center=HAZARD, downlinks EVADE 090 advisory vector.',
       eventLog: 'T+ 02:00.0 - Altitude < 500m. Edge TinyML active. Obstacle detected in center nadir sector. Evasion vector calculated.'
     },
     {

@@ -274,6 +274,24 @@ Then browse to:
 http://localhost:8000/
 ```
 
+### 4. Docker container deployment (Render, Hugging Face Spaces, Local Docker)
+
+To deploy the entire ground station with its machine learning server and telemetry bridge in a lightweight, self-contained container:
+
+```bash
+# Build the Docker image
+docker build -t cansat-ground-station .
+
+# Run the container (binds to host port 8000)
+docker run -p 8000:8000 cansat-ground-station
+```
+
+To bind to a custom port or deploy on cloud platforms providing dynamic `$PORT`:
+
+```bash
+docker run -e PORT=8080 -p 8080:8080 cansat-ground-station
+```
+
 ## Atmospheric physics and kinematic formulation
 
 The ground station performs real-time mathematical derivations on incoming telemetry packets:
@@ -408,8 +426,8 @@ The Cognitive CanSat system features an embedded SQLite database engine operatin
  ┌────────────────────────────────────────────────────────────────────────┐
  │                  GROUND STATION WEB HUD (dashboard.html)               │
  │  - Real-Time 3D Attitude, Charts & Sensor Processing Engine            │
- │  - Client-Side Micro-Batching Buffer (flushes 10 pkts or every 2.5s)   │
- │  - Live Recording Controller: [ARM REC] / [FINISH] / [SAVE FLIGHT]     │
+ │  - Client-Side Micro-Batching Buffer (flushes 10 pkts or every 2.0s)   │
+ │  - Live Recording: [AUTO-REC: ON] / [ARM REC] / [FINISH] / [SAVE]     │
  └───────────────────────────────────┬────────────────────────────────────┘
                                      │ JSON REST API (HTTP POST)
                                      ▼
@@ -659,6 +677,12 @@ The Ground Station (`dashboard.html`) embeds an interactive aerospace Database E
    - **`[PURGE ALL]`**: Executes cascaded atomic wipe of all flight sessions (`DELETE /api/db/missions`) and resets auto-increment sequences.
    - **PFR Deletion Action**: Added a red **`[DELETE MISSION]`** button in the Post-Flight Review modal header when viewing historical records.
 
+4. **Automatic Flight Telemetry Recording**:
+   - **Zero-Configuration Logging**: As soon as valid telemetry packets arrive from the CanSat via direct USB Web Serial or the Python WebSocket bridge, the ground station automatically provisions a new mission session (`Auto Flight YYYY-MM-DD_HHMMSS`) in SQLite.
+   - **Zero Packet Loss**: Incoming packets during initial mission creation are buffered client-side and flushed immediately upon session allocation.
+   - **Auto-Recording Toggle**: The top HUD features an `[AUTO-REC: ON]` button allowing operators to toggle between automatic logging and manual arming (`[ARM REC]`).
+   - **Post-Flight Cooldown**: Finalizing a flight introduces a 10-second cooldown to prevent stationary landed packets from inadvertently creating duplicate missions.
+
 ---
 
 ## Machine learning pipeline
@@ -715,6 +739,8 @@ Tile 12 and the OpenCV viewer (`firmware/ground_cam_viewer.py`) evaluate aerial 
    $$\vec{v}_{\text{escape}} = \sum_{k=0}^{8} \left(S_k - S_{\text{center}}\right) \cdot \left(\vec{c}_k - \vec{c}_{\text{center}}\right)$$
 
    $$\theta_{\text{evade}} = \left(\arctan2(dx, -dy) \times \frac{180}{\pi} + 360\right) \pmod{360} \quad [^\circ]$$
+
+   _Note: The current flight unit operates with a passive recovery parachute, downlinking the computed EVADE advisory vector to the ground station in real-time. Active aerodynamic actuation via steerable ram-air parafoils and micro-servo winches is structured as a future iteration research concept._
 
 4. **Visible Atmospheric Resistant Index (VARI)**:
    A remote sensing index estimating vegetative surface health while minimizing aerosol scattering:
@@ -852,26 +878,6 @@ Hotkeys for rapid ground station operation (disabled during text input):
 | D     | Download CSV telemetry recording                         |
 | Esc   | Close active modal or exit maximized card view           |
 
-## System Testing & Stress Verification
-
-This project includes automated batch testing scripts to ensure the backend can handle high-frequency CanSat telemetry without data loss or bottlenecks.
-
-### Batch Testing the Machine Learning API
-
-To verify the ML endpoint's ability to process sequential data rapidly:
-
-1. Ensure the FastAPI backend is running locally (`python launch.py`).
-2. Run the ML batch test script in a separate terminal:
-   ```bash
-   python batch_test_ml.py
-   ```
-
-### Benchmark Test Results
-
-- **ML API Load Capacity:** 100/100 successful predictions in 10.18s (~9.8 req/sec sequential throughput).
-- **WebSocket Ingestion Rate:** 500 packets processed in 8.29s (~60.3 Hz throughput) with **0.0% packet loss**.
-- **System Stability:** Confirmed stable continuous operations for high-frequency Ground Station telemetry streams (1Hz–10Hz operational baseline).
-
 ## Verification
 
 The project includes comprehensive test suites for unit, firmware, and integration testing:
@@ -894,7 +900,7 @@ Validates SQLite Write-Ahead Logging (WAL) initialization, 4-table relational in
 
 ```bash
 python tests/test_firmware_protocol.py
-```
+````
 
 Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
 
@@ -938,6 +944,15 @@ python -m jupyter nbconvert --to notebook --execute test_cases/cansat_eval_ablat
 
 Executes the sensor ablation pipeline across all 10 flight scenarios, validates MetPy atmospheric potential temperature calculations, trains touchdown regressors across 4 sensor configurations, and plots prediction error comparison charts.
 
+### Batch ML API & WebSocket stress testing
+
+```bash
+python tests/batch_test_ml.py
+python tests/batch_test_ws.py
+```
+
+Validates real-time inference latency and throughput across 100 simulated telemetry packets, and tests the full-duplex WebSocket serial bridge under 500 rapid packets at 100 Hz.
+
 ## Project status
 
 This repository represents a complete, prototype-grade CanSat ground station and inference stack designed for research, simulation, and mission rehearsal workflows. It is suitable for local demonstration, hardware integration testing, and further engineering extension.
@@ -949,4 +964,7 @@ This project is provided for educational and engineering use under the MIT Licen
 ## Contact
 
 For questions or collaboration, connect through the repository issues or the project maintainer profile on GitHub.
-````
+
+```
+
+```

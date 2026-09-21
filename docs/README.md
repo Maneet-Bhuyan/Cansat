@@ -25,7 +25,7 @@ The repository is structured into focused modular directories:
 * **`reports/`**: Post-flight sounding reports, including all 10 mission PDF evaluations (`reports/pdf/`), 60+ 4-panel publication figures (`reports/figures/`), and summary metrics.
 * **`analysis/`**: Post-flight telemetry analysis, sensor ablation evaluation notebook, and figure assets.
 * **`test_cases/`**: 10 comprehensive CSV mission flight profiles covering nominal and extreme edge-case flight dynamics.
-* **`tests/`**: Automated verification test suites (`selftest.js`, `selftest.ps1`, `test_backend_core.py`, `test_database.py`, `test_firmware_protocol.py`, `test_sm.ps1`).
+* **`tests/`**: Automated verification and batch test suites (`selftest.js`, `selftest.ps1`, `test_backend_core.py`, `test_database.py`, `test_firmware_protocol.py`, `test_sm.ps1`, `batch_test_ml.py`, `batch_test_ws.py`).
 * **`scripts/`**: GPU workstation automated setup and dependency installation scripts.
 * **`docs/`**: Technical documentation, engineering manuals, mission journals, and team task trackers.
 

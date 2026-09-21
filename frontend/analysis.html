@@ -316,7 +316,7 @@
           <h3 class="card-title" style="margin-bottom: 0.5rem;">Savitzky-Golay Polynomial Filter</h3>
 
           <div class="analogy-callout">
-            <strong>Why it matters:</strong> Standard rolling average or low-pass filters introduce a delay of 1.2 to 2.5 seconds. In a rocket flight, a 2-second delay means parachute ejection triggers when the rocket is already hurtling downward. Savitzky-Golay fits a local moving polynomial, cleaning jitter with <em>zero phase lag</em>.
+            <strong>Why it matters:</strong> Standard rolling average or low-pass filters introduce a delay of 1.2 to 2.5 seconds. In a sounding flight, a 2-second delay means apogee detection and parachute deployment are identified late when the probe is already hurtling downward. Savitzky-Golay fits a local moving polynomial, cleaning jitter with <em>zero phase lag</em>.
           </div>
 
           <div class="math-formula-box">
@@ -346,7 +346,7 @@
           </div>
 
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            The resultant acceleration magnitude immediately identifies high-G booster burnout shocks, explosive parachute ejection jolts, pendulum swings, and terminal ground impact.
+            The resultant acceleration magnitude immediately identifies ascent acceleration transitions, parachute deployment line shocks, pendulum swings, and terminal ground impact.
           </p>
         </div>
 
@@ -458,13 +458,13 @@
         <div class="kpi-card">
           <div class="kpi-label">Time to Apogee</div>
           <div id="kpi-time-apogee" class="kpi-value">44.8 s</div>
-          <div class="kpi-sub">T+ Motor Burnout</div>
+          <div class="kpi-sub">T+ Ascent to Apogee</div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-label">Max Ascent Velocity</div>
           <div id="kpi-ascent-vel" class="kpi-value" style="color: var(--accent-cyan);">+32.6 m/s</div>
-          <div class="kpi-sub">Vertical Rocket Climb</div>
+          <div class="kpi-sub">Vertical Ascent Climb</div>
         </div>
 
         <div class="kpi-card">
@@ -476,7 +476,7 @@
         <div class="kpi-card">
           <div class="kpi-label">Peak G-Shock Impact</div>
           <div id="kpi-peak-g" class="kpi-value" style="color: var(--accent-amber);">3.84 G</div>
-          <div class="kpi-sub">Ejection &amp; Parachute Jerk</div>
+          <div class="kpi-sub">Deployment &amp; Parachute Jerk</div>
         </div>
 
         <div class="kpi-card">

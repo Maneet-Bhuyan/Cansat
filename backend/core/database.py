@@ -167,6 +167,27 @@ def create_mission(name: str, callsign: str = "CANSAT-1", operator: str = "Fligh
         return dict(row)
 
 
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    """Safely convert a value to float, handling None, NaN, and conversion errors."""
+    if val is None:
+        return default
+    try:
+        f = float(val)
+        return default if math.isnan(f) or math.isinf(f) else f
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_int(val: Any, default: int = 0) -> int:
+    """Safely convert a value to int, handling None and conversion errors."""
+    if val is None:
+        return default
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def insert_telemetry_batch(mission_id: str, records: List[Dict[str, Any]],
                            db_path: Optional[str] = None) -> int:
     """Insert a batch of telemetry packets into the database."""
@@ -188,36 +209,71 @@ def insert_telemetry_batch(mission_id: str, records: List[Dict[str, Any]],
     batch_params = []
     for r in records:
         # Fallbacks & conversions
-        ax = float(r.get("ax", 0.0))
-        ay = float(r.get("ay", 0.0))
-        az = float(r.get("az", 1.0))
-        accel_mag = float(r.get("accel_mag", math.sqrt(ax * ax + ay * ay + az * az)))
+        ax = _safe_float(r.get("ax"), 0.0)
+        ay = _safe_float(r.get("ay"), 0.0)
+        az = _safe_float(r.get("az"), 1.0)
+        accel_mag = _safe_float(
+            r.get("accel_mag") if r.get("accel_mag") is not None else r.get("accelMag"),
+            math.sqrt(ax * ax + ay * ay + az * az)
+        )
+
+        battery_v = r.get("battery_voltage")
+        if battery_v is None:
+            battery_v = r.get("batteryVoltage")
+
+        v_spd = r.get("v_spd")
+        if v_spd is None:
+            v_spd = r.get("vSpd")
+
+        air_dens = r.get("air_density")
+        if air_dens is None:
+            air_dens = r.get("airDensity")
+
+        dew_p = r.get("dew_point")
+        if dew_p is None:
+            dew_p = r.get("dewPoint")
+
+        lapse_r = r.get("lapse_rate")
+        if lapse_r is None:
+            lapse_r = r.get("lapseRate")
+
+        phase = r.get("flight_phase")
+        if phase is None:
+            phase = r.get("flightPhase", "PAD_IDLE")
+
+        anom_score = r.get("anomaly_score")
+        if anom_score is None:
+            anom_score = r.get("anomalyScore")
+
+        is_anom = r.get("is_anomaly")
+        if is_anom is None:
+            is_anom = r.get("isAnomaly", False)
 
         batch_params.append((
             mission_id,
-            int(r.get("timestamp_ms", 0)),
-            float(r.get("met_seconds", 0.0)),
-            float(r.get("altitude", 0.0)),
-            float(r.get("pressure", 1013.25)),
-            float(r.get("temp", 25.0)),
-            float(r.get("humidity", 50.0)),
-            float(r.get("battery_voltage", 4.2)),
+            _safe_int(r.get("timestamp_ms"), 0),
+            _safe_float(r.get("met_seconds"), 0.0),
+            _safe_float(r.get("altitude"), 0.0),
+            _safe_float(r.get("pressure"), 1013.25),
+            _safe_float(r.get("temp"), 25.0),
+            _safe_float(r.get("humidity"), 50.0),
+            _safe_float(battery_v, 4.2),
             ax, ay, az,
-            float(r.get("gx", 0.0)),
-            float(r.get("gy", 0.0)),
-            float(r.get("gz", 0.0)),
-            float(r.get("lat", 0.0)),
-            float(r.get("lon", 0.0)),
-            float(r.get("v_spd", 0.0)),
+            _safe_float(r.get("gx"), 0.0),
+            _safe_float(r.get("gy"), 0.0),
+            _safe_float(r.get("gz"), 0.0),
+            _safe_float(r.get("lat"), 0.0),
+            _safe_float(r.get("lon"), 0.0),
+            _safe_float(v_spd, 0.0),
             accel_mag,
-            float(r.get("pitch", 0.0)),
-            float(r.get("roll", 0.0)),
-            float(r.get("air_density", 1.225)),
-            float(r.get("dew_point", 15.0)),
-            float(r.get("lapse_rate", 0.65)),
-            str(r.get("flight_phase", "PAD_IDLE")),
-            float(r.get("anomaly_score", 0.0)),
-            1 if r.get("is_anomaly", False) else 0
+            _safe_float(r.get("pitch"), 0.0),
+            _safe_float(r.get("roll"), 0.0),
+            _safe_float(air_dens, 1.225),
+            _safe_float(dew_p, 15.0),
+            _safe_float(lapse_r, 0.65),
+            str(phase or "PAD_IDLE"),
+            _safe_float(anom_score, 0.0),
+            1 if bool(is_anom) else 0
         ))
 
     with get_db_connection(db_path) as conn:

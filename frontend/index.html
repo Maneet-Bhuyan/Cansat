@@ -340,7 +340,7 @@
         </h1>
 
         <p class="hero-subtitle">
-          The best way to ensure autonomous touchdown instead of obstacle collisions. Real-time edge hazard detection and descent evasion powered by ultra-low-power TinyML.
+          The best way to assess landing terrain and identify hazards in real-time. Edge hazard detection and landing safety scoring powered by ultra-low-power TinyML.
         </p>
 
         <div class="hero-cta-group">
@@ -387,7 +387,7 @@
   <span class="code-keyword">if</span> (grid.sectors[<span class="code-number">1</span>][<span class="code-number">1</span>].hazard_score > <span class="code-number">0.65f</span>) {
     Vector2D evade = <span class="code-function">compute_evasion_vector</span>(grid);
     <span class="code-function">telemetry_downlink</span>(evade.angle, grid.slai_score);
-    <span class="code-function">command_parafoil_steering</span>(evade.angle); <span class="code-comment">// EVADE 090°</span>
+    <span class="code-comment">// Downlink optimal evasion advisory vector to ground station</span>
   }
 }</div>
 
@@ -407,7 +407,7 @@
         <div class="section-tag">MISSION CONTEXT &amp; FUNDAMENTALS</div>
         <h2 class="section-title">What is a CanSat &amp; Why This Project Exists</h2>
         <p class="section-desc">
-          A CanSat is a simulation of a real artificial satellite, integrated within the strict volume and shape of a standard soft-drink can (66mm diameter, 115mm height). Launched via model rockets or drones, they test core space systems, atmospheric data collection, and recovery procedures.
+          A CanSat is a simulation of a real artificial satellite, integrated within the strict volume and shape of a standard soft-drink can (66mm diameter, 115mm height). Deployed via drones, sounding balloons, or drop mechanisms, they test core space systems, atmospheric data collection, and recovery procedures.
         </p>
       </div>
 
@@ -426,7 +426,7 @@
           <div class="card-badge" style="color: var(--accent-green); width: fit-content; margin-bottom: 0.75rem;">Our Innovation</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">The Cognitive CanSat Solution</h3>
           <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-            Equipping the probe with an independent vision processor allows it to analyze terrain directly beneath it and steer away from danger autonomously before touchdown.
+            Equipping the probe with an independent vision processor allows it to analyze terrain directly beneath it and evaluate safe landing zones in real-time before touchdown.
           </p>
         </div>
       </div>
@@ -501,7 +501,7 @@
           <div class="card-badge" style="color: var(--accent-red); width: fit-content; margin-bottom: 0.75rem;">Card 02 // The Hazard</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Blind Ballistic Drift</h3>
           <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-            Without guidance, over 40% of standard parachute drops land in hazardous zones or get destroyed upon impact because passive parachutes cannot compensate for crosswinds or obstacles.
+            Under passive parachutes, conventional CanSats drift with crosswinds without terrain awareness, risking impact with hazardous structures or bodies of water.
           </p>
         </div>
 
@@ -524,7 +524,7 @@
               Onboard Reflex Intelligence: Think in the Air, Don't Stream
             </h3>
             <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-              By deploying an INT8 quantized convolutional neural network (<code>TinyLandingNet</code>) directly into the ESP32-CAM's internal 520 KB SRAM, the CanSat processes frames in <strong>38 milliseconds</strong>. It classifies ground hazards and commands autonomous parafoil steering without depending on ground radio links.
+              By deploying an INT8 quantized convolutional neural network (<code>TinyLandingNet</code>) directly into the ESP32-CAM's internal 520 KB SRAM, the CanSat processes frames in <strong>38 milliseconds</strong>. It classifies ground hazards and calculates landing safety advisories in real-time without depending on ground radio links.
             </p>
           </div>
           <a href="tinyml.html" class="btn-resend-pill" style="white-space: nowrap;">Explore TinyML</a>
@@ -540,7 +540,7 @@
         <div class="section-tag">SOFTWARE &amp; EDGE ARCHITECTURE</div>
         <h2 class="section-title">Onboard Software &amp; Perception Architecture</h2>
         <p class="section-desc">
-          A real-time, deterministic embedded pipeline executing on the ESP32-CAM. FreeRTOS partitions optical capture and neural inference onto Core 0, while Core 1 calculates spatial hazard gradients, evaluates the flight state machine, and dispatches steering commands.
+          A real-time, deterministic embedded pipeline executing on the ESP32-CAM. FreeRTOS partitions optical capture and neural inference onto Core 0, while Core 1 calculates spatial hazard gradients, evaluates the flight state machine, and dispatches telemetry packets with hazard advisory vectors.
         </p>
       </div>
 
@@ -550,7 +550,7 @@
           <div class="card-badge" style="color: var(--accent-cyan); width: fit-content; margin-bottom: 0.75rem;">Core 0 // Perception</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">DMA Frame Ingestion</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            Direct Memory Access (DMA) pulls raw grayscale frames from the OV3660 camera sensor via the DVP parallel bus. Frames are downsampled in-place into a normalized 64&times;48 tensor directly inside internal SRAM, avoiding external PSRAM bus latency.
+            Direct Memory Access (DMA) pulls raw grayscale frames from the OV3660 camera sensor via the DVP parallel bus. Frames are downsampled in-place into a normalized 64&times;64 tensor directly inside internal SRAM, avoiding external PSRAM bus latency.
           </p>
           <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
             Rate: 10 FPS &middot; Buffer: 3.07 KB
@@ -574,19 +574,19 @@
           <div class="card-badge" style="color: var(--accent-green); width: fit-content; margin-bottom: 0.75rem;">Core 1 // Guidance</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Hazard Gradient &amp; Evasion</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            Calculates the Surface Landing Area Index (SLAI) across all 9 sectors. If the center nadir sector [1,1] exceeds the 0.65 hazard threshold, a 2D spatial gradient vector determines the lowest-risk trajectory to command autonomous parafoil steering.
+            Calculates the Surface Landing Area Index (SLAI) across all 9 sectors. If the center nadir sector [1,1] exceeds the 0.65 hazard threshold, a 2D spatial gradient vector determines the lowest-risk trajectory and logs the recommended evasion vector for ground recovery.
           </p>
           <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
             Resolution: 3&times;3 Grid &middot; Threshold: 0.65
           </div>
         </div>
 
-        <!-- Card 4: Telemetry & Actuation -->
+        <!-- Card 4: Telemetry & Downlink -->
         <div class="resend-card">
           <div class="card-badge" style="color: var(--accent-amber); width: fit-content; margin-bottom: 0.75rem;">Core 1 // Downlink</div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Dual-Stream Telemetry</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6;">
-            Downlinks real-time 13-field physical telemetry plus an embedded hazard bitmask over the 433MHz LoRa link (9600 baud). Concurrently triggers hardware PWM duty cycle shifts to actuate the left or right parafoil control line.
+            Downlinks real-time 13-field physical telemetry plus the embedded 3x3 hazard bitmask over the 433MHz LoRa link (9600 baud) for real-time mission control mapping and post-flight recovery.
           </p>
           <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
             Baud: 9600 &middot; Protocol: Custom CSV
@@ -627,7 +627,7 @@
         <!-- Scrubber Controls & Readouts -->
         <div class="resend-card">
           <div class="card-header">
-            <span id="scrubber-phase-badge" class="card-badge" style="color: #ffffff;">Rocket Launch &amp; Boost</span>
+            <span id="scrubber-phase-badge" class="card-badge" style="color: #ffffff;">Pre-Launch &amp; Ascent</span>
             <span id="scrubber-time" class="card-badge" style="font-family: var(--font-mono);">T+ 00:00.0</span>
           </div>
 
@@ -644,7 +644,7 @@
 
           <div>
             <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
-              <span>01 LAUNCH (0s)</span>
+              <span>01 ASCENT (0s)</span>
               <span>02 APOGEE (45s)</span>
               <span>05 TINYML (120s)</span>
               <span>06 TOUCHDOWN (180s)</span>
@@ -652,7 +652,7 @@
             <input type="range" id="mission-scrubber" class="range-slider" min="0" max="5" step="1" value="0">
 
             <div class="phase-btn-grid">
-              <button type="button" class="phase-btn active" data-scrubber-phase="0">01 Launch</button>
+              <button type="button" class="phase-btn active" data-scrubber-phase="0">01 Pad/Ascent</button>
               <button type="button" class="phase-btn" data-scrubber-phase="1">02 Apogee</button>
               <button type="button" class="phase-btn" data-scrubber-phase="2">03 Separation</button>
               <button type="button" class="phase-btn" data-scrubber-phase="3">04 Descent</button>
@@ -666,7 +666,7 @@
               Active Telemetry Packet Type
             </div>
             <div id="scrubber-packet-badge" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-primary);">
-              CALIBRATION &amp; BOOST TELEMETRY (CSV @ 9600)
+              CALIBRATION &amp; ASCENT TELEMETRY (CSV @ 9600)
             </div>
           </div>
         </div>
@@ -689,7 +689,7 @@
               Flight Computer Event Log
             </div>
             <div id="scrubber-event-log" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary);">
-              T+ 00:00.0 - Ground pad baseline established (1013.25 hPa). High-G booster ignition detected.
+              T+ 00:00.0 - Ground pad baseline established (1013.25 hPa). Flight ascent initiated.
             </div>
           </div>
         </div>
@@ -977,7 +977,7 @@
   <span class="code-keyword">if</span> (grid.sectors[<span class="code-number">1</span>][<span class="code-number">1</span>].hazard_score > <span class="code-number">0.65f</span>) {
     Vector2D evade = <span class="code-function">compute_evasion_vector</span>(grid);
     <span class="code-function">telemetry_downlink</span>(evade.angle, grid.slai_score);
-    <span class="code-function">command_parafoil_steering</span>(evade.angle); <span class="code-comment">// EVADE 090°</span>
+    <span class="code-comment">// Downlink optimal evasion advisory vector to ground station</span>
   }
 }`;
       });
@@ -994,7 +994,7 @@
   <span class="code-string">"nadir_status"</span>: <span class="code-string">"CRITICAL_HAZARD"</span>,
   <span class="code-string">"nadir_classification"</span>: <span class="code-string">"ROOF_ASPHALT"</span>,
   <span class="code-string">"slai_score"</span>: <span class="code-number">0.142</span>,
-  <span class="code-string">"commanded_evasion"</span>: {
+  <span class="code-string">"advisory_evasion"</span>: {
     <span class="code-string">"evade_bearing_deg"</span>: <span class="code-number">90</span>,
     <span class="code-string">"target_sector"</span>: [<span class="code-number">1</span>, <span class="code-number">2</span>],
     <span class="code-string">"target_status"</span>: <span class="code-string">"SAFE_LZ_GRASS"</span>

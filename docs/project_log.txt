@@ -1531,3 +1531,101 @@ RISHI MERGE REQUEST: SQLITE FLIGHT DATABASE & RECORDS MANAGER INTEGRATION
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: RISHI MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
+--------------------------------------------------------------------------------
+SHUBHAM MERGE REQUEST: DOCKER DEPLOYMENT, DYNAMIC HOST RESOLUTION & BATCH TESTING
+--------------------------------------------------------------------------------
+
+[2026-09-20T19:00:00Z] ACTION: Validated and merged Shubham's deliverables (shubham/web-testing). Integrated production Docker container configuration, dynamic host and port resolution in frontend/dashboard.html, and batch stress-testing scripts in tests/.
+
+1. Delivered Production Deployment Assets:
+   - Dockerfile: Multi-stage lightweight Python 3.12-slim container with headless graphics (libgl1, libglib2.0-0, libgomp1), non-root execution user (UID 1000 for Hugging Face Spaces & Render), and dynamic $PORT override.
+   - .dockerignore: Optimized build context excluding firmware binaries, raw media, training caches, and local databases while preserving required models, test cases, and application code.
+   - frontend/dashboard.html: Updated ML_SERVER_URL to '' (relative path) and wsUrl to use location.host, enabling seamless operation under containerized reverse proxies, cloud domains, and custom ports.
+   - tests/batch_test_ml.py: Automated 100-packet batch inference latency and throughput benchmark with built-in standard library urllib fallback.
+   - tests/batch_test_ws.py: WebSocket serial bridge stress-test script streaming 500 rapid telemetry packets at 100 Hz.
+   - readme.md: Added Docker Container Deployment section and batch testing commands in Verification section.
+   - docs/README.md: Updated test directory inventory.
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 4/4 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - python -m py_compile tests/batch_test_ml.py tests/batch_test_ws.py: PASS (0 syntax/import errors)
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: SHUBHAM MERGE REQUEST INTEGRATED, VERIFIED, AND DEPLOYED TO MAIN
+--------------------------------------------------------------------------------
+AUTOMATIC FLIGHT TELEMETRY RECORDING & SAFE PARSING ENGINE
+--------------------------------------------------------------------------------
+
+[2026-09-21T01:10:00Z] ACTION: Implemented automatic flight telemetry recording by default into the persistent SQLite database (cansat_missions.db). Hardened database ingestion with safe numeric converters and camelCase key mapping.
+
+1. Delivered Enhancements:
+   - frontend/dashboard.html:
+     * Enabled automatic flight recording by default (autoRecordEnabled = true).
+     * Implemented autoStartFlightMission() to dynamically provision a timestamped mission session (Auto Flight YYYY-MM-DD_HHMMSS) the moment telemetry packets start streaming via direct USB Web Serial or WebSocket bridge.
+     * Added packet buffering during mission provisioning to prevent initial packet loss (packets 0..N preserved).
+     * Added HUD Auto-Recording toggle button (#db-autorec-btn) and dynamic badge indicators (REC [AUTO: MSN-...]).
+     * Added 10-second post-finish cooldown (autoArmCooldownUntil) preventing landed stationary CanSat packets from accidentally spinning up duplicate missions immediately after finalization.
+     * Implemented getApiUrl(path) helper dynamically resolving http://127.0.0.1:8000 when opened from file:/// or non-8000 ports (e.g. Live Server).
+     * Added checkActiveMissionOnLoad() reconnecting to any running ACTIVE_FLIGHT mission if the page is refreshed during a flight.
+   - backend/core/database.py:
+     * Added _safe_float and _safe_int helper functions preventing TypeError on None or NaN values during initial GPS acquisition or sensor warm-up.
+     * Mapped both snake_case and camelCase keys transparently in insert_telemetry_batch (battery_voltage / batteryVoltage, v_spd / vSpd, etc.).
+   - backend/core/kinematics.py:
+     * Wrapped joblib import in try-except with None fallback, allowing backend.core to import cleanly in lightweight test environments without joblib installed.
+   - tests/test_database.py:
+     * Added test_telemetry_batch_safe_parsing_and_camel_case verifying None values, NaN, and camelCase keys are handled gracefully.
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_database.py: 5/5 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - python -m unittest tests/test_firmware_protocol.py: 4/4 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: AUTOMATIC FLIGHT TELEMETRY RECORDING OPERATIONAL AND VERIFIED
+--------------------------------------------------------------------------------
+DYNAMIC BOUNDED CHART SCALING (ALTITUDE & KINEMATICS)
+--------------------------------------------------------------------------------
+
+[2026-09-21T01:23:00Z] ACTION: Implemented dynamic bounded scales on real-time telemetry charts in frontend/dashboard.html to eliminate stationary micro-noise amplification while preserving full sensitivity to manual elevation changes (>= 1m) and rocket flight trajectories.
+
+1. Delivered Enhancements:
+   - frontend/dashboard.html:
+     * Added boundedScale(minSpan, centerZero) helper leveraging Chart.js afterDataLimits lifecycle hook.
+     * altChart: Configured with boundedScale(5.0), guaranteeing a minimum 5.0m vertical window. Stationary sensor/draft noise (0.15m to 0.25m) occupies < 4% of the canvas height, rendering as a calm, stable line. Real physical elevation changes (e.g. 1.0m manual lift) occupy 20% of the canvas height and are clearly distinguished.
+     * vSpeedChart: Configured with boundedScale(4.0, true), enforcing a minimum [-2.0 m/s, +2.0 m/s] window centered on 0.0 m/s at rest.
+     * orientChart & gyroChart: Applied boundedScale(20.0, true) and boundedScale(10.0, true) respectively to eliminate resting jitter while auto-scaling dynamically during motion.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: BOUNDED CHART SCALING OPERATIONAL AND VERIFIED
+--------------------------------------------------------------------------------
+MISSION TERMINOLOGY & ADVISORY EVASION RECOVERY ARCHITECTURE REFINEMENT
+--------------------------------------------------------------------------------
+
+[2026-09-21T06:05:00Z] ACTION: Synchronized documentation and frontend presentations with operational flight reality. Refined flight phase terminology from rigid booster-specific phrasing to general atmospheric sounding/ascent kinematics, and explicitly documented that the current flight unit operates with a passive recovery parachute downlinking advisory evasion vectors, while active parafoil winching remains a future concept.
+
+1. Delivered Enhancements:
+   - frontend/analysis.html, models.html, results.html, tinyml.html, index.html:
+     * Updated terminology across mission overview, model descriptions, and results to emphasize general sounding ascent, atmospheric drops, and landing safety assessments.
+     * Clarified that TinyLandingNet downlinks real-time advisory evasion headings rather than driving active airborne steering servos on the current physical unit.
+     * Explicitly marked steerable ram-air parafoil actuation with micro-servo winches as a future research iteration.
+   - frontend/js/mission-slider.js & frontend/js/tinyml-demo.js:
+     * Aligned mission scrubber phase names and event log strings ("Pre-Launch & Ascent", "Apogee Separation & Chute Deploy").
+     * Updated decision badges to reflect advisory evasion headings (e.g. "CRITICAL HAZARD - ADVISORY EVADE 090 DEG TOWARD OPEN SECTOR").
+   - readme.md:
+     * Added architectural clarification under SLAI section noting passive parachute operation and real-time advisory vector downlink to ground station.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - python -m unittest tests/test_database.py: 5/5 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: DOCUMENTATION & FRONTEND TERMINOLOGY SYNCHRONIZED

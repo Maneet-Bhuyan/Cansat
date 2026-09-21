@@ -126,7 +126,7 @@
       statusColor: '#10b981',
       confidence: '97.4%',
       riskScore: '0.04 (Low Risk)',
-      decision: 'NOMINAL DESCENT - NO EVASION REQUIRED',
+      decision: 'NOMINAL DESCENT - SAFE LANDING ZONE CONFIRMED',
       explanation: 'Low high-frequency spatial gradients, uniform vegetative chroma (520nm peak reflectance), zero abrupt structural edges.'
     },
     urban: {
@@ -135,7 +135,7 @@
       statusColor: '#ef4444',
       confidence: '96.8%',
       riskScore: '0.94 (Extreme Risk)',
-      decision: 'CRITICAL HAZARD - EVADE 090 DEG TOWARD OPEN SECTOR',
+      decision: 'CRITICAL HAZARD - ADVISORY EVADE 090 DEG TOWARD OPEN SECTOR',
       explanation: 'High edge density (>450 pixels), desaturated asphalt/concrete reflectance, and rectangular structural shadows trigger hazard classification.'
     },
     water: {
@@ -153,7 +153,7 @@
       statusColor: '#f59e0b',
       confidence: '91.5%',
       riskScore: '0.78 (Moderate Risk)',
-      decision: 'OBSTACLE IN NADIR SECTOR - EVADE 180 DEG SOUTH',
+      decision: 'OBSTACLE IN NADIR SECTOR - ADVISORY EVADE 180 DEG SOUTH',
       explanation: 'Localized high-contrast edge cluster in center nadir sector. Adjacent sectors exhibit flat terrain suitable for touchdown.'
     }
   };

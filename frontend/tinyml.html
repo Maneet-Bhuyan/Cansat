@@ -219,7 +219,7 @@
           </div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Onboard TinyML (TinyLandingNet)</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.25rem;">
-            Inference executes entirely in internal SRAM on the CanSat. Evasive maneuvers are computed directly at the descent point without radio delays.
+            Inference executes entirely in internal SRAM on the CanSat. Landing site hazard indices and evasion advisory vectors are computed directly at the descent point without radio delays.
           </p>
           <ul style="list-style: none; font-size: 0.85rem; color: var(--text-secondary);">
             <li style="padding: 0.4rem 0; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between;">
@@ -245,7 +245,7 @@
           </div>
           <h3 class="card-title" style="margin-bottom: 0.75rem;">Downlink Video &amp; Ground Compute</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.25rem;">
-            Raw video frames are transmitted over RF to a laptop, processed, and steering uplink commands sent back up to the CanSat.
+            Raw video frames are transmitted over RF to a laptop and processed on the ground, creating substantial latency and bandwidth bottlenecks.
           </p>
           <ul style="list-style: none; font-size: 0.85rem; color: var(--text-secondary);">
             <li style="padding: 0.4rem 0; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between;">
@@ -426,9 +426,9 @@
             <div id="visualizer-risk" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-red); font-family: var(--font-mono); margin-top: 0.2rem;">0.94 (Extreme Risk)</div>
           </div>
           <div style="grid-column: span 2;">
-            <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Autonomous Flight Decision</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Landing Safety Assessment</div>
             <div id="visualizer-decision" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-red); font-family: var(--font-mono); margin-top: 0.2rem;">
-              CRITICAL HAZARD - EVADE 090 DEG TOWARD OPEN SECTOR
+              CRITICAL HAZARD - ADVISORY EVADE 090 DEG TOWARD OPEN SECTOR
             </div>
           </div>
         </div>
@@ -506,7 +506,7 @@
             </div>
 
             <div style="background: #000000; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
-              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Commanded Evasion Vector</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Advisory Evasion Heading</div>
               <div id="replay-evade-badge" style="font-size: 1.1rem; font-weight: 700; color: #ffffff; font-family: var(--font-mono); margin-top: 0.2rem;">
                 EVADE 090 deg
               </div>
