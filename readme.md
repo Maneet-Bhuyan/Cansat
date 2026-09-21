@@ -155,6 +155,8 @@ Mission Control Web UI Suite:
 ├── drivers/                    # USB CP210x hardware drivers
 ├── START_MISSION_CONTROL.bat   # 1-Click Windows system launcher
 ├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
+├── batch_test_ml.py            # Local ML API endpoint sequential load tester
+├── batch_test_ws.py            # WebSocket 100Hz continuous telemetry stress tester
 ├── requirements.txt            # Python dependencies
 ├── tasks.txt                   # Master team task tracker
 ├── readme.md                   # Comprehensive project documentation
@@ -663,28 +665,15 @@ The Ground Station (`dashboard.html`) embeds an interactive aerospace Database E
 
 The machine learning subsystem in `backend/app.py` and `ml/` processes telemetry vectors in real time:
 
-<<<<<<< HEAD
-| Model Architecture | Task | Input Vector | Performance Metric |
+| Model Architecture                     | Task                                                           | Input Vector                                      | Performance Metric                                                                                                  |
 | :------------------------------------- | :------------------------------------------------------------- | :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------ |
-| Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
-| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.4% Accuracy (Macro F1: 0.98) |
-| PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
-| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | RMSE: +/- 14.2 m |
-| Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
-| Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
-| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |
-=======
-| Model Architecture | Task | Input Vector | Performance Metric |
-| :--- | :--- | :--- | :--- |
-| Multi-Output ExtraTrees Regressor | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$) |
-| Random Forest Classifier | 5-Phase Mission State Progression | 17 telemetry features | 98.56% Accuracy (Weighted F1: 0.985; Macro F1: 0.902) |
-| PyOD Isolation Forest | Unsupervised Outlier and Fault Scoring | Kinematics, voltage, gyros, acceleration | Continuous Score [0.0, 1.0] |
-| Gradient Boosting Regressor | Apogee Altitude Prediction | Early ascent rate, acceleration, sounding | R²: 0.9951, RMSE: ±24.2 m |
-| Random Forest Touchdown Regressor | Sensor Suite Ablation & Touchdown Localization | Ablation suites (Full, No IMU, No Env, GPS-Only) | Evaluated across 10 flight scenarios (MAE in lat/lon degrees) |
-| Savitzky-Golay Kinematic Estimator | Flight Dynamics Profiling & Shock Acceleration | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs |
-| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation | 64x64 RGB Nadir Imagery | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |
-
-> > > > > > > main
+| Multi-Output ExtraTrees Regressor      | Sensor Calibration & Aerodynamic Dynamic Pressure Compensation | 13 telemetry & dynamic features                   | Altitude $R^2: 1.0000$ (RMSE: $0.804\text{ m}$), Velocity $R^2: 0.9516$ (RMSE: $1.109\text{ m/s}$)                  |
+| Random Forest Classifier               | 5-Phase Mission State Progression                              | 17 telemetry features                             | 98.56% Accuracy (Weighted F1: 0.985; Macro F1: 0.902)                                                               |
+| PyOD Isolation Forest                  | Unsupervised Outlier and Fault Scoring                         | Kinematics, voltage, gyros, acceleration          | Continuous Score [0.0, 1.0]                                                                                         |
+| Gradient Boosting Regressor            | Apogee Altitude Prediction                                     | Early ascent rate, acceleration, sounding         | R²: 0.9951, RMSE: ±24.2 m                                                                                           |
+| Random Forest Touchdown Regressor      | Sensor Suite Ablation & Touchdown Localization                 | Ablation suites (Full, No IMU, No Env, GPS-Only)  | Evaluated across 10 flight scenarios (MAE in lat/lon degrees)                                                       |
+| Savitzky-Golay Kinematic Estimator     | Flight Dynamics Profiling & Shock Acceleration                 | Filter window $N=11$, polyorder $p=2$, $\Delta t$ | Smooth vertical velocity $v_z$, peak shock $a_{\text{mag}}$, and touchdown Gs                                       |
+| TinyLandingNet Depthwise Separable CNN | Autonomous Safe Landing Zone & 3x3 Hazard Grid Evaluation      | 64x64 RGB Nadir Imagery                           | 7,320 params, 93.80% Val Acc, 93.21% F1, INT8: 7.15 KB Flash ROM (< 25 KB), Latency: 0.055 ms ONNX / ~16.3 ms ESP32 |
 
 ### TinyLandingNet Edge Vision & Microcontroller Benchmarking (`ml/benchmark_inference.py`)
 
@@ -863,23 +852,34 @@ Hotkeys for rapid ground station operation (disabled during text input):
 | D     | Download CSV telemetry recording                         |
 | Esc   | Close active modal or exit maximized card view           |
 
+## System Testing & Stress Verification
+
+This project includes automated batch testing scripts to ensure the backend can handle high-frequency CanSat telemetry without data loss or bottlenecks.
+
+### Batch Testing the Machine Learning API
+
+To verify the ML endpoint's ability to process sequential data rapidly:
+
+1. Ensure the FastAPI backend is running locally (`python launch.py`).
+2. Run the ML batch test script in a separate terminal:
+   ```bash
+   python batch_test_ml.py
+   ```
+
+### Benchmark Test Results
+
+- **ML API Load Capacity:** 100/100 successful predictions in 10.18s (~9.8 req/sec sequential throughput).
+- **WebSocket Ingestion Rate:** 500 packets processed in 8.29s (~60.3 Hz throughput) with **0.0% packet loss**.
+- **System Stability:** Confirmed stable continuous operations for high-frequency Ground Station telemetry streams (1Hz–10Hz operational baseline).
+
 ## Verification
 
 The project includes comprehensive test suites for unit, firmware, and integration testing:
 
-<<<<<<< HEAD
-
 ### Python backend core unit tests (16 assertions)
 
-=======
-
-### Python backend core unit tests (12 test cases)
-
-> > > > > > > main
-
-```bash
+````bash
 python -m unittest tests/test_backend_core.py
-```
 
 Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, ML model predictions, and multi-threaded serial lifecycle without hardware attached.
 
@@ -887,7 +887,6 @@ Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU at
 
 ```bash
 python -m unittest tests/test_database.py
-```
 
 Validates SQLite Write-Ahead Logging (WAL) initialization, 4-table relational integrity with cascading foreign keys, high-throughput micro-batch telemetry ingestion, automated Post-Flight Review (PFR) calculation, database disk and WAL storage statistics, 25-column CanSat CSV exports, binary `.db` downloads, and complete mission purges.
 
@@ -950,3 +949,4 @@ This project is provided for educational and engineering use under the MIT Licen
 ## Contact
 
 For questions or collaboration, connect through the repository issues or the project maintainer profile on GitHub.
+````
