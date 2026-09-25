@@ -146,8 +146,11 @@ Mission Control Web UI Suite:
 │   ├── SETUP_GPU_WORKSTATION.bat # 1-Click autonomous bootstrapper for NVIDIA GPU machines
 │   └── setup_gpu_workstation.ps1 # PowerShell zero-to-hero GPU environment installer
 ├── tests/                      # Automated self-test & verification test suites
-│   ├── test_backend_core.py    # Python backend core unit test suite (12 assertions)
+│   ├── test_backend_core.py    # Python backend core unit test suite (16 assertions)
+│   ├── test_database.py        # SQLite flight database & PFR audit tests (4 suites)
 │   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
+│   ├── batch_test_ml.py        # Local ML API endpoint sequential load tester
+│   ├── batch_test_ws.py        # WebSocket 100Hz continuous telemetry stress tester
 │   ├── selftest.js             # Node.js automated unit testing suite (27 assertions)
 │   ├── selftest.ps1            # PowerShell mission verification suite (17 assertions)
 │   ├── test_sm.ps1             # Flight state machine transition checker (10 scenarios)
@@ -155,8 +158,6 @@ Mission Control Web UI Suite:
 ├── drivers/                    # USB CP210x hardware drivers
 ├── START_MISSION_CONTROL.bat   # 1-Click Windows system launcher
 ├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
-├── batch_test_ml.py            # Local ML API endpoint sequential load tester
-├── batch_test_ws.py            # WebSocket 100Hz continuous telemetry stress tester
 ├── requirements.txt            # Python dependencies
 ├── tasks.txt                   # Master team task tracker
 ├── readme.md                   # Comprehensive project documentation
@@ -884,8 +885,9 @@ The project includes comprehensive test suites for unit, firmware, and integrati
 
 ### Python backend core unit tests (16 assertions)
 
-````bash
+```bash
 python -m unittest tests/test_backend_core.py
+```
 
 Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU attitude angles, high-G shock and gyro tumble alarms, barometric altimetry, moist air density, stationary tare calibration, ML model predictions, and multi-threaded serial lifecycle without hardware attached.
 
@@ -893,6 +895,7 @@ Validates 1D state estimation convergence ($z, v_z$), complementary 6-DOF IMU at
 
 ```bash
 python -m unittest tests/test_database.py
+```
 
 Validates SQLite Write-Ahead Logging (WAL) initialization, 4-table relational integrity with cascading foreign keys, high-throughput micro-batch telemetry ingestion, automated Post-Flight Review (PFR) calculation, database disk and WAL storage statistics, 25-column CanSat CSV exports, binary `.db` downloads, and complete mission purges.
 
@@ -900,7 +903,7 @@ Validates SQLite Write-Ahead Logging (WAL) initialization, 4-table relational in
 
 ```bash
 python tests/test_firmware_protocol.py
-````
+```
 
 Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
 
@@ -964,7 +967,3 @@ This project is provided for educational and engineering use under the MIT Licen
 ## Contact
 
 For questions or collaboration, connect through the repository issues or the project maintainer profile on GitHub.
-
-```
-
-```

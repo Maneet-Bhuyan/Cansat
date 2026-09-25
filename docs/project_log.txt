@@ -1629,3 +1629,32 @@ MISSION TERMINOLOGY & ADVISORY EVASION RECOVERY ARCHITECTURE REFINEMENT
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: DOCUMENTATION & FRONTEND TERMINOLOGY SYNCHRONIZED
+--------------------------------------------------------------------------------
+SHUBHAM MERGE INTEGRATION & RESULTS PAGE TEAM CARDS REFACTORING
+--------------------------------------------------------------------------------
+
+[2026-09-25T15:35:00Z] ACTION: Integrated Shubham's commits from origin/shubham/web-testing into main (commits b09028fe and ba7e6104). Sanitized and validated readme.md code block formatting and script paths. Refactored frontend/results.html to remove the 3D print/CAD artifact card, and streamlined the team section by removing verbose descriptions and roles in favor of clean minimal cards featuring avatar, name, and direct GitHub profile icon links.
+
+1. Delivered Enhancements:
+   - Git Branch Integration:
+     * Fast-forwarded main to include Shubham Sharma's commits (b09028fe and ba7e6104), crediting contributor attribution on GitHub.
+   - readme.md:
+     * Fixed code block syntax in unit test verification sections.
+     * Normalized batch testing script references to tests/batch_test_ml.py and tests/batch_test_ws.py within the repository file tree.
+     * Removed trailing backtick artifacts.
+   - frontend/results.html:
+     * Removed CAD & 3D print artifact card, leaving a balanced 3-card grid (Firmware, Model Weights, Research Paper).
+     * Replaced verbose member role titles and descriptive paragraphs with clean, responsive team cards displaying contributor initials avatar, name, and a direct SVG GitHub profile icon button linking to:
+       - Maneet Bhuyan: https://github.com/Maneet-Bhuyan
+       - Gurbashish Nayak: https://github.com/Rishe17
+       - Shubham Sharma: https://github.com/shxbhxm7
+       - Ganesh Vallabh: https://github.com/ganeshvallabhm
+     * Added .team-github-btn styling matching the Resend obsidian design system.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - python -m unittest tests/test_database.py: 5/5 PASS
+   - python -m unittest tests/test_backend_core.py: 12/12 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: SHUBHAM MERGE INTEGRATED AND RESULTS PAGE REFACTORED
