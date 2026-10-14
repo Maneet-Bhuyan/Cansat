@@ -1658,3 +1658,37 @@ SHUBHAM MERGE INTEGRATION & RESULTS PAGE TEAM CARDS REFACTORING
    - Strict constraint check: 0 emojis across all project files.
 
 STATUS: SHUBHAM MERGE INTEGRATED AND RESULTS PAGE REFACTORED
+--------------------------------------------------------------------------------
+DISTRIBUTED TELEMETRY LAKEHOUSE INTEGRATION & AIRBORNE SD BLACKBOX FIRMWARE
+--------------------------------------------------------------------------------
+
+[2026-10-14T23:30:00Z] ACTION: Integrated Rishi's distributed telemetry lakehouse branch (origin/rishi/analytics), engineered 1-bit low-power MicroSD blackbox recording into airborne ESP32-CAM firmware with graceful no-card fallback, and verified live hardware execution on COM6.
+
+1. Delivered Enhancements:
+   - Distributed Telemetry Lakehouse Merge (origin/rishi/analytics):
+     * Merged Redpanda / Kafka event streaming broker integration, TimescaleDB hot-path hypertables, MinIO S3 cold Parquet storage, and Grafana avionics dashboards.
+     * Integrated non-blocking PipelineBridge (backend/core/pipeline_bridge.py) with bounded queue eviction, thread-safe asynchronous dispatches, and automatic offline fallback to prevent latency spikes during field flights without Docker active.
+     * Added Telemetry Lakehouse Management modal (#pipelineModal) to frontend/dashboard.html with live status telemetry, broker config, and scenario replay streaming.
+     * Corrected requirements.txt file encoding from legacy UTF-16 LE with null bytes to standard clean UTF-8.
+   - Airborne ESP32-CAM Firmware (firmware/esp32_cam_airborne/esp32_cam_airborne.ino):
+     * Configured 1-bit SD_MMC mode (SD_MMC.begin("/sdcard", true)) to eliminate the 4-bit bus collision on GPIO 4, keeping the high-power onboard white flash LED permanently off and saving 200 mA.
+     * Throttled CPU frequency to 160 MHz via setCpuFrequencyMhz(160) to stay strictly within the 600 mA operating envelope of the mini DC-DC USB boost converter.
+     * Implemented strictly sequential execution pipeline: Frame Grab -> Onboard TinyML (TinyLandingNet INT8) -> ESP-NOW Wireless Broadcast -> 1ms Quiescence -> MicroSD Flash Write, preventing concurrent peak current spikes between the 2.4 GHz RF power amplifier and flash programming charge pumps.
+     * Added continuous 15-second video segmentation (/flight_XXX.mjpeg) with matching frame-by-frame telemetry metadata CSV logs (/flight_XXX.csv) for post-flight model validation and quantization benchmarking.
+     * Implemented graceful no-card fallback: if the MicroSD card is not inserted, unformatted, or unseats during launch shock, the airborne firmware flags an explicit serial notice and continues broadcasting video and TinyML decisions over ESP-NOW 100% uninterrupted.
+   - Hardware Flashing & Live Avionics Verification:
+     * Put AI-Thinker ESP32-CAM on COM6 into manual download mode via BOOT + RST pin sequence.
+     * Flashed bootloader, partition tables, boot_app0, and 1.06 MB application binary using esptool at 460800 baud with verified SHA-256 data hash.
+     * Verified live hardware boot sequence over COM6 serial: OmniVision OV3660 camera initialized (PID 0x3660), TinyLandingNet INT8 verified (7,320 params), radio locked to 2.4 GHz Channel 1, and verified continuous real-time broadcast with SD [NOT INSERTED] notice.
+
+2. Automated Test Verification:
+   - node tests/selftest.js: 27/27 PASS
+   - python tests/test_firmware_protocol.py: 4/4 PASS
+   - python tests/test_backend_core.py: 12/12 PASS
+   - python tests/test_database.py: 5/5 PASS
+   - powershell tests/selftest.ps1: 17/17 PASS
+   - powershell tests/test_sm.ps1: 10/10 PASS
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: LAKEHOUSE MERGED, AIRBORNE SD BLACKBOX DEPLOYED AND VERIFIED ON HARDWARE
+

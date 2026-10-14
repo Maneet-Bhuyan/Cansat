@@ -29,3 +29,7 @@ tests/scratch/
 *.sqlite
 *.sqlite3
 *.stl
+
+# Firmware & compilation build directories
+build/
+firmware/**/build/
