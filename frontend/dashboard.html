@@ -446,7 +446,9 @@
     #rawFeedModal,
     #aiModal,
     #helpModal,
-    #pfrModal {
+    #pfrModal,
+    #dbManagerModal,
+    #pipelineModal {
       z-index: 99999 !important;
     }
 
@@ -732,6 +734,12 @@
           <!-- Post-Flight Review Report Action -->
           <button type="button" onclick="openModal('pfrModal')" class="px-3 py-1.5 rounded-full text-xs font-medium bg-[#171717] hover:bg-[#242424] border border-[#2e2e2e] text-zinc-200 hover:text-white flex items-center gap-1.5 transition-all" title="Generate Post-Flight Review (PFR) Report">
             <svg class="w-3.5 h-3.5 text-zinc-400 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> <span>PFR REPORT</span>
+          </button>
+
+          <!-- Distributed Telemetry Pipeline & Data Lakehouse Action -->
+          <button type="button" onclick="openModal('pipelineModal')" id="pipeline-header-btn" class="px-3 py-1.5 rounded-full text-xs font-medium bg-[#161224] hover:bg-[#231b3b] border border-purple-800/60 text-purple-200 hover:text-white flex items-center gap-1.5 transition-all shadow-sm cursor-pointer" title="Distributed Telemetry Lakehouse (Redpanda / TimescaleDB / MinIO / Grafana)">
+            <span id="pipeline-status-dot" class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span id="pipeline-status-text">LAKEHOUSE</span>
           </button>
         </div>
       </header>
@@ -1515,6 +1523,150 @@
       </div>
     </div>
 
+    <!-- Telemetry Pipeline & Data Lakehouse Modal -->
+    <div id="pipelineModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-[99999] flex items-center justify-center p-3 sm:p-5">
+      <div class="w-full max-w-5xl max-h-[92vh] p-5 sm:p-6 flex flex-col relative rounded-2xl border border-purple-900/60 shadow-2xl bg-[#0b0914] text-zinc-200">
+        <!-- Close button -->
+        <button type="button" onclick="closeModal('pipelineModal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded hover:bg-[#1a1429] transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Header -->
+        <div class="flex flex-wrap items-center justify-between border-b border-purple-950/80 pb-3 mb-4 pr-8 gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-purple-950/60 border border-purple-700/50 flex items-center justify-center text-purple-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide flex items-center gap-2 font-mono">
+                TELEMETRY DATA LAKEHOUSE &amp; DISTRIBUTED PIPELINE
+                <span class="text-[10px] font-sans px-2 py-0.5 rounded-full bg-purple-900/40 border border-purple-700/50 text-purple-300">ENTERPRISE SCALE</span>
+              </h3>
+              <p class="text-xs text-zinc-400">High-throughput Redpanda / Kafka broker, TimescaleDB hot-path hypertable, MinIO S3 Parquet cold storage, and Grafana avionics dashboards.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="loadPipelineManagerData()" class="px-2.5 py-1 rounded text-xs bg-[#19152b] hover:bg-[#251f3e] text-purple-200 border border-purple-800/60 flex items-center gap-1 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Refresh Status</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4-Node Health Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="bg-[#120e21] border border-purple-900/40 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] uppercase font-bold text-purple-400 font-mono">Message Broker</span>
+              <span id="pipe-broker-dot" class="w-2 h-2 rounded-full bg-zinc-500"></span>
+            </div>
+            <div class="text-sm font-bold text-white font-mono" id="pipe-broker-name">Redpanda / Kafka</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-1" id="pipe-broker-addr">localhost:19092</div>
+          </div>
+
+          <div class="bg-[#120e21] border border-purple-900/40 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] uppercase font-bold text-emerald-400 font-mono">Hot Path DB</span>
+              <span id="pipe-timescale-dot" class="w-2 h-2 rounded-full bg-zinc-500"></span>
+            </div>
+            <div class="text-sm font-bold text-white font-mono">TimescaleDB PG16</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-1" id="pipe-timescale-status">localhost:5432 (Hypertable)</div>
+          </div>
+
+          <div class="bg-[#120e21] border border-purple-900/40 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] uppercase font-bold text-cyan-400 font-mono">Cold Storage</span>
+              <span id="pipe-minio-dot" class="w-2 h-2 rounded-full bg-cyan-500"></span>
+            </div>
+            <div class="text-sm font-bold text-white font-mono">MinIO S3 Lake</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-1">Snappy Parquet (9000/9001)</div>
+          </div>
+
+          <div class="bg-[#120e21] border border-purple-900/40 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] uppercase font-bold text-amber-400 font-mono">Operations HUD</span>
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            </div>
+            <div class="text-sm font-bold text-white font-mono">Grafana Avionics</div>
+            <div class="text-[10px] text-zinc-400 font-mono mt-1">localhost:3000</div>
+          </div>
+        </div>
+
+        <!-- Telemetry Statistics & Action Toolbar -->
+        <div class="bg-[#120e21] border border-purple-900/40 rounded-xl p-3.5 mb-4 flex flex-wrap items-center justify-between gap-3 font-mono">
+          <div class="flex items-center gap-4 text-xs">
+            <div><span class="text-zinc-500">SENT:</span> <span id="pipe-stat-sent" class="text-purple-300 font-bold">0</span></div>
+            <div><span class="text-zinc-500">QUEUED:</span> <span id="pipe-stat-queued" class="text-zinc-300 font-bold">0</span></div>
+            <div><span class="text-zinc-500">DROPPED:</span> <span id="pipe-stat-dropped" class="text-zinc-400">0</span></div>
+            <div><span class="text-zinc-500">ERRORS:</span> <span id="pipe-stat-errors" class="text-rose-400">0</span></div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="http://localhost:3000/d/cansat-mission-control/" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-950/40 hover:bg-amber-900/60 border border-amber-700/50 text-amber-200 flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              <span>Open Grafana (3000)</span>
+            </a>
+            <a href="http://localhost:9001" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-700/50 text-cyan-200 flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              <span>MinIO Console (9001)</span>
+            </a>
+            <button type="button" id="pipe-toggle-stream-btn" onclick="togglePipelineStreaming()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-900/50 hover:bg-purple-800/60 border border-purple-600/60 text-purple-200 transition">
+              STREAMING: ON
+            </button>
+          </div>
+        </div>
+
+        <!-- Scenario Replay to Pipeline & TimescaleDB Hot Path Live Feed -->
+        <div class="flex-1 min-h-0 flex flex-col bg-[#08060f] border border-purple-950 rounded-xl overflow-hidden">
+          <div class="p-3 bg-[#110d1e] border-b border-purple-950 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-purple-300">STREAM SCENARIO TO LAKEHOUSE:</span>
+              <select id="pipe-scenario-select" class="bg-[#1b152d] border border-purple-800/60 rounded px-2 py-1 text-xs text-zinc-200 font-mono">
+                <option value="01_nominal_sounding_flight">01 Nominal Sounding Flight</option>
+                <option value="02_high_altitude_burst_1200m">02 High Altitude Burst (1200m)</option>
+                <option value="03_severe_wind_shear_drift">03 Severe Wind Shear Drift</option>
+                <option value="04_apogee_ejection_shock_tumble">04 Apogee Ejection Shock &amp; Tumble</option>
+                <option value="05_parachute_pendulum_resonance">05 Parachute Pendulum Resonance</option>
+                <option value="06_delayed_chute_deployment">06 Delayed Chute Deployment</option>
+                <option value="07_thermal_inversion_sounding">07 Thermal Inversion Sounding</option>
+                <option value="08_sensor_glitch_gps_recovery">08 Sensor Glitch &amp; GPS Recovery</option>
+                <option value="09_low_battery_voltage_sag">09 Low Battery Voltage Sag</option>
+                <option value="10_ground_pad_static_test">10 Ground Pad Static Test</option>
+              </select>
+              <button type="button" onclick="streamSelectedScenarioToPipeline()" class="px-3 py-1 rounded bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold font-mono transition flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                <span>Dispatch to Redpanda</span>
+              </button>
+            </div>
+            <div id="pipe-stream-status-msg" class="text-xs font-mono text-purple-300">Ready to stream</div>
+          </div>
+
+          <!-- TimescaleDB Live Hot Path Feed -->
+          <div class="flex-1 overflow-auto p-2">
+            <table class="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr class="text-zinc-500 border-b border-purple-950/60 uppercase">
+                  <th class="p-2">TIME (UTC)</th>
+                  <th class="p-2">MISSION</th>
+                  <th class="p-2">PKT</th>
+                  <th class="p-2">ALTITUDE</th>
+                  <th class="p-2">VELOCITY</th>
+                  <th class="p-2">G-SHOCK</th>
+                  <th class="p-2">BATTERY</th>
+                  <th class="p-2">STAGE</th>
+                  <th class="p-2">AI ANOMALY</th>
+                </tr>
+              </thead>
+              <tbody id="pipe-timescale-table-body" class="divide-y divide-purple-950/30">
+                <tr>
+                  <td colspan="9" class="p-6 text-center text-zinc-500">Click "Refresh Status" to query TimescaleDB hot-path records.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Legacy Compatibility Stubs for Modals (so openModal('accelModal') works seamlessly) -->
     <div id="accelModal" class="hidden"></div>
     <div id="orientModal" class="hidden"></div>
@@ -1859,6 +2011,7 @@
           dot.className = 'led-dot bg-emerald-400 text-emerald-400 led-pulse';
           text.innerText = 'PYTHON ML (ONLINE)';
           badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-emerald-800/40 bg-emerald-950/30 text-emerald-300';
+          if (typeof updatePipelineBadgeStatus === 'function') updatePipelineBadgeStatus();
           return;
         }
       }
@@ -1869,6 +2022,7 @@
     dot.className = 'led-dot bg-zinc-500 text-zinc-500';
     text.innerText = 'PYTHON ML (STANDBY)';
     badge.className = 'px-2.5 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border border-[#2e2e2e] bg-[#171717] text-zinc-400';
+    if (typeof updatePipelineBadgeStatus === 'function') updatePipelineBadgeStatus();
   }
 
   setInterval(checkMlServerHealth, 3500);
@@ -5162,6 +5316,171 @@
     }
   }
 
+  // --- TELEMETRY DATA LAKEHOUSE & PIPELINE CONTROLLER ---
+  let pipelineStreamingEnabled = true;
+
+  function openPipelineManager() {
+    openModal('pipelineModal');
+    loadPipelineManagerData();
+  }
+
+  async function updatePipelineBadgeStatus() {
+    try {
+      const res = await fetch(getApiUrl('/api/pipeline/status'), { signal: AbortSignal.timeout(2000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      const p = data.pipeline;
+      if (!p) return;
+
+      const headerDot = document.getElementById('pipeline-status-dot');
+      const headerText = document.getElementById('pipeline-status-text');
+      if (headerDot && headerText) {
+        if (p.connected) {
+          headerDot.className = 'w-2 h-2 rounded-full bg-emerald-400 led-pulse';
+          headerText.textContent = 'LAKEHOUSE: STREAMING';
+        } else if (p.enabled) {
+          headerDot.className = 'w-2 h-2 rounded-full bg-purple-400';
+          headerText.textContent = 'LAKEHOUSE: READY';
+        } else {
+          headerDot.className = 'w-2 h-2 rounded-full bg-zinc-500';
+          headerText.textContent = 'LAKEHOUSE: OFF';
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function loadPipelineManagerData() {
+    try {
+      const res = await fetch(getApiUrl('/api/pipeline/status'));
+      if (!res.ok) return;
+      const data = await res.json();
+      const p = data.pipeline;
+      if (!p) return;
+
+      // Update Header Button
+      updatePipelineBadgeStatus();
+
+      // Update Modal Nodes
+      const brokerDot = document.getElementById('pipe-broker-dot');
+      const brokerAddr = document.getElementById('pipe-broker-addr');
+      if (brokerDot) brokerDot.className = 'w-2 h-2 rounded-full ' + (p.connected ? 'bg-emerald-400 led-pulse' : 'bg-zinc-500');
+      if (brokerAddr) brokerAddr.textContent = p.broker + (p.connected ? ' (Connected)' : ' (Waiting for broker)');
+
+      const tsDot = document.getElementById('pipe-timescale-dot');
+      const tsStatus = document.getElementById('pipe-timescale-status');
+      if (tsDot) tsDot.className = 'w-2 h-2 rounded-full ' + (p.timescaledb_online ? 'bg-emerald-400 led-pulse' : 'bg-zinc-500');
+      if (tsStatus) tsStatus.textContent = p.timescaledb_online ? 'localhost:5432 (Online)' : 'localhost:5432 (Offline/Standby)';
+
+      // Update Statistics
+      const sentEl = document.getElementById('pipe-stat-sent');
+      const queuedEl = document.getElementById('pipe-stat-queued');
+      const droppedEl = document.getElementById('pipe-stat-dropped');
+      const errorsEl = document.getElementById('pipe-stat-errors');
+      if (sentEl) sentEl.textContent = (p.packets_sent || 0).toLocaleString();
+      if (queuedEl) queuedEl.textContent = (p.packets_queued || 0).toLocaleString();
+      if (droppedEl) droppedEl.textContent = (p.packets_dropped || 0).toLocaleString();
+      if (errorsEl) errorsEl.textContent = (p.errors || 0).toLocaleString();
+
+      const toggleBtn = document.getElementById('pipe-toggle-stream-btn');
+      if (toggleBtn) {
+        pipelineStreamingEnabled = p.enabled;
+        toggleBtn.textContent = p.enabled ? 'STREAMING: ON' : 'STREAMING: PAUSED';
+        toggleBtn.className = p.enabled
+          ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-900/50 hover:bg-purple-800/60 border border-purple-600/60 text-purple-200 transition'
+          : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-400 transition';
+      }
+
+      // Fetch TimescaleDB Hot Path Telemetry
+      loadTimescaleHotPathData();
+    } catch (e) {
+      console.warn('Could not fetch pipeline status:', e);
+    }
+  }
+
+  async function togglePipelineStreaming() {
+    try {
+      const nextState = !pipelineStreamingEnabled;
+      const res = await fetch(getApiUrl('/api/pipeline/config'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: nextState })
+      });
+      if (res.ok) {
+        pipelineStreamingEnabled = nextState;
+        loadPipelineManagerData();
+      }
+    } catch (e) {
+      console.error('Failed to toggle pipeline streaming:', e);
+    }
+  }
+
+  async function streamSelectedScenarioToPipeline() {
+    const sel = document.getElementById('pipe-scenario-select');
+    const msg = document.getElementById('pipe-stream-status-msg');
+    if (!sel) return;
+    const scenario = sel.value;
+    if (msg) msg.textContent = 'Initiating stream for ' + scenario + '...';
+
+    try {
+      const res = await fetch(getApiUrl('/api/pipeline/stream-scenario'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario: scenario, rate_hz: 10.0 })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (msg) msg.innerHTML = '<span class="text-emerald-400 font-bold">Streaming: ' + scenario + ' @ 10Hz</span>';
+        setTimeout(loadPipelineManagerData, 1000);
+      } else {
+        if (msg) msg.innerHTML = '<span class="text-rose-400">Error: ' + (data.detail || 'failed') + '</span>';
+      }
+    } catch (e) {
+      if (msg) msg.innerHTML = '<span class="text-rose-400">Stream trigger failed: ' + e.message + '</span>';
+    }
+  }
+
+  async function loadTimescaleHotPathData() {
+    const tbody = document.getElementById('pipe-timescale-table-body');
+    if (!tbody) return;
+
+    try {
+      const res = await fetch(getApiUrl('/api/pipeline/timescale-summary?limit=15'));
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.status === 'offline') {
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-zinc-500 font-mono">TimescaleDB container offline. Run docker compose in cansat-telemetry-pipeline to activate hot-path storage.</td></tr>';
+        return;
+      }
+
+      if (!data.telemetry || data.telemetry.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-zinc-500 font-mono">TimescaleDB connected. No telemetry packets logged yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.telemetry.map(row => {
+        const tStr = (row.time || '').substring(11, 23);
+        const anomBadge = (row.status && row.status !== 'OK') || (row.anomaly_score > 0.65)
+          ? '<span class="px-1.5 py-0.5 rounded bg-rose-950 border border-rose-800 text-rose-300 text-[10px]">' + (row.status || 'ANOMALY') + '</span>'
+          : '<span class="text-emerald-400">NOMINAL</span>';
+
+        return `<tr class="hover:bg-purple-950/20 transition">
+          <td class="p-2 text-zinc-300">${tStr}</td>
+          <td class="p-2 text-purple-300 font-semibold">${row.mission_id || 'ALPHA'}</td>
+          <td class="p-2 text-zinc-400">#${row.packet_id || 0}</td>
+          <td class="p-2 text-white font-bold">${Number(row.altitude_m || 0).toFixed(1)}m</td>
+          <td class="p-2 text-cyan-300">${Number(row.velocity_mps || 0).toFixed(1)}m/s</td>
+          <td class="p-2 text-zinc-300">${Number(row.accel_z_g || 1).toFixed(2)}g</td>
+          <td class="p-2 text-amber-300">${Number(row.battery_v || 4.2).toFixed(2)}V</td>
+          <td class="p-2"><span class="px-1.5 py-0.5 rounded bg-[#1f1730] text-purple-200 text-[10px] border border-purple-800/40">${row.flight_stage || 'PAD'}</span></td>
+          <td class="p-2">${anomBadge}</td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      console.warn('Error fetching timescale hot path telemetry:', e);
+    }
+  }
+
   // --- DATABASE EXPLORER & MISSION MANAGEMENT ---
   let dbManagerActiveTab = 'missions';
   let cachedDbMissions = [];
@@ -5621,17 +5940,25 @@
     const modal = document.getElementById(id);
     if (modal) {
       modal.classList.remove('hidden');
+      modal.style.display = 'flex';
       if (id === 'aiModal') {
         analyzeData();
       } else if (id === 'dbManagerModal') {
         loadDatabaseManagerData();
+      } else if (id === 'pipelineModal') {
+        if (typeof loadPipelineManagerData === 'function') {
+          loadPipelineManagerData();
+        }
       }
     }
   }
 
   function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
   }
 
   function analyzeData() {
@@ -5915,7 +6242,7 @@
     }
 
     if (e.key === 'Escape') {
-      ['rawFeedModal', 'aiModal', 'helpModal', 'pfrModal', 'startMissionModal', 'dbManagerModal'].forEach(id => {
+      ['rawFeedModal', 'aiModal', 'helpModal', 'pfrModal', 'startMissionModal', 'dbManagerModal', 'pipelineModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
@@ -5983,6 +6310,14 @@
   window.deleteCurrentPfrMission = deleteCurrentPfrMission;
   window.purgeAllMissions = purgeAllMissions;
 
+  // Telemetry Data Lakehouse & Pipeline Exports
+  window.openPipelineManager = openPipelineManager;
+  window.loadPipelineManagerData = loadPipelineManagerData;
+  window.togglePipelineStreaming = togglePipelineStreaming;
+  window.streamSelectedScenarioToPipeline = streamSelectedScenarioToPipeline;
+  window.loadTimescaleHotPathData = loadTimescaleHotPathData;
+  window.updatePipelineBadgeStatus = updatePipelineBadgeStatus;
+
   // Verification Testing Harness Exports
   window.__COGNITIVE_CANSAT__ = {
     parsePacketLine: parsePacketLine,
@@ -6001,6 +6336,15 @@
     getActiveDbMissionId: function() { return activeDbMissionId; },
     getDbTelemetryBuffer: function() { return dbTelemetryBuffer; }
   };
+
+  // Direct click binding for Telemetry Lakehouse header button
+  const pipeBtn = document.getElementById('pipeline-header-btn');
+  if (pipeBtn) {
+    pipeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openModal('pipelineModal');
+    });
+  }
 })();
 </script>
 </body>

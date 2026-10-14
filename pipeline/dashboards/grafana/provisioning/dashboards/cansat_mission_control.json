@@ -1,0 +1,174 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Current Altitude",
+      "type": "stat",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, altitude_m FROM raw_telemetry ORDER BY time DESC LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 100 },
+              { "color": "orange", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "Vertical Velocity (Δh/Δt)",
+      "type": "stat",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, velocity_mps FROM raw_telemetry ORDER BY time DESC LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "velocityms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": -15 },
+              { "color": "green", "value": -8 },
+              { "color": "blue", "value": 0 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "Flight Stage",
+      "type": "stat",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, flight_stage FROM raw_telemetry ORDER BY time DESC LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "Battery Voltage",
+      "type": "gauge",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, battery_v FROM raw_telemetry ORDER BY time DESC LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 3.0,
+          "max": 4.2,
+          "unit": "volt",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 3.4 },
+              { "color": "green", "value": 3.7 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "title": "Altitude & Descent Velocity Profile",
+      "type": "timeseries",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time AS \"time\", altitude_m AS \"Altitude (m)\", velocity_mps AS \"Velocity (m/s)\" FROM raw_telemetry WHERE $__timeFilter(time) ORDER BY time ASC;",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "title": "Tri-Axis Accelerometer (G)",
+      "type": "timeseries",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time AS \"time\", accel_x_g AS \"Accel X\", accel_y_g AS \"Accel Y\", accel_z_g AS \"Accel Z\" FROM raw_telemetry WHERE $__timeFilter(time) ORDER BY time ASC;",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 12 },
+      "id": 7,
+      "title": "Live Flight Events & Anomaly Stream",
+      "type": "table",
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "targets": [
+        {
+          "rawSql": "SELECT time, event_type, severity, description, metric_value FROM flight_events ORDER BY time DESC LIMIT 20;",
+          "format": "table"
+        }
+      ]
+    }
+  ],
+  "refresh": "500ms",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["cansat", "telemetry", "avionics"],
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["500ms", "1s", "5s"]
+  },
+  "timezone": "browser",
+  "title": "CanSat Mission Control Telemetry",
+  "uid": "cansat-mission-control"
+}
