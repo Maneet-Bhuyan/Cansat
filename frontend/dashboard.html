@@ -1016,41 +1016,50 @@
               <button type="button" onclick="toggleTileMaximize('tile-camera')" class="panel-expand-btn" title="Expand View"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m-6 11l-5-5m0 5h4m-4 0v-4m16 4l-5-5m5 5h-4m4 0v-4"/></svg></button>
             </div>
           </div>
-          <div class="relative flex-1 min-h-[240px] flex items-center justify-center bg-[#000000] overflow-hidden rounded-b-md">
-            <img id="live-cam-img" class="w-full h-full object-contain" alt="Aerial Camera Stream" style="display: none;" />
-            <canvas id="cam-grid-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
-            
-            <div id="cam-placeholder" class="text-center p-4 space-y-2">
-              <div class="w-10 h-10 mx-auto rounded-full bg-[#171717] border border-[#2e2e2e] flex items-center justify-center text-zinc-400">
-                <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <div class="relative flex-1 min-h-[240px] flex items-center justify-center bg-[#000000] overflow-hidden rounded-b-md p-1.5">
+            <!-- 4:3 Aspect Ratio Stage matching camera QVGA (320x240) for pixel-perfect alignment -->
+            <div id="cam-viewport-stage" class="relative w-full max-w-[480px] aspect-[4/3] flex items-center justify-center overflow-hidden rounded border border-white/10 bg-[#050505] shadow-inner">
+              <img id="live-cam-img" class="absolute inset-0 w-full h-full object-cover" alt="Aerial Camera Stream" style="display: none;" />
+              <canvas id="cam-grid-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+              
+              <div id="cam-placeholder" class="text-center p-4 space-y-2 z-10">
+                <div class="w-10 h-10 mx-auto rounded-full bg-[#171717] border border-[#2e2e2e] flex items-center justify-center text-zinc-400">
+                  <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="text-xs font-semibold tracking-wider text-zinc-300 uppercase">AERIAL CAMERA FEED STANDBY</div>
+                <div class="text-[11px] font-mono text-zinc-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
               </div>
-              <div class="text-xs font-semibold tracking-wider text-zinc-300 uppercase">AERIAL CAMERA FEED STANDBY</div>
-              <div class="text-[11px] font-mono text-zinc-500">Awaiting 2.4 GHz ESP-NOW frames from ESP32-CAM (OV3660)...</div>
-            </div>
-            
-            <!-- Tactical Camera HUD Overlay -->
-            <div id="cam-hud" class="absolute top-2 left-2 bg-[#0a0a0a]/90 border border-[#262626] p-2 rounded-lg text-[10.5px] text-zinc-300 font-mono shadow-md backdrop-blur-sm space-y-0.5 pointer-events-none tabular-nums hidden">
-              <div class="text-[9.5px] text-zinc-400 font-semibold uppercase tracking-wider border-b border-[#262626] pb-0.5 flex justify-between gap-3">
-                <span>OV3660 DESCENT VIEW</span>
-                <span id="cam-hud-res" class="text-white">320x240</span>
+              
+              <!-- Integrated Top HUD Strip (Ground Cam Viewer Style) -->
+              <div id="cam-hud" class="absolute top-0 inset-x-0 h-6 bg-black/85 border-b border-white/10 px-2.5 flex items-center justify-between text-[10px] text-cyan-300 font-mono shadow-sm pointer-events-none tabular-nums hidden z-20 backdrop-blur-xs">
+                <div class="flex items-center gap-2 truncate">
+                  <span id="cam-hud-frame" class="text-white font-bold">#0000</span>
+                  <span class="text-zinc-600">|</span>
+                  <span id="cam-hud-res" class="text-zinc-400">320x240</span>
+                  <span class="text-zinc-600">|</span>
+                  <span id="cam-metric-fps-hud" class="text-emerald-400 font-bold">0.0 FPS</span>
+                  <span class="text-zinc-600 hidden sm:inline">|</span>
+                  <span id="cam-vari-val" class="text-cyan-300 hidden sm:inline">VARI +0.00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-zinc-400">TTI: <b id="cam-tti-val" class="text-white font-semibold">14.5s</b></span>
+                  <span class="text-zinc-600">|</span>
+                  <span id="cam-hud-airtime" class="text-emerald-400 font-semibold">0ms</span>
+                </div>
               </div>
-              <div class="flex justify-between gap-3"><span>Frame:</span><span id="cam-hud-frame" class="text-white font-semibold">#0000</span></div>
-              <div class="flex justify-between gap-3"><span>Size:</span><span id="cam-hud-size" class="text-zinc-300">0.0 KB</span></div>
-              <div class="flex justify-between gap-3"><span>Airtime:</span><span id="cam-hud-airtime" class="text-emerald-400">0 ms</span></div>
-              <div class="flex justify-between gap-3"><span>Radio:</span><span class="text-zinc-400">ESP-NOW Ch1</span></div>
-            </div>
 
-            <!-- Directional Escape Vector HUD -->
-            <div id="cam-evade-hud" class="absolute top-2 right-2 bg-[#0a0a0a]/90 border border-emerald-500/40 p-1.5 px-2.5 rounded-lg text-[10.5px] text-emerald-300 font-mono shadow-md backdrop-blur-sm hidden flex items-center gap-1.5 pointer-events-none">
-              <span id="cam-evade-arrow" class="text-base text-emerald-400">↗</span>
-              <span id="cam-evade-text" class="font-semibold tracking-wide">EVADE 042°</span>
-            </div>
-
-            <!-- Remote Sensing & TTI Telemetry Strip -->
-            <div id="cam-vari-hud" class="absolute bottom-2 left-2 right-2 bg-[#0a0a0a]/90 border border-[#262626] p-1.5 px-3 rounded-lg text-[10.5px] font-mono flex flex-wrap justify-between items-center backdrop-blur-sm pointer-events-none hidden gap-2">
-              <span class="text-zinc-400">REMOTE SENSING: <b id="cam-vari-val" class="text-emerald-400">VARI +0.28 (VEG)</b></span>
-              <span class="text-zinc-400">OPTICAL TTI: <b id="cam-tti-val" class="text-white">14.2s</b></span>
-              <span class="text-zinc-400">DESCENT HAZARD: <b id="cam-risk-val" class="text-emerald-300">LOW RISK (SAFE)</b></span>
+              <!-- Integrated Bottom HUD Strip (Ground Cam Viewer Style) -->
+              <div id="cam-vari-hud" class="absolute bottom-0 inset-x-0 h-6 bg-black/85 border-t border-white/10 px-2.5 flex items-center justify-between text-[10px] font-mono shadow-sm pointer-events-none hidden z-20 backdrop-blur-xs">
+                <div class="flex items-center gap-2 truncate">
+                  <span class="text-zinc-400">SLAI:</span>
+                  <span id="cam-risk-val" class="text-emerald-300 font-bold">SAFE_LZ</span>
+                  <span id="cam-hud-size" class="text-zinc-500 text-[9px] hidden sm:inline">0.0 KB</span>
+                </div>
+                <div id="cam-evade-hud" class="flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <span id="cam-evade-arrow" class="text-xs">↗</span>
+                  <span id="cam-evade-text" class="tracking-wide">ON TARGET</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3310,21 +3319,23 @@
     const canvas = document.getElementById('cam-grid-canvas');
     if (!canvas) return;
 
-    if (canvas.width !== imgEl.naturalWidth || canvas.height !== imgEl.naturalHeight) {
-      canvas.width = imgEl.naturalWidth || 320;
-      canvas.height = imgEl.naturalHeight || 240;
+    const targetW = imgEl.naturalWidth || 320;
+    const targetH = imgEl.naturalHeight || 240;
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
     }
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!offscreenCamCanvas) {
       offscreenCamCanvas = document.createElement('canvas');
-      offscreenCamCanvas.width = 64;
-      offscreenCamCanvas.height = 48;
+      offscreenCamCanvas.width = 32;
+      offscreenCamCanvas.height = 24;
     }
     const offCtx = offscreenCamCanvas.getContext('2d', { willReadFrequently: true });
-    offCtx.drawImage(imgEl, 0, 0, 64, 48);
-    const imgData = offCtx.getImageData(0, 0, 64, 48);
+    offCtx.drawImage(imgEl, 0, 0, 32, 24);
+    const imgData = offCtx.getImageData(0, 0, 32, 24);
     const data = imgData.data;
 
     let totR = 0, totG = 0, totB = 0;
@@ -3345,8 +3356,8 @@
     vari = Math.max(-1.0, Math.min(1.0, vari));
 
     // 3x3 Sectors Analysis
-    const cw = Math.floor(64 / 3);
-    const ch = Math.floor(48 / 3);
+    const cw = Math.floor(32 / 3);
+    const ch = Math.floor(24 / 3);
     let bestScore = -999;
     let bestCell = [1, 1];
     let bestLabel = 'CRITICAL_HAZARD';
@@ -3359,7 +3370,7 @@
         let sR = 0, sG = 0, sB = 0, sCnt = 0;
         for (let y = r * ch; y < (r + 1) * ch; y++) {
           for (let x = c * cw; x < (c + 1) * cw; x++) {
-            const idx = (y * 64 + x) * 4;
+            const idx = (y * 32 + x) * 4;
             sR += data[idx];
             sG += data[idx+1];
             sB += data[idx+2];
@@ -3376,42 +3387,36 @@
         const maxC = Math.max(avgR, avgG, avgB);
         const minC = Math.min(avgR, avgG, avgB);
         const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-        const isGrayOrConcrete = saturation < 0.10; // Concrete, asphalt, gray rooftops
+        const isGrayOrConcrete = saturation < 0.10;
 
         let sLabel = 'CRITICAL_HAZARD';
         let sScore = -0.6;
-        let sColor = 'rgba(239, 68, 68, 0.25)';
+        let sColor = 'rgba(239, 68, 68, 0.18)';
 
         if (avgB > (avgR + avgG) * 0.65 && avgB > 80) {
-          // Water Body
           sLabel = 'WATER_HAZARD';
           sScore = -1.0;
-          sColor = 'rgba(6, 182, 212, 0.25)';
+          sColor = 'rgba(6, 182, 212, 0.20)';
         } else if (isGrayOrConcrete || (avgR > 185 && avgG > 185 && avgB > 175 && saturation < 0.12)) {
-          // Concrete, asphalt roads, white/gray rooftops, screen backlight washout
           sLabel = 'CRITICAL_HAZARD';
           sScore = -0.8;
-          sColor = 'rgba(239, 68, 68, 0.28)';
+          sColor = 'rgba(239, 68, 68, 0.20)';
         } else if (avgR > avgG * 1.06) {
-          // Brick, terracotta roofs, red tiles, dry buildings
           sLabel = 'CRITICAL_HAZARD';
           sScore = -0.7;
-          sColor = 'rgba(239, 68, 68, 0.25)';
+          sColor = 'rgba(239, 68, 68, 0.18)';
         } else if (sVari > 0.08 && avgG > avgR * 1.05 && avgG > avgB * 1.03 && saturation > 0.10) {
-          // Genuine Green Vegetation / Pasture
           sLabel = 'SAFE_LZ';
           sScore = 1.0 + sVari;
-          sColor = 'rgba(16, 185, 129, 0.25)';
+          sColor = 'rgba(16, 185, 129, 0.22)';
         } else if (sVari >= -0.02 && avgG > avgR && avgG > avgB && saturation > 0.08) {
-          // Dense Foliage / Forest Canopy
           sLabel = 'OBSTACLE_CANOPY';
           sScore = 0.2 + sVari;
-          sColor = 'rgba(245, 158, 11, 0.22)';
+          sColor = 'rgba(245, 158, 11, 0.18)';
         } else {
-          // Urban structures / buildings / pavement fallback
           sLabel = 'CRITICAL_HAZARD';
           sScore = -0.5;
-          sColor = 'rgba(239, 68, 68, 0.25)';
+          sColor = 'rgba(239, 68, 68, 0.18)';
         }
 
         if (r === 1 && c === 1) {
@@ -3437,28 +3442,28 @@
     }
     const needsEvade = (centerLabel !== 'SAFE_LZ') && (bestCell[0] !== 1 || bestCell[1] !== 1);
 
-    // Update Live SLAI Badge based on CENTER (NADIR) IMPACT SECTOR
+    // Update Live SLAI Badge in Panel Header
     const slaiPill = document.getElementById('cam-slai-pill');
     const slaiDot = document.getElementById('cam-slai-dot');
     const slaiTxt = document.getElementById('cam-slai-text');
     if (slaiTxt && slaiPill && slaiDot) {
       slaiTxt.innerText = 'SLAI: ' + centerLabel;
       if (centerLabel === 'SAFE_LZ') {
-        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300';
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/60 text-[10px] font-mono font-semibold text-emerald-300';
         slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
       } else if (centerLabel === 'OBSTACLE_CANOPY') {
-        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono font-semibold text-amber-300';
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/60 text-[10px] font-mono font-semibold text-amber-300';
         slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
       } else if (centerLabel === 'WATER_HAZARD') {
-        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/60 text-[10px] font-mono font-semibold text-cyan-300';
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/60 text-[10px] font-mono font-semibold text-cyan-300';
         slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse';
       } else {
-        slaiPill.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/60 text-[10px] font-mono font-semibold text-rose-300';
+        slaiPill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-950/80 border border-rose-500/60 text-[10px] font-mono font-semibold text-rose-300';
         slaiDot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse';
       }
     }
 
-    // Update Escape Vector HUD
+    // Update Escape Vector HUD Text
     const evadeHud = document.getElementById('cam-evade-hud');
     const evadeTxt = document.getElementById('cam-evade-text');
     const evadeArrow = document.getElementById('cam-evade-arrow');
@@ -3470,28 +3475,26 @@
         const arrowIdx = Math.round(evadeAngle / 45) % 8;
         evadeArrow.innerText = arrowGlyphs[arrowIdx];
       } else {
-        evadeHud.classList.add('hidden');
+        evadeArrow.innerText = '•';
+        evadeTxt.innerText = 'ON TARGET';
       }
     }
 
-    // Update Remote Sensing & TTI HUD (Based on Center Nadir Landing Point)
-    const variHud = document.getElementById('cam-vari-hud');
+    // Update Remote Sensing & TTI HUD (Top/Bottom Strips)
     const variVal = document.getElementById('cam-vari-val');
     const ttiVal = document.getElementById('cam-tti-val');
     const riskVal = document.getElementById('cam-risk-val');
-    if (variHud && variVal && ttiVal && riskVal) {
-      variHud.classList.remove('hidden');
-      const vegType = vari > 0.12 ? 'DENSE VEG' : (vari >= 0.04 ? 'MODERATE VEG' : (vari >= -0.05 ? 'DRY GROUND' : 'URBAN/ASPHALT'));
-      variVal.innerText = `VARI ${vari >= 0 ? '+' : ''}${vari.toFixed(2)} (${vegType})`;
+    if (variVal && ttiVal && riskVal) {
       const curAlt = (clientAltitudeFilter && clientAltitudeFilter.z !== undefined) ? clientAltitudeFilter.z : 45.0;
       const curVspd = Math.abs(telemetryHistory.length ? (telemetryHistory[telemetryHistory.length - 1].v_spd || 4.8) : 4.8);
-      const estTti = curVspd > 0.3 ? (curAlt / curVspd) : 15.0;
+      const estTti = curVspd > 0.3 ? (curAlt / curVspd) : 14.5;
+      variVal.innerText = `VARI ${vari >= 0 ? '+' : ''}${vari.toFixed(2)}`;
       ttiVal.innerText = estTti.toFixed(1) + 's';
-      riskVal.innerText = centerLabel === 'SAFE_LZ' ? 'LOW RISK (SAFE)' : (centerLabel === 'OBSTACLE_CANOPY' ? 'MODERATE (CANOPY)' : 'CRITICAL HAZARD');
+      riskVal.innerText = centerLabel;
       riskVal.className = centerLabel === 'SAFE_LZ' ? 'text-emerald-300 font-bold' : (centerLabel === 'OBSTACLE_CANOPY' ? 'text-amber-300 font-bold' : 'text-rose-400 font-bold');
     }
 
-    // Draw 3x3 Grid Overlay
+    // Draw 3x3 Grid Overlay & Reticle (Matching OpenCV ground_cam_viewer HUD)
     if (camTacticalGridActive) {
       const W = canvas.width;
       const H = canvas.height;
@@ -3499,7 +3502,7 @@
       const sh = H / 3;
 
       ctx.lineWidth = 1.0;
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.strokeStyle = 'rgba(60, 80, 100, 0.45)';
 
       for (const sec of sectorGrid) {
         const x = sec.c * sw;
@@ -3512,21 +3515,31 @@
       // Highlight best sector
       const bx = bestCell[1] * sw;
       const by = bestCell[0] * sh;
-      ctx.lineWidth = 2.0;
+      ctx.lineWidth = 1.5;
       ctx.strokeStyle = '#10B981';
-      ctx.strokeRect(bx + 2, by + 2, sw - 4, sh - 4);
+      ctx.strokeRect(bx + 1, by + 1, sw - 2, sh - 2);
       ctx.fillStyle = '#10B981';
-      ctx.font = '10px monospace';
-      ctx.fillText('OPTIMAL LZ', bx + 6, by + 16);
+      ctx.font = '9px monospace';
+      ctx.fillText('OPTIMAL LZ', bx + 4, by + 14);
+
+      // Center Crosshairs Reticle (OpenCV Style)
+      const cx = W / 2;
+      const cy = H / 2;
+      ctx.strokeStyle = 'rgba(0, 255, 200, 0.75)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(cx - 8, cy);
+      ctx.lineTo(cx + 8, cy);
+      ctx.moveTo(cx, cy - 8);
+      ctx.lineTo(cx, cy + 8);
+      ctx.stroke();
 
       // Escape Vector Arrow
       if (needsEvade) {
-        const cx = W / 2;
-        const cy = H / 2;
         const tx = bx + sw / 2;
         const ty = by + sh / 2;
-        ctx.strokeStyle = '#34D399';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 2.0;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(tx, ty);
