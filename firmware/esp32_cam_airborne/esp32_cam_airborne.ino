@@ -9,6 +9,8 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include "FS.h"
+#include "SD_MMC.h"
 #include "camera_pins.h"
 #include "model_data.h"
 
@@ -21,6 +23,7 @@
 #define CHUNK_MAX_SIZE       200            // Bytes per ESP-NOW packet (Hard limit: 250)
 #define WIFI_CHANNEL         1              // Must match Ground Receiver channel
 #define TINYML_DOWNSAMPLE    4              // Downsample factor for fast onboard feature eval
+#define SD_CLIP_DURATION_SEC 15             // 15 seconds per video chunk segment
 
 // Broadcast MAC address (receivable by any ESP32 listening on Channel 1)
 static uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -66,6 +69,65 @@ static const unsigned long g_frame_interval_ms = 1000 / TARGET_FPS;
 static uint8_t  g_last_slai_class = SLAI_SAFE_LZ;
 static uint8_t  g_last_slai_conf = 95;
 static const char* SLAI_NAMES[] = {"SAFE_LZ", "CANOPY", "CRITICAL_HAZARD", "WATER_HAZARD"};
+
+// MicroSD Logging State
+static bool g_sd_available = false;
+static uint16_t g_clip_counter = 0;
+static File g_video_file;
+static File g_telemetry_file;
+static unsigned long g_clip_start_time = 0;
+
+void open_next_sd_clip() {
+    if (!g_sd_available) return;
+
+    if (g_video_file) {
+        g_video_file.close();
+    }
+    if (g_telemetry_file) {
+        g_telemetry_file.close();
+    }
+
+    char video_path[32];
+    char telem_path[32];
+    snprintf(video_path, sizeof(video_path), "/flight_%03d.mjpeg", g_clip_counter);
+    snprintf(telem_path, sizeof(telem_path), "/flight_%03d.csv", g_clip_counter);
+
+    g_video_file = SD_MMC.open(video_path, FILE_WRITE);
+    g_telemetry_file = SD_MMC.open(telem_path, FILE_WRITE);
+
+    if (g_video_file && g_telemetry_file) {
+        g_telemetry_file.println(F("frame_id,time_ms,bytes,chunks,slai_class,slai_name,confidence"));
+        g_telemetry_file.flush();
+        Serial.printf("[SD] Active recording chunk: %s & %s\n", video_path, telem_path);
+        g_clip_start_time = millis();
+        g_clip_counter++;
+    } else {
+        Serial.println(F("[SD ERROR] Failed to open new clip files."));
+        g_sd_available = false;
+    }
+}
+
+void write_frame_to_sd(camera_fb_t *fb, uint16_t frame_id, uint8_t slai_class, uint8_t slai_conf, uint16_t chunks) {
+    if (!g_sd_available || !g_video_file) return;
+
+    // Check if current 15s clip has expired
+    if (millis() - g_clip_start_time >= (SD_CLIP_DURATION_SEC * 1000UL)) {
+        open_next_sd_clip();
+        if (!g_video_file) return;
+    }
+
+    // Append raw JPEG frame to MJPEG container
+    g_video_file.write(fb->buf, fb->len);
+    g_video_file.flush();
+
+    // Log matching TinyML telemetry metadata
+    if (g_telemetry_file) {
+        g_telemetry_file.printf("%u,%lu,%u,%u,%u,%s,%u\n",
+                                frame_id, millis(), fb->len, chunks,
+                                slai_class, SLAI_NAMES[slai_class], slai_conf);
+        g_telemetry_file.flush();
+    }
+}
 
 // ----------------------------------------------------------------------------
 // ONBOARD TINYML INFERENCE ENGINE (Executes directly on ESP32 in the air)
@@ -293,14 +355,29 @@ void capture_and_transmit() {
         delayMicroseconds(450); // Inter-packet spacing prevents ground FIFO overflow
     }
 
+    // 4. Radio Quiescence Delay (Allows RF power amplifier to cool & clear bus)
+    delayMicroseconds(1000);
+
+    // 5. MicroSD Flash Write (Radio is now completely IDLE, preventing concurrent peak current spikes)
+    unsigned long t_sd_start = millis();
+    write_frame_to_sd(fb, g_frame_counter, g_last_slai_class, g_last_slai_conf, total_chunks);
+    unsigned long t_sd_duration = millis() - t_sd_start;
+
     unsigned long t_duration = millis() - t_start;
     float current_fps = (t_duration > 0) ? (1000.0f / t_duration) : 0.0f;
 
+    char sd_status[20];
+    if (g_sd_available) {
+        snprintf(sd_status, sizeof(sd_status), "SD: %lums", t_sd_duration);
+    } else {
+        snprintf(sd_status, sizeof(sd_status), "SD: [NOT INSERTED]");
+    }
+
     // Professional Aerospace Serial Telemetry Output
-    Serial.printf("[TX #%04d] Size: %u B | Chunks: %2d | TinyML: %-15s (%2d%%, %lums) | Total: %lums (~%.1f FPS)\n",
+    Serial.printf("[TX #%04d] %u B | %2d chunks | ML: %-15s (%2d%%, %lums) | %-17s | Total: %lums (~%.1f FPS)\n",
                   g_frame_counter, frame_bytes, total_chunks,
                   SLAI_NAMES[g_last_slai_class], g_last_slai_conf, t_ml_duration,
-                  t_duration, current_fps);
+                  sd_status, t_duration, current_fps);
 
     // Release camera memory back to driver pool
     esp_camera_fb_return(fb);
@@ -314,6 +391,9 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
 
+    // 1. Throttle CPU clock to 160 MHz to stay strictly within 600mA boost converter limit
+    setCpuFrequencyMhz(160);
+
     // Clean Aerospace Mission Avionics Boot Banner
     Serial.println();
     Serial.println(F("========================================================================"));
@@ -322,13 +402,14 @@ void setup() {
     Serial.println(F("*              Sensor: OmniVision OV3660 / OV2640 (Nadir Mount)       *"));
     Serial.println(F("*              Neural Net: TinyLandingNet (INT8 Quantized 7.15 KB)     *"));
     Serial.println(F("*              Radio Link: 2.4 GHz ESP-NOW (Ch 1, +19.5 dBm Tx)        *"));
+    Serial.println(F("*              Storage: MicroSD 1-Bit Low-Power Flight Blackbox        *"));
     Serial.println(F("========================================================================"));
-    Serial.println(F("[SYSTEM] Xtensa LX6 dual-core 32-bit processor booted @ 240 MHz."));
+    Serial.println(F("[SYSTEM] Xtensa LX6 dual-core 32-bit processor throttled @ 160 MHz for power safety."));
 
     pinMode(ONBOARD_LED_PIN, OUTPUT);
     pinMode(FLASH_LED_PIN, OUTPUT);
     digitalWrite(ONBOARD_LED_PIN, HIGH); // Red LED off initially (Active Low)
-    digitalWrite(FLASH_LED_PIN, LOW);    // Flash off initially
+    digitalWrite(FLASH_LED_PIN, LOW);    // Flash LED forced OFF
 
     // Initialize Camera
     if (!init_camera()) {
@@ -354,7 +435,31 @@ void setup() {
         ESP.restart();
     }
 
-    Serial.println(F("[INIT COMPLETE] Commencing autonomous aerial capture & TinyML broadcast..."));
+    // Initialize MicroSD in 1-bit mode (Frees GPIO 4, 12, 13 and keeps Flash LED off)
+    Serial.println(F("[SD] Checking MicroSD Card status (1-bit low-power mode)..."));
+    if (!SD_MMC.begin("/sdcard", true)) { // true = 1-bit mode
+        Serial.println(F("[SD NOTICE] MicroSD Card is NOT active/inserted (or unformatted)."));
+        Serial.println(F("[SYSTEM] Airborne system continuing 100% in RADIO-ONLY mode (ESP-NOW broadcast ACTIVE)."));
+        g_sd_available = false;
+    } else {
+        uint8_t cardType = SD_MMC.cardType();
+        if (cardType == CARD_NONE) {
+            Serial.println(F("[SD NOTICE] No MicroSD Card detected in slot."));
+            Serial.println(F("[SYSTEM] Airborne system continuing 100% in RADIO-ONLY mode (ESP-NOW broadcast ACTIVE)."));
+            g_sd_available = false;
+        } else {
+            uint64_t cardSizeMB = SD_MMC.cardSize() / (1024 * 1024);
+            Serial.printf("[SD] MicroSD Card DETECTED & ACTIVE: Type %d, %llu MB. Dual continuous blackbox logging ENABLED.\n", cardType, cardSizeMB);
+            g_sd_available = true;
+            open_next_sd_clip();
+        }
+    }
+
+    if (g_sd_available) {
+        Serial.println(F("[INIT COMPLETE] Commencing autonomous aerial capture, TinyML broadcast & SD logging..."));
+    } else {
+        Serial.println(F("[INIT COMPLETE] Commencing autonomous aerial capture & TinyML radio broadcast (SD: OFF)..."));
+    }
     Serial.println(F("------------------------------------------------------------------------"));
 }
 
