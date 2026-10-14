@@ -381,8 +381,18 @@
       });
     }
 
+    const presetSelect = document.getElementById('replay-preset-select');
+    if (presetSelect) {
+      presetSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val) {
+          loadVideoSource(val);
+        }
+      });
+    }
+
     // Initial render placeholder
-    renderReplayHudFrame(null, 120, 'CRITICAL_HAZARD', 90);
+    renderReplayHudFrame();
   }
 
   function loadVideoSource(url) {
@@ -398,11 +408,16 @@
       const playBtn = document.getElementById('btn-replay-play');
       if (playBtn) playBtn.textContent = 'PAUSE';
       playLoop(performance.now());
+    }).catch((err) => {
+      console.warn('Video autoplay prevented or source error:', err);
     });
   }
 
   let proceduralTime = 0;
   function startProceduralFlightReplay() {
+    if (videoElement) {
+      videoElement.pause();
+    }
     isPlaying = true;
     const playBtn = document.getElementById('btn-replay-play');
     if (playBtn) playBtn.textContent = 'PAUSE';
@@ -418,11 +433,11 @@
     if (elapsed >= frameInterval) {
       lastFrameTime = timestamp - (elapsed % frameInterval);
 
-      if (videoElement && !videoElement.paused) {
+      if (videoElement && !videoElement.paused && videoElement.readyState >= 2) {
         // Extract real video frame
         videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
         analyzeAndDrawHud(videoCtx, videoCanvas.width, videoCanvas.height);
-      } else {
+      } else if (!videoElement || videoElement.paused) {
         // Procedural descent simulation
         proceduralTime += 0.05;
         renderProceduralFrame(proceduralTime);
@@ -452,14 +467,116 @@
     analyzeAndDrawHud(videoCtx, w, h);
   }
 
+  let offscreenReplayCanvas = null;
+  let offscreenReplayCtx = null;
+
   function analyzeAndDrawHud(ctx, w, h) {
+    if (!offscreenReplayCanvas) {
+      offscreenReplayCanvas = document.createElement('canvas');
+      offscreenReplayCanvas.width = 32;
+      offscreenReplayCanvas.height = 24;
+      offscreenReplayCtx = offscreenReplayCanvas.getContext('2d', { willReadFrequently: true });
+    }
+
+    // Downsample the rendered frame for rapid sector evaluation
+    offscreenReplayCtx.drawImage(videoCanvas, 0, 0, 32, 24);
+    const imgData = offscreenReplayCtx.getImageData(0, 0, 32, 24);
+    const pixels = imgData.data;
+
     const cellW = w / 3;
     const cellH = h / 3;
+    const cw = Math.floor(32 / 3);
+    const ch = Math.floor(24 / 3);
 
-    // Draw 3x3 Grid Lines
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+    const sectorGrid = [];
+    let bestCell = [1, 1];
+    let maxScore = -999;
+    let centerLabel = 'CRITICAL_HAZARD';
+    let centerVari = 0;
+
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        let sumR = 0, sumG = 0, sumB = 0, count = 0;
+        for (let y = r * ch; y < (r + 1) * ch; y++) {
+          for (let x = c * cw; x < (c + 1) * cw; x++) {
+            const idx = (y * 32 + x) * 4;
+            sumR += pixels[idx];
+            sumG += pixels[idx + 1];
+            sumB += pixels[idx + 2];
+            count++;
+          }
+        }
+        const avgR = sumR / count;
+        const avgG = sumG / count;
+        const avgB = sumB / count;
+
+        const maxC = Math.max(avgR, avgG, avgB);
+        const minC = Math.min(avgR, avgG, avgB);
+        const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+        const sVari = (avgG - avgR) / Math.max(1, (avgG + avgR - avgB));
+
+        let sLabel = 'CRITICAL_HAZARD';
+        let sScore = -0.5;
+        let sColor = 'rgba(239, 68, 68, 0.20)';
+        let sBorder = 'rgba(239, 68, 68, 0.55)';
+
+        if (avgB > avgR * 1.08 && avgB > avgG * 0.95 && avgB > 80) {
+          sLabel = 'WATER_HAZARD';
+          sScore = -1.0;
+          sColor = 'rgba(6, 182, 212, 0.22)';
+          sBorder = 'rgba(6, 182, 212, 0.65)';
+        } else if (saturation < 0.10 || (avgR > 185 && avgG > 185 && avgB > 175)) {
+          sLabel = 'CRITICAL_HAZARD';
+          sScore = -0.8;
+          sColor = 'rgba(239, 68, 68, 0.20)';
+          sBorder = 'rgba(239, 68, 68, 0.55)';
+        } else if (sVari > 0.06 && avgG > avgR * 1.04 && saturation > 0.08) {
+          sLabel = 'SAFE_LZ';
+          sScore = 1.0 + sVari;
+          sColor = 'rgba(16, 185, 129, 0.24)';
+          sBorder = 'rgba(16, 185, 129, 0.8)';
+        } else if (sVari >= -0.02 && avgG > avgR && avgG > avgB) {
+          sLabel = 'OBSTACLE_CANOPY';
+          sScore = 0.2 + sVari;
+          sColor = 'rgba(245, 158, 11, 0.20)';
+          sBorder = 'rgba(245, 158, 11, 0.65)';
+        }
+
+        if (r === 1 && c === 1) {
+          centerLabel = sLabel;
+          centerVari = sVari;
+        }
+
+        if (sScore > maxScore) {
+          maxScore = sScore;
+          bestCell = [r, c];
+        }
+
+        sectorGrid.push({ r, c, label: sLabel, color: sColor, border: sBorder });
+      }
+    }
+
+    // 1. Draw Sector Grid Fills & Borders
+    for (const sec of sectorGrid) {
+      const x = sec.c * cellW;
+      const y = sec.r * cellH;
+
+      ctx.fillStyle = sec.color;
+      ctx.fillRect(x, y, cellW, cellH);
+
+      ctx.strokeStyle = sec.border;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2);
+
+      // Label Sector Tag
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(sec.label.replace('_', ' '), x + 6, y + 16);
+    }
+
+    // 2. Draw 3x3 Grid Divider Lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 1;
-
     for (let i = 1; i < 3; i++) {
       ctx.beginPath();
       ctx.moveTo(i * cellW, 0);
@@ -472,54 +589,78 @@
       ctx.stroke();
     }
 
-    // Center nadir sector [1, 1] is HAZARD
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
-    ctx.fillRect(cellW, cellH, cellW, cellH);
+    // 3. Highlight Optimal LZ Sector
+    const bx = bestCell[1] * cellW;
+    const by = bestCell[0] * cellH;
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx + 2, by + 2, cellW - 4, cellH - 4);
 
-    ctx.fillStyle = '#ef4444';
-    ctx.font = 'bold 11px "JetBrains Mono", monospace';
-    ctx.fillText('CRITICAL HAZARD', cellW + 10, cellH + 30);
-    ctx.font = '9px "JetBrains Mono", monospace';
-    ctx.fillText('ROOF / ASPHALT', cellW + 10, cellH + 46);
+    ctx.fillStyle = '#10B981';
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    ctx.fillText('OPTIMAL LZ', bx + 6, by + 28);
 
-    // Right sector [1, 2] is SAFE LZ
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.28)';
-    ctx.fillRect(cellW * 2, cellH, cellW, cellH);
-
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 11px "JetBrains Mono", monospace';
-    ctx.fillText('SAFE LZ', cellW * 2 + 15, cellH + 30);
-    ctx.font = '9px "JetBrains Mono", monospace';
-    ctx.fillText('GRASSLAND', cellW * 2 + 15, cellH + 46);
-
-    // Directional Evasion Arrow pointing right (090 deg)
-    ctx.strokeStyle = '#00e5ff';
-    ctx.lineWidth = 3;
+    // 4. Center Crosshairs Reticle
+    const cx = w / 2;
+    const cy = h / 2;
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.8)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(w / 2, h / 2);
-    ctx.lineTo(w * 0.8, h / 2);
-    ctx.lineTo(w * 0.76, h / 2 - 8);
-    ctx.moveTo(w * 0.8, h / 2);
-    ctx.lineTo(w * 0.76, h / 2 + 8);
+    ctx.moveTo(cx - 10, cy);
+    ctx.lineTo(cx + 10, cy);
+    ctx.moveTo(cx, cy - 10);
+    ctx.lineTo(cx, cy + 10);
     ctx.stroke();
 
-    // Top HUD Bar
+    // 5. Evasion Vector Calculation
+    const needsEvade = (centerLabel !== 'SAFE_LZ') && (bestCell[0] !== 1 || bestCell[1] !== 1);
+    let evadeAngle = 0;
+    let evadeText = 'ON TARGET (SAFE LZ)';
+
+    if (needsEvade) {
+      const tx = bx + cellW / 2;
+      const ty = by + cellH / 2;
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+
+      // Arrowhead
+      const angle = Math.atan2(ty - cy, tx - cx);
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - 10 * Math.cos(angle - Math.PI / 6), ty - 10 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(tx - 10 * Math.cos(angle + Math.PI / 6), ty - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      let deg = Math.round((angle * 180 / Math.PI + 90 + 360) % 360);
+      evadeAngle = deg;
+      evadeText = `EVADE ${String(deg).padStart(3, '0')} deg`;
+    }
+
+    // 6. Top HUD Status Bar
     ctx.fillStyle = 'rgba(7, 10, 19, 0.85)';
     ctx.fillRect(0, 0, w, 26);
 
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = centerLabel === 'SAFE_LZ' ? '#34d399' : (centerLabel === 'OBSTACLE_CANOPY' ? '#fbbf24' : '#f87171');
     ctx.font = '10px "JetBrains Mono", monospace';
-    ctx.fillText('SLAI: 0.14 (HAZARD) | NADIR: [1,1] | EVADE: 090 deg | RATE: ' + playbackFps + ' FPS', 10, 17);
+    const variStr = `VARI ${centerVari >= 0 ? '+' : ''}${centerVari.toFixed(2)}`;
+    ctx.fillText(`SLAI: ${centerLabel} | ${variStr} | NADIR: [1,1] | ${evadeText} | RATE: ${playbackFps} FPS`, 10, 17);
 
-    // Update external UI metrics
+    // 7. Update External UI Badges
     const slaiBadge = document.getElementById('replay-slai-badge');
     const evadeBadge = document.getElementById('replay-evade-badge');
     if (slaiBadge) {
-      slaiBadge.textContent = 'CRITICAL HAZARD';
-      slaiBadge.style.color = '#ef4444';
+      slaiBadge.textContent = centerLabel.replace('_', ' ');
+      slaiBadge.style.color = centerLabel === 'SAFE_LZ' ? 'var(--accent-green)' : (centerLabel === 'OBSTACLE_CANOPY' ? 'var(--accent-yellow)' : 'var(--accent-red)');
     }
     if (evadeBadge) {
-      evadeBadge.textContent = 'EVADE 090 deg';
+      evadeBadge.textContent = evadeText;
+      evadeBadge.style.color = needsEvade ? '#ffffff' : 'var(--accent-green)';
     }
   }
 

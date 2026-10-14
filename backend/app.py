@@ -348,6 +348,53 @@ reports_dir = os.path.join(BASE_DIR, "reports")
 if os.path.exists(reports_dir):
     app.mount("/reports", StaticFiles(directory=reports_dir), name="reports")
 
+tinyml_videos_dir = os.path.join(BASE_DIR, "tinyml_test_videos")
+if os.path.exists(tinyml_videos_dir):
+    app.mount("/tinyml_test_videos", StaticFiles(directory=tinyml_videos_dir), name="tinyml_test_videos")
+
+@app.get("/api/tinyml/sample-videos")
+def get_tinyml_sample_videos():
+    """Returns curated flight test video presets categorized by terrain hazard profile."""
+    return [
+        {
+            "id": "farmland",
+            "title": "01 Farmland & Pasture (Nominal LZ)",
+            "category": "01_farmland_and_pasture",
+            "filename": "aerial_hemp_field_descent.webm",
+            "url": "/tinyml_test_videos/01_farmland_and_pasture/aerial_hemp_field_descent.webm",
+            "expected_class": "SAFE_LZ",
+            "desc": "Overhead descent over green crops, pasture, and dirt trails with high vegetative index (VARI > +0.15)."
+        },
+        {
+            "id": "urban",
+            "title": "02 Village Roads & Buildings (Hazard)",
+            "category": "02_urban_roads_and_buildings",
+            "filename": "aerial_village_roads_and_rooftops.webm",
+            "url": "/tinyml_test_videos/02_urban_roads_and_buildings/aerial_village_roads_and_rooftops.webm",
+            "expected_class": "CRITICAL_HAZARD",
+            "desc": "Overhead flight above buildings, commercial rooftops, asphalt road, and parking area with structural shadows."
+        },
+        {
+            "id": "river",
+            "title": "03 River & Dense Canopy (Water/Canopy)",
+            "category": "03_water_hazards_and_canopy",
+            "filename": "aerial_beaverhead_river_canopy.webm",
+            "url": "/tinyml_test_videos/03_water_hazards_and_canopy/aerial_beaverhead_river_canopy.webm",
+            "expected_class": "WATER_HAZARD",
+            "desc": "Aerial drone flight tracking a winding river surrounded by dense tree and shrub thickets."
+        },
+        {
+            "id": "coastline",
+            "title": "04 Coastline & Ocean Surf (Immersion)",
+            "category": "03_water_hazards_and_canopy",
+            "filename": "aerial_rocky_coastline_waves.mp4",
+            "url": "/tinyml_test_videos/03_water_hazards_and_canopy/aerial_rocky_coastline_waves.mp4",
+            "expected_class": "WATER_HAZARD",
+            "desc": "Vertical nadir view of breaking ocean surf and coastal rock shelves."
+        }
+    ]
+
+
 
 # -----------------------------------------------------------------------------
 # Post-Flight Telemetry & Sensor Suite Ablation API Endpoints
