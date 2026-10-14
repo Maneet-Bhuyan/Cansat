@@ -1,7 +1,9 @@
 # Virtual Environments
 .venv/
 .venv*/
+venv/
 .env
+.pytest_cache/
 
 # Python caches
 __pycache__/

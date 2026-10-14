@@ -55,20 +55,21 @@ Python Backend Core (backend/core/):
   - KinematicsEngine: 1D Kalman Filter (alt, v_z) & 6-DOF IMU attitude fusion
   - AtmosphericEngine: Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
   - database.py: SQLite WAL flight engine (missions, telemetry, PFR audits, events)
+  - pipeline_bridge.py: Non-blocking Redpanda / Kafka distributed stream publisher
                                 |
-                                v
-FastAPI Telemetry & Inference Server (backend/app.py):
-  - /ws/serial: Real-time dual-port WebSocket dispatcher to web HUD
-  - /analytics/kinematics & /analytics/sounding REST APIs
-  - /hardware/ports & /hardware/tare: Serial port manager & gyro tare
-  - /api/predict: Random Forest phase classifier & Isolation Forest anomaly detector
-  - /api/analysis/*: Scenarios, raw telemetry, ablation benchmarks & 1-click reports ZIP bundle
-  - /api/db/*: Mission arming, batch streaming, PFR report generation, flight archive API
+                                +-----------------------------+
+                                |                             |
+                                v                             v
+FastAPI Telemetry & ML (backend/app.py):        Distributed Telemetry Pipeline:
+  - /ws/serial: Real-time dual-port WebSocket     - Redpanda Broker (19092)
+  - /api/predict: Random Forest & PyOD IForest    - TimescaleDB Hot Path (5432)
+  - /api/pipeline/*: Status, Stream & Timescale   - MinIO S3 Parquet Lake (9000)
+  - /api/db/*: Mission arming & PFR persistence   - Grafana Cockpit HUD (3000)
                                 |
                                 v
 Mission Control Web UI Suite:
   - index.html: Mission overview, interactive 3D PLA airframe, and hardware specs
-  - dashboard.html: Real-time telemetry HUD, 3D attitude, and Web Serial bridge
+  - dashboard.html: Real-time telemetry HUD, 3D attitude, and Lakehouse bridge
   - tinyml.html: TinyML edge vision deep dive, INT8 quantization & inference simulator
   - models.html: 6-model machine learning architecture and comparative benchmark analysis
   - analysis.html: Post-flight mission analytics, sensor ablation suite & dropout simulator
@@ -149,14 +150,25 @@ Mission Control Web UI Suite:
 │   ├── test_backend_core.py    # Python backend core unit test suite (16 assertions)
 │   ├── test_database.py        # SQLite flight database & PFR audit tests (4 suites)
 │   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
+│   ├── test_pipeline_integration.py # Distributed telemetry lakehouse & bridge unit tests
 │   ├── batch_test_ml.py        # Local ML API endpoint sequential load tester
 │   ├── batch_test_ws.py        # WebSocket 100Hz continuous telemetry stress tester
 │   ├── selftest.js             # Node.js automated unit testing suite (27 assertions)
 │   ├── selftest.ps1            # PowerShell mission verification suite (17 assertions)
 │   ├── test_sm.ps1             # Flight state machine transition checker (10 scenarios)
 │   └── README.md               # Testing guide
+├── pipeline/                   # Distributed telemetry lakehouse (Redpanda, TimescaleDB, MinIO, Grafana)
+│   ├── docker-compose.yml      # Multi-container orchestration (Redpanda, TimescaleDB, MinIO, Grafana)
+│   ├── ingestion/              # Telemetry ingestion daemon & schema packet parser
+│   ├── stream_processing/      # Real-time PyOD ML anomaly detector & Parquet micro-batch buffer
+│   ├── storage/                # TimescaleDB hypertable DDL & continuous aggregates
+│   ├── analytics/              # Post-flight cold path analytical queries (DuckDB / S3)
+│   ├── dashboards/             # Pre-configured Grafana telemetry cockpit & datasource
+│   ├── simulator/              # High-frequency flight trajectory generator
+│   └── tests/                  # Automated integration tests for lakehouse stack
 ├── drivers/                    # USB CP210x hardware drivers
 ├── START_MISSION_CONTROL.bat   # 1-Click Windows system launcher
+├── START_INTEGRATED_MISSION_CONTROL.bat # 1-Click Integrated CanSat & Telemetry Lakehouse launcher
 ├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
 ├── requirements.txt            # Python dependencies
 ├── tasks.txt                   # Master team task tracker

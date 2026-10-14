@@ -1,0 +1,63 @@
+services:
+  # --- Distributed Message Broker (Kafka-compatible) ---
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.10
+    container_name: cansat_broker
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9092:9092"
+
+  # --- Hot Path Time-Series Database ---
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: cansat_timescaledb
+    environment:
+      POSTGRES_USER: cansat_admin
+      POSTGRES_PASSWORD: cansat_password
+      POSTGRES_DB: telemetry_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./storage/timescaledb/01_init_hypertable.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - timescale_data:/var/lib/postgresql/data
+
+  # --- Cold Path S3 Object Storage (Fixed image tag) ---
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: cansat_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  # --- Mission Control Dashboard ---
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cansat_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./dashboards/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - timescaledb
+
+volumes:
+  timescale_data:
+  minio_data:
+  grafana_data:

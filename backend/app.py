@@ -23,6 +23,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend.core import database
+from backend.core.pipeline_bridge import get_pipeline_bridge
+
+# Initialize telemetry pipeline bridge (Redpanda / TimescaleDB / MinIO)
+pipeline_bridge = get_pipeline_bridge()
 
 # Suppress minor version warnings for clean telemetry logs
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -241,6 +245,36 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
     dew_point, air_density, lapse_rate = compute_physics_soundings(
         payload.temp, payload.pressure, payload.humidity, payload.altitude, pad_alt, pad_temp
     )
+
+    # 5. Non-blocking Stream to Telemetry Pipeline (Redpanda / TimescaleDB / MinIO)
+    try:
+        pipeline_bridge.publish_telemetry({
+            "temp": payload.temp,
+            "pressure": payload.pressure,
+            "altitude": payload.altitude,
+            "ax": payload.ax, "ay": payload.ay, "az": payload.az,
+            "gx": payload.gx, "gy": payload.gy, "gz": payload.gz,
+            "lat": payload.lat, "lon": payload.lon,
+            "humidity": payload.humidity,
+            "batteryVoltage": payload.batteryVoltage,
+            "vSpd": v_spd,
+            "flight_phase": predicted_phase,
+            "anomaly_score": normalized_anom_score,
+            "is_anomaly": is_anomaly,
+            "anomaly_type": anomaly_type,
+            "dew_point": dew_point,
+            "air_density": air_density,
+            "lapse_rate": lapse_rate
+        })
+        if is_anomaly and anomaly_type != "NOMINAL":
+            pipeline_bridge.publish_event(
+                event_type=f"AI_ANOMALY_{anomaly_type}",
+                severity="WARNING",
+                description=f"Cognitive AI Alert: {anomaly_type} detected at alt {payload.altitude:.1f}m",
+                metric_value=normalized_anom_score
+            )
+    except Exception:
+        pass
 
     return {
         "status": "success",
@@ -486,6 +520,12 @@ def ingest_mission_telemetry(req: TelemetryBatchRequest):
     """Ingest a batch of telemetry packets into database for the specified mission."""
     try:
         count = database.insert_telemetry_batch(req.mission_id, req.records)
+        # Asynchronously mirror batch to the distributed telemetry pipeline
+        try:
+            for rec in req.records:
+                pipeline_bridge.publish_telemetry(rec, mission_id=req.mission_id)
+        except Exception:
+            pass
         return {"status": "success", "mission_id": req.mission_id, "inserted": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -501,6 +541,15 @@ def log_mission_event(mission_id: str, payload: EventLogPayload):
             severity=payload.severity,
             description=payload.description
         )
+        try:
+            pipeline_bridge.publish_event(
+                event_type=payload.event_type,
+                severity=payload.severity,
+                description=payload.description,
+                mission_id=mission_id
+            )
+        except Exception:
+            pass
         return {"status": "success", "event_id": event_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -722,6 +771,29 @@ def on_telemetry_csv_processor(line: str):
                 "vSpd": kin_state.vertical_speed if kin_state else 0.0,
                 "calibrated_vspd": kin_state.calibrated_vspd if kin_state else 0.0,
             })
+            # Stream enriched packet to telemetry data lakehouse
+            try:
+                pipeline_bridge.publish_telemetry({
+                    "time": time.time(),
+                    "temp": temp,
+                    "pressure": press,
+                    "altitude": alt,
+                    "calibrated_altitude": kin_state.calibrated_altitude if kin_state else alt,
+                    "ax": ax, "ay": ay, "az": az,
+                    "gx": gx, "gy": gy, "gz": gz,
+                    "lat": lat, "lon": lon,
+                    "humidity": hum,
+                    "batteryVoltage": volt,
+                    "vSpd": kin_state.vertical_speed if kin_state else 0.0,
+                    "calibrated_vspd": kin_state.calibrated_vspd if kin_state else 0.0,
+                    "pitch": kin_state.pitch if kin_state else 0.0,
+                    "roll": kin_state.roll if kin_state else 0.0,
+                    "dew_point": atmo_state.dew_point_c if atmo_state else None,
+                    "air_density": atmo_state.air_density_kg_m3 if atmo_state else None,
+                    "lapse_rate": atmo_state.lapse_rate_c_100m if atmo_state else None,
+                })
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -886,6 +958,130 @@ async def websocket_serial_bridge(websocket: WebSocket):
             remaining = len(serial_subscribers)
         if remaining == 0:
             manager.stop()
+
+
+# -----------------------------------------------------------------------------
+# Distributed Telemetry Pipeline (Redpanda / TimescaleDB / MinIO / Grafana) API
+# -----------------------------------------------------------------------------
+class PipelineConfigRequest(BaseModel):
+    broker: Optional[str] = None
+    enabled: Optional[bool] = None
+
+class ScenarioStreamRequest(BaseModel):
+    scenario: str = Field(default="01_nominal_sounding_flight")
+    rate_hz: float = Field(default=10.0, ge=0.5, le=100.0)
+    mission_id: Optional[str] = None
+
+@app.get("/api/pipeline/status")
+def get_pipeline_status():
+    """Return status of the Redpanda message broker, TimescaleDB, and MinIO lakehouse."""
+    status = pipeline_bridge.get_status()
+    timescale_online = False
+    try:
+        import psycopg
+        db_host = os.environ.get("DB_HOST", "localhost")
+        db_port = os.environ.get("DB_PORT", "5432")
+        db_name = os.environ.get("DB_NAME", "telemetry_db")
+        db_user = os.environ.get("DB_USER", "cansat_admin")
+        db_pass = os.environ.get("DB_PASS", "cansat_password")
+        with psycopg.connect(host=db_host, port=db_port, dbname=db_name, user=db_user, password=db_pass, connect_timeout=1) as conn:
+            timescale_online = True
+    except Exception:
+        timescale_online = False
+
+    status["timescaledb_online"] = timescale_online
+    status["grafana_url"] = "http://localhost:3000"
+    status["minio_console_url"] = "http://localhost:9001"
+    return {"status": "success", "pipeline": status}
+
+@app.post("/api/pipeline/config")
+def update_pipeline_config(req: PipelineConfigRequest):
+    """Update pipeline broker URL or enable/disable live streaming."""
+    pipeline_bridge.reconfigure(broker=req.broker, enabled=req.enabled)
+    return {"status": "success", "pipeline": pipeline_bridge.get_status()}
+
+@app.post("/api/pipeline/stream-scenario")
+def trigger_scenario_pipeline_stream(req: ScenarioStreamRequest):
+    """
+    Stream any of the 10 flight scenario CSVs through the pipeline in real-time.
+    Runs asynchronously in a background thread.
+    """
+    clean_name = req.scenario.replace(".csv", "")
+    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
+    if not os.path.exists(csv_path):
+        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
+
+    m_id = req.mission_id or f"SIM_{clean_name.upper()}"
+
+    def _worker():
+        try:
+            df = pd.read_csv(csv_path)
+            dt = 1.0 / req.rate_hz
+            for idx, row in df.iterrows():
+                row_dict = row.to_dict()
+                row_dict["mission_id"] = m_id
+                row_dict["packet_id"] = idx + 1
+                pipeline_bridge.publish_telemetry(row_dict, mission_id=m_id)
+                time.sleep(dt)
+        except Exception as e:
+            logger.error(f"Error streaming scenario to pipeline: {e}")
+
+    th = threading.Thread(target=_worker, name=f"ScenarioStreamer-{clean_name}", daemon=True)
+    th.start()
+    return {
+        "status": "started",
+        "scenario": clean_name,
+        "mission_id": m_id,
+        "rate_hz": req.rate_hz,
+        "message": f"Streaming {clean_name} to topic {pipeline_bridge.telemetry_topic} @ {req.rate_hz} Hz"
+    }
+
+@app.get("/api/pipeline/timescale-summary")
+def get_timescale_summary(limit: int = 20):
+    """Query recent rows and continuous aggregates from TimescaleDB hot path."""
+    try:
+        import psycopg
+        db_host = os.environ.get("DB_HOST", "localhost")
+        db_port = os.environ.get("DB_PORT", "5432")
+        db_name = os.environ.get("DB_NAME", "telemetry_db")
+        db_user = os.environ.get("DB_USER", "cansat_admin")
+        db_pass = os.environ.get("DB_PASS", "cansat_password")
+        with psycopg.connect(host=db_host, port=db_port, dbname=db_name, user=db_user, password=db_pass, connect_timeout=2) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT time, mission_id, packet_id, altitude_m, velocity_mps, accel_z_g, battery_v, flight_stage, status, anomaly_score
+                    FROM raw_telemetry
+                    ORDER BY time DESC
+                    LIMIT %s;
+                """, (limit,))
+                rows = cur.fetchall()
+                cols = [desc[0] for desc in cur.description]
+                telemetry = [dict(zip(cols, [(r.isoformat() if hasattr(r, 'isoformat') else r) for r in row])) for row in rows]
+
+                cur.execute("""
+                    SELECT time, mission_id, event_type, severity, description, metric_value
+                    FROM flight_events
+                    ORDER BY time DESC
+                    LIMIT 10;
+                """)
+                ev_rows = cur.fetchall()
+                ev_cols = [desc[0] for desc in cur.description]
+                events = [dict(zip(ev_cols, [(r.isoformat() if hasattr(r, 'isoformat') else r) for r in row])) for row in ev_rows]
+
+                return {
+                    "status": "online",
+                    "telemetry_count": len(telemetry),
+                    "telemetry": telemetry,
+                    "recent_events": events
+                }
+    except Exception as e:
+        return {
+            "status": "offline",
+            "message": f"TimescaleDB connection failed: {str(e)}",
+            "telemetry": [],
+            "recent_events": []
+        }
+
 
 
 
