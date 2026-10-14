@@ -501,6 +501,171 @@
     </section>
 
     <!-- ============================================================== -->
+    <!-- SECTION 2.5: TELEMETRY DATA QUALITY & FLIGHT RELIABILITY       -->
+    <!-- ============================================================== -->
+    <section id="telemetry-quality-section" style="margin-top: 7rem;">
+      <div class="section-header">
+        <div class="section-tag" style="color: var(--accent-cyan);">DATA QUALITY &amp; FLIGHT RELIABILITY</div>
+        <h2 class="section-title">Telemetry Integrity &amp; Sensor Completeness Analyzer</h2>
+        <p class="section-desc">
+          Objective pre-flight and post-flight reliability audit assessing packet completeness, temporal continuity, sensor availability, and physical operating bounds. Verifies dataset suitability before downstream ML classification and descent reconstruction.
+        </p>
+      </div>
+
+      <!-- Controls & Custom CSV Upload Strip -->
+      <div class="controls-strip">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">
+            Auditing Profile:
+          </span>
+          <span id="quality-profile-badge" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; color: #ffffff; background: #171717; padding: 0.3rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+            01_nominal_sounding_flight
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); cursor: pointer;">
+            <span>Upload Custom CSV:</span>
+            <input type="file" id="quality-csv-file-input" accept=".csv" style="display: none;" onchange="handleQualityFileUpload(event)">
+            <button type="button" onclick="document.getElementById('quality-csv-file-input').click()" class="btn-action-ghost" style="padding: 0.35rem 0.8rem; font-size: 0.75rem;">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              <span>Choose CSV File</span>
+            </button>
+          </label>
+
+          <button type="button" id="btn-reanalyze-quality" onclick="refreshQualityAnalysis()" class="btn-action-ghost" style="padding: 0.35rem 0.8rem; font-size: 0.75rem;" title="Re-run Quality Audit">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Re-Audit</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quality Metrics KPI Grid -->
+      <div class="kpi-metric-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Telemetry Packets</div>
+          <div id="kpi-qual-total-packets" class="kpi-value">--</div>
+          <div id="kpi-qual-valid-sub" class="kpi-sub">-- valid packets parsed</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Packet Completeness</div>
+          <div id="kpi-qual-completeness" class="kpi-value" style="color: var(--accent-green);">--%</div>
+          <div id="kpi-qual-missing-sub" class="kpi-sub">0 dropped / 0 corrupt</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Mean Sampling Interval</div>
+          <div id="kpi-qual-mean-dt" class="kpi-value" style="color: var(--accent-cyan);">-- s</div>
+          <div id="kpi-qual-dt-sub" class="kpi-sub">Nominal: 0.80 s (1.25 Hz)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Temporal Outage Gaps</div>
+          <div id="kpi-qual-gaps" class="kpi-value" style="color: var(--accent-amber);">--</div>
+          <div id="kpi-qual-gaps-sub" class="kpi-sub">Gaps &gt; 2.0 s threshold</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">GNSS Fix Availability</div>
+          <div id="kpi-qual-gps-avail" class="kpi-value" style="color: #ffffff;">--%</div>
+          <div id="kpi-qual-gps-sub" class="kpi-sub">Valid 2D/3D Lock</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">LiPo Voltage Envelope</div>
+          <div id="kpi-qual-voltage" class="kpi-value" style="color: var(--accent-green);">-- V</div>
+          <div id="kpi-qual-voltage-sub" class="kpi-sub">Min observed (Limit: 3.40V)</div>
+        </div>
+      </div>
+
+      <!-- Two-Column Layout for Sensors & Event Log -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        
+        <!-- Left Panel: Sensor Completeness Breakdown Table -->
+        <div class="chart-panel-container" style="margin-top: 0; padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+            <div style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: #ffffff;">
+              Sensor Completeness &amp; Hardware Bounds
+            </div>
+            <div id="quality-health-badge" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-green); background: rgba(16, 185, 129, 0.1); padding: 0.2rem 0.6rem; border-radius: 9999px;">
+              VERIFIED
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.75rem;">
+              <thead>
+                <tr style="color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); text-align: left;">
+                  <th style="padding: 0.5rem 0.6rem;">Channel</th>
+                  <th style="padding: 0.5rem 0.6rem;">Availability</th>
+                  <th style="padding: 0.5rem 0.6rem;">Valid / Miss</th>
+                  <th style="padding: 0.5rem 0.6rem;">Observed Range</th>
+                  <th style="padding: 0.5rem 0.6rem;">Bounds</th>
+                </tr>
+              </thead>
+              <tbody id="quality-sensor-table-body">
+                <tr><td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-muted);">Loading quality telemetry...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Panel: Temporal Statistics & Factual Findings Log -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Timing Statistics Card -->
+          <div class="resend-card" style="padding: 1.25rem;">
+            <div style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: #ffffff; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+              Temporal Continuity &amp; Sampling Jitter
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; font-family: var(--font-mono); font-size: 0.75rem;">
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">MIN Δt</div>
+                <div id="timing-min-dt" style="color: #ffffff; font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">-- s</div>
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">MEDIAN Δt</div>
+                <div id="timing-med-dt" style="color: #ffffff; font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">-- s</div>
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">MAX Δt</div>
+                <div id="timing-max-dt" style="color: #ffffff; font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">-- s</div>
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">JITTER (σ)</div>
+                <div id="timing-std-dt" style="color: var(--accent-cyan); font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">-- s</div>
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">FLIGHT TIME</div>
+                <div id="timing-duration" style="color: #ffffff; font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">-- s</div>
+              </div>
+              <div>
+                <div style="color: var(--text-muted); font-size: 0.68rem;">IRREGULAR Δt</div>
+                <div id="timing-irregular-count" style="color: var(--accent-amber); font-weight: 600; font-size: 0.95rem; margin-top: 0.15rem;">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Objective Issues & Dropout Events Log -->
+          <div class="resend-card" style="padding: 1.25rem; flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+              <div style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: #ffffff;">
+                Detected Discontinuities &amp; Dropout Events
+              </div>
+              <div id="quality-event-count-badge" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">
+                0 events
+              </div>
+            </div>
+            <div id="quality-events-container" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem;">
+              <div style="color: var(--text-muted); padding: 0.5rem 0;">No sensor dropouts or timing discontinuities detected.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
     <!-- SECTION 3: INTERACTIVE CANSAT_EVAL_ABLATION SENSOR STUDY       -->
     <!-- ============================================================== -->
     <section id="sensor-ablation-section" style="margin-top: 7rem; margin-bottom: 7rem;">
@@ -882,6 +1047,7 @@
         document.getElementById('btn-download-pdf').href = `/reports/pdf/${scenarioName}_Flight_Report.pdf`;
 
         renderTelemetryChart(activeChartTab, data);
+        loadScenarioQuality(scenarioName);
       } catch (err) {
         console.error('Error loading scenario telemetry:', err);
       }
@@ -1106,6 +1272,255 @@
         btnRunSim.textContent = 'Run Testing Evaluation';
       }
     });
+
+    // --------------------------------------------------------------------------
+    // Telemetry Data Quality & Reliability Audit Engine
+    // --------------------------------------------------------------------------
+    let currentQualityData = null;
+
+    async function loadScenarioQuality(scenarioName) {
+      try {
+        const badge = document.getElementById('quality-profile-badge');
+        if (badge) badge.textContent = scenarioName;
+
+        const res = await fetch(`/api/analysis/quality/${scenarioName}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        currentQualityData = data;
+        renderQualityReport(data, scenarioName);
+      } catch (err) {
+        console.error('Error loading scenario quality:', err);
+      }
+    }
+
+    function renderQualityReport(q, profileTitle) {
+      if (!q) return;
+
+      const p = q.packet_integrity || {};
+      const t = q.temporal_integrity || {};
+      const s = q.sensor_completeness || {};
+      const d = q.flight_duration || {};
+      const dropouts = q.sensor_dropouts || [];
+      const issues = q.issues_log || [];
+
+      // 1. KPI Cards
+      document.getElementById('kpi-qual-total-packets').textContent = p.total_rows != null ? p.total_rows.toLocaleString() : '--';
+      document.getElementById('kpi-qual-valid-sub').textContent = `${p.valid_packets || 0} valid parsed (${p.corrupted_rows || 0} corrupt)`;
+
+      const compEl = document.getElementById('kpi-qual-completeness');
+      const compVal = p.packet_completeness_pct != null ? p.packet_completeness_pct : 100;
+      compEl.textContent = `${compVal.toFixed(1)}%`;
+      compEl.style.color = compVal >= 98.0 ? 'var(--accent-green)' : (compVal >= 90.0 ? 'var(--accent-amber)' : 'var(--accent-red)');
+      document.getElementById('kpi-qual-missing-sub').textContent = `${p.missing_packets_estimate || 0} dropped / ${p.duplicate_packets || 0} duplicate`;
+
+      document.getElementById('kpi-qual-mean-dt').textContent = t.mean_interval_sec != null ? `${t.mean_interval_sec.toFixed(3)} s` : '--';
+      document.getElementById('kpi-qual-dt-sub').textContent = `Nominal: ${t.nominal_interval_sec ? t.nominal_interval_sec.toFixed(2) : '0.80'} s (${t.timestamp_count || 0} TS)`;
+
+      const gapEl = document.getElementById('kpi-qual-gaps');
+      gapEl.textContent = t.gap_count != null ? t.gap_count : '0';
+      gapEl.style.color = (t.gap_count || 0) === 0 ? 'var(--accent-green)' : 'var(--accent-amber)';
+      document.getElementById('kpi-qual-gaps-sub').textContent = `Outages > ${t.nominal_interval_sec ? (t.nominal_interval_sec * 2.5).toFixed(1) : '2.0'} s`;
+
+      // GPS Availability
+      const gpsLat = s['lat'] || {};
+      const gpsLon = s['lon'] || {};
+      const gpsAvail = Math.min(gpsLat.availability_pct || 100, gpsLon.availability_pct || 100);
+      const gpsEl = document.getElementById('kpi-qual-gps-avail');
+      gpsEl.textContent = `${gpsAvail.toFixed(1)}%`;
+      const hasGpsDropout = dropouts.some(dr => dr.dropout_type === 'GNSS_FIX_LOSS');
+      gpsEl.style.color = (!hasGpsDropout && gpsAvail >= 99.0) ? 'var(--accent-green)' : 'var(--accent-amber)';
+      document.getElementById('kpi-qual-gps-sub').textContent = hasGpsDropout ? 'Fix dropouts detected' : 'Full lock maintained';
+
+      // Battery Voltage
+      const bat = s['batteryVoltage'] || {};
+      const minV = bat.min_value != null ? bat.min_value : 4.15;
+      const vEl = document.getElementById('kpi-qual-voltage');
+      vEl.textContent = `${minV.toFixed(2)} V`;
+      const hasSag = minV < 3.40;
+      vEl.style.color = hasSag ? 'var(--accent-red)' : 'var(--accent-green)';
+      document.getElementById('kpi-qual-voltage-sub').textContent = hasSag ? 'Warning: Sag < 3.40V' : 'Nominal envelope >= 3.40V';
+
+      // Health badge
+      const healthBadge = document.getElementById('quality-health-badge');
+      if (healthBadge) {
+        if (hasSag || compVal < 90.0) {
+          healthBadge.textContent = 'ATTENTION REQUIRED';
+          healthBadge.style.color = 'var(--accent-amber)';
+          healthBadge.style.background = 'rgba(245, 158, 11, 0.1)';
+        } else {
+          healthBadge.textContent = 'OBJECTIVELY VERIFIED';
+          healthBadge.style.color = 'var(--accent-green)';
+          healthBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+        }
+      }
+
+      // 2. Sensor Table
+      const tbody = document.getElementById('quality-sensor-table-body');
+      if (tbody) {
+        tbody.innerHTML = '';
+        const fieldLabels = {
+          'temp': 'Temperature (°C)',
+          'pressure': 'Baro Pressure (hPa)',
+          'altitude': 'Altitude AGL (m)',
+          'gx': 'Gyroscope X (°/s)',
+          'gy': 'Gyroscope Y (°/s)',
+          'gz': 'Gyroscope Z (°/s)',
+          'ax': 'Accelerometer X (G)',
+          'ay': 'Accelerometer Y (G)',
+          'az': 'Accelerometer Z (G)',
+          'lat': 'GNSS Latitude (°)',
+          'lon': 'GNSS Longitude (°)',
+          'humidity': 'Relative Humidity (%)',
+          'batteryVoltage': 'LiPo Battery (V)',
+          'accelMag': 'Accel Magnitude (G)',
+          'pitch': 'Derived Pitch (°)',
+          'roll': 'Derived Roll (°)'
+        };
+
+        const fieldBoundsDisplay = {
+          'temp': '[-50, +85] °C',
+          'pressure': '[10, 1150] hPa',
+          'altitude': '[-100, 45k] m',
+          'gx': '±2000 °/s',
+          'gy': '±2000 °/s',
+          'gz': '±2000 °/s',
+          'ax': '±16.0 G',
+          'ay': '±16.0 G',
+          'az': '±16.0 G',
+          'lat': '[-90, +90]°',
+          'lon': '[-180, +180]°',
+          'humidity': '[0, 100]%',
+          'batteryVoltage': '[3.0, 4.3] V'
+        };
+
+        const fieldKeys = Object.keys(s);
+        fieldKeys.forEach(key => {
+          const item = s[key];
+          const tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid rgba(255, 255, 255, 0.04)';
+
+          const availPct = item.availability_pct != null ? item.availability_pct : 100.0;
+          const barColor = availPct >= 99.0 ? '#10b981' : (availPct >= 90.0 ? '#f59e0b' : '#ef4444');
+          const rangeStr = (item.min_value != null && item.max_value != null)
+            ? `[${item.min_value.toFixed(1)}, ${item.max_value.toFixed(1)}]`
+            : '--';
+          const boundsStr = fieldBoundsDisplay[key] || '--';
+          const outStr = item.out_of_range_count > 0 ? `<span style="color: #ef4444;">${item.out_of_range_count} out</span>` : '<span style="color: #52525b;">0</span>';
+
+          tr.innerHTML = `
+            <td style="padding: 0.45rem 0.6rem; color: #e4e4e7; font-weight: 500;">${fieldLabels[key] || key}</td>
+            <td style="padding: 0.45rem 0.6rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="flex: 1; height: 5px; background: #1a1a1a; border-radius: 9999px; overflow: hidden; min-width: 50px;">
+                  <div style="width: ${Math.max(0, Math.min(100, availPct))}%; height: 100%; background: ${barColor};"></div>
+                </div>
+                <span style="color: ${barColor}; font-weight: 600; width: 44px; text-align: right;">${availPct.toFixed(1)}%</span>
+              </div>
+            </td>
+            <td style="padding: 0.45rem 0.6rem; color: #a1a1aa;">${item.non_null_count || 0} / <span style="color: ${item.missing_count > 0 ? '#f59e0b' : '#71717a'}">${item.missing_count || 0}</span></td>
+            <td style="padding: 0.45rem 0.6rem; color: #ffffff;">${rangeStr}</td>
+            <td style="padding: 0.45rem 0.6rem; color: #71717a;">${boundsStr} (${outStr})</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // 3. Timing Details
+      document.getElementById('timing-min-dt').textContent = t.min_interval_sec != null ? `${t.min_interval_sec.toFixed(3)} s` : '--';
+      document.getElementById('timing-med-dt').textContent = t.median_interval_sec != null ? `${t.median_interval_sec.toFixed(3)} s` : '--';
+      document.getElementById('timing-max-dt').textContent = t.max_interval_sec != null ? `${t.max_interval_sec.toFixed(3)} s` : '--';
+      document.getElementById('timing-std-dt').textContent = t.std_interval_sec != null ? `${t.std_interval_sec.toFixed(4)} s` : '--';
+      document.getElementById('timing-duration').textContent = d.duration_sec != null ? `${d.duration_sec.toFixed(1)} s` : '--';
+      document.getElementById('timing-irregular-count').textContent = t.irregular_intervals_count != null ? t.irregular_intervals_count : '0';
+
+      // 4. Detected Events Log
+      const eventCountBadge = document.getElementById('quality-event-count-badge');
+      const eventsBox = document.getElementById('quality-events-container');
+      const allEvents = [];
+
+      dropouts.forEach(dr => {
+        allEvents.push({
+          type: dr.dropout_type,
+          color: dr.dropout_type === 'GNSS_FIX_LOSS' ? '#00e5ff' : '#f59e0b',
+          desc: dr.description,
+          duration: `${dr.duration_sec}s (${dr.packet_count} packets)`
+        });
+      });
+
+      (t.timestamp_gaps || []).forEach(g => {
+        allEvents.push({
+          type: 'TIMING_GAP',
+          color: '#a855f7',
+          desc: `Timing gap of ${g.interval_sec}s between sample ${g.start_index} and ${g.end_index}.`,
+          duration: `~${g.missing_packets_estimate} dropped packets`
+        });
+      });
+
+      if (eventCountBadge) eventCountBadge.textContent = `${allEvents.length} event(s)`;
+
+      if (eventsBox) {
+        if (allEvents.length === 0) {
+          eventsBox.innerHTML = `
+            <div style="color: var(--accent-green); background: rgba(16, 185, 129, 0.05); border-left: 2px solid var(--accent-green); padding: 0.6rem 0.75rem; border-radius: 0 4px 4px 0;">
+              ✓ Telemetry continuous: Zero temporal gaps (&gt;2.0s), zero sensor dropouts, and nominal voltage observed.
+            </div>
+          `;
+        } else {
+          eventsBox.innerHTML = '';
+          allEvents.forEach(ev => {
+            const div = document.createElement('div');
+            div.style.background = '#111111';
+            div.style.borderLeft = `2px solid ${ev.color}`;
+            div.style.padding = '0.55rem 0.75rem';
+            div.style.borderRadius = '0 4px 4px 0';
+            div.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                <span style="color: ${ev.color}; font-weight: 600; font-size: 0.72rem;">${ev.type}</span>
+                <span style="color: var(--text-muted); font-size: 0.68rem;">${ev.duration}</span>
+              </div>
+              <div style="color: var(--text-secondary); font-size: 0.72rem; line-height: 1.4;">${ev.desc}</div>
+            `;
+            eventsBox.appendChild(div);
+          });
+        }
+      }
+    }
+
+    async function handleQualityFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target.result;
+        try {
+          const badge = document.getElementById('quality-profile-badge');
+          if (badge) badge.textContent = `Custom: ${file.name}`;
+
+          const res = await fetch('/api/analysis/quality/analyze-csv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ csv_content: text, nominal_interval_sec: 0.8, gap_threshold_sec: 2.0 })
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          currentQualityData = data;
+          renderQualityReport(data, file.name);
+        } catch (err) {
+          console.error('Error analyzing custom CSV quality:', err);
+          alert(`Failed to analyze custom CSV: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function refreshQualityAnalysis() {
+      const selector = document.getElementById('scenario-selector');
+      if (selector) {
+        loadScenarioQuality(selector.value);
+      }
+    }
 
     // Initialize on page load
     loadScenario('01_nominal_sounding_flight');
