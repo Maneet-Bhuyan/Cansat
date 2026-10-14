@@ -18,6 +18,7 @@ import zipfile
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -48,6 +49,9 @@ app = FastAPI(
     description="Real-Time Machine Learning Inference API for Sounding Pico-Satellite Telemetry",
     version="2.0.0"
 )
+
+# Enable GZip compression for high-performance response streaming (HTML/CSS/JS/JSON)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Enable CORS for local file execution and browser dashboard
 app.add_middleware(
@@ -159,7 +163,8 @@ def run_ml_inference(payload: TelemetryPayload) -> Dict[str, Any]:
         "batteryVoltage": payload.batteryVoltage,
         "vSpd": v_spd
     })
-    print(f"[LIVE AUDIT]: Temp={payload.temp}C, Press={payload.pressure}hPa, Alt={payload.altitude}m, Accel=({payload.ax},{payload.ay},{payload.az})g, Gyro=({payload.gx},{payload.gy},{payload.gz})deg/s, GPS=({payload.lat},{payload.lon}), Hum={payload.humidity}%, Bat={payload.batteryVoltage}V, vSpd={v_spd}m/s", flush=True)
+    if len(live_telemetry_history) % 20 == 0:
+        print(f"[LIVE AUDIT]: Temp={payload.temp:.1f}C, Press={payload.pressure:.1f}hPa, Alt={payload.altitude:.1f}m, Bat={payload.batteryVoltage:.2f}V, vSpd={v_spd:.2f}m/s")
     pad_alt = payload.padAlt if (payload.padAlt is not None and payload.padAlt > 0) else payload.altitude
     pad_temp = payload.padTemp if payload.padTemp is not None else payload.temp
     pad_press = payload.padPress if payload.padPress is not None else 1013.25
