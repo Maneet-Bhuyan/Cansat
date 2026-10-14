@@ -35,6 +35,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - Automated post-flight telemetry analyzer (`ml/flight_analyzer.py`) with Savitzky-Golay velocity smoothing, peak G-shock transients, sounding profiles, and publication-ready PDF/PNG report generation
 - CanSat sensor suite ablation & evaluation notebook (`test_cases/cansat_eval_ablation.ipynb`) benchmarking touchdown prognostics under sensor dropouts (Full Suite, No IMU, No Env, GPS-Only) using MetPy physics
 - Interactive Post-Flight Analysis & Sensor Ablation Web Suite (`analysis.html`) featuring interactive telemetry graphs, 4-sensor ablation bar charts, live sensor dropout simulator, and 1-click batch ZIP report downloads (`/api/analysis/reports-zip`)
+- Telemetry Data Quality & Flight Reliability Analyzer (`backend/core/telemetry_analyzer.py` & `analysis.html`): automated packet loss audits, sampling interval jitter analysis (min/median/max/std dt), sensor completeness tracking, out-of-bounds physical threshold validation, and automated dropout detection (GNSS fix loss, LiPo battery voltage sag)
 - Tactical GIS tracking and recovery tools with Leaflet mapping and direct navigation links
 - CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes
 - Direct hardware USB serial streaming via the native browser Web Serial API
@@ -56,6 +57,7 @@ Python Backend Core (backend/core/):
   - AtmosphericEngine: Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
   - database.py: SQLite WAL flight engine (missions, telemetry, PFR audits, events)
   - pipeline_bridge.py: Non-blocking Redpanda / Kafka distributed stream publisher
+  - telemetry_analyzer.py: Objective data quality, packet loss & sensor dropout evaluator
                                 |
                                 +-----------------------------+
                                 |                             |
@@ -101,7 +103,10 @@ Mission Control Web UI Suite:
 │   ├── core/                   # Signal processing & hardware integration
 │   │   ├── serial_manager.py   # DualSerialManager (LoRa @ 9600 & Video @ 460800)
 │   │   ├── kinematics.py       # 1D Kalman Filter & 6-DOF IMU attitude fusion
-│   │   └── atmospheric.py      # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+│   │   ├── atmospheric.py      # Hypsometric altimetry, ELR, Magnus-Tetens, Air Density
+│   │   ├── database.py         # SQLite WAL flight database & PFR persistence
+│   │   ├── pipeline_bridge.py  # Non-blocking distributed lakehouse bridge
+│   │   └── telemetry_analyzer.py # Objective data quality, packet loss & sensor dropout evaluator
 │   └── README.md               # Backend API and WebSocket documentation
 ├── ml/                         # Machine learning training, quantization & benchmarks
 │   ├── download_dataset.py     # EuroSAT aerial dataset downloader
@@ -142,6 +147,10 @@ Mission Control Web UI Suite:
 │   ├── whatsapp_messages.txt   # Formatted team task briefings (Maneet, Rishi, Shubham, Ganesh)
 │   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
 │   ├── python-ml_focused.text  # Python & ML transformation master roadmap
+│   ├── TELEMETRY_QUALITY_ANALYZER.md # Telemetry data quality & flight reliability audit manual
+│   ├── research_paper_draft.md # Publication draft on edge TinyML & multi-sensor CanSat avionics
+│   ├── audit_report.md         # Comprehensive engineering audit report
+│   ├── QA_REPORT.md            # Quality assurance test results & verification matrix
 │   └── README.md               # Documentation index
 ├── scripts/                    # Workstation setup & installation utilities
 │   ├── SETUP_GPU_WORKSTATION.bat # 1-Click autonomous bootstrapper for NVIDIA GPU machines
@@ -151,6 +160,7 @@ Mission Control Web UI Suite:
 │   ├── test_database.py        # SQLite flight database & PFR audit tests (4 suites)
 │   ├── test_firmware_protocol.py # Binary struct packing & ESP-NOW chunking tests (4 assertions)
 │   ├── test_pipeline_integration.py # Distributed telemetry lakehouse & bridge unit tests
+│   ├── test_telemetry_analyzer.py # Telemetry quality & sensor reliability unit tests (11 tests)
 │   ├── batch_test_ml.py        # Local ML API endpoint sequential load tester
 │   ├── batch_test_ws.py        # WebSocket 100Hz continuous telemetry stress tester
 │   ├── selftest.js             # Node.js automated unit testing suite (27 assertions)
@@ -918,6 +928,14 @@ python tests/test_firmware_protocol.py
 ```
 
 Validates ESP-NOW 250-byte MTU constraints, 200-byte frame chunking, bit-for-bit SHA-256 JPEG payload reassembly, packet loss detection, and Base64 serial framing.
+
+### Telemetry data quality & flight reliability unit tests (11 tests)
+
+```bash
+python -m unittest tests/test_telemetry_analyzer.py
+```
+
+Validates automated packet loss audits, sampling rate and timestamp jitter metrics ($\Delta t$ min, median, max, std), sensor completeness ratios across all channels, out-of-bounds physical sanity checks, GNSS fix loss dropouts, battery voltage sag event detection, and overall data quality scoring.
 
 ### JavaScript unit test suite (27 assertions)
 
