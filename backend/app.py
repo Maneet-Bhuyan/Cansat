@@ -3,6 +3,13 @@ Cognitive CanSat FastAPI Real-Time Machine Learning Backend Server
 Serves real-time inference using trained scikit-learn and PyOD models.
 """
 import os
+import sys
+
+# Ensure repository root is on sys.path so direct script execution (python backend/app.py) works
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 import math
 import json
 import time
@@ -1165,4 +1172,11 @@ def get_timescale_summary(limit: int = 20):
             "telemetry": [],
             "recent_events": []
         }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("[Server] Starting Cognitive CanSat FastAPI server on http://127.0.0.1:8000 ...")
+    uvicorn.run("backend.app:app", host="127.0.0.1", port=8000, reload=True)
+
 
