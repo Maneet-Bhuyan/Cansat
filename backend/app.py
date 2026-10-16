@@ -22,6 +22,8 @@ import joblib
 
 import io
 import zipfile
+import base64
+from PIL import Image
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -100,6 +102,31 @@ def load_models():
         models_loaded = False
 
 load_models()
+
+# Global vision model state
+vision_guard = None
+tinylandingnet_model = None
+
+def load_vision_models():
+    global vision_guard, tinylandingnet_model
+    try:
+        from ml.vision_guard import AerialVisionGuard
+        from ml.train_tinyml_vision import TinyLandingNet
+        import torch
+        vision_guard = AerialVisionGuard()
+        pth_path = os.path.join(MODELS_DIR, "tinylandingnet_best.pth")
+        if os.path.exists(pth_path):
+            net = TinyLandingNet(num_classes=4)
+            net.load_state_dict(torch.load(pth_path, map_location="cpu"))
+            net.eval()
+            tinylandingnet_model = net
+            print("[ML Server] TinyLandingNet vision model successfully loaded.")
+        else:
+            print("[ML Server] Notice: tinylandingnet_best.pth not found; vision inference in fallback mode.")
+    except Exception as e:
+        print(f"[ML Server] Warning: Could not initialize vision models: {e}")
+
+load_vision_models()
 
 class TelemetryPayload(BaseModel):
     temp: float = Field(..., description="Ambient temperature in °C")
@@ -1172,6 +1199,156 @@ def get_timescale_summary(limit: int = 20):
             "telemetry": [],
             "recent_events": []
         }
+
+# -----------------------------------------------------------------------------
+# TinyML & Safe Landing AI (SLAI) Aerial Vision Inference API
+# -----------------------------------------------------------------------------
+class VisionFrameRequest(BaseModel):
+    image_base64: str = Field(..., description="Base64 encoded JPEG/PNG frame or data URL")
+    model_tier: Optional[str] = Field("tinylandingnet", description="Model architecture: tinylandingnet, mobilenet_v3_small, or resnet18")
+    run_ood_guard: Optional[bool] = Field(True, description="Enable Out-of-Distribution guard against human faces/indoor scenes")
+
+@app.post("/api/vision/classify-frame")
+def classify_vision_frame(req: VisionFrameRequest):
+    """
+    Classify downlinked optical CanSat camera frame with Out-of-Distribution safety guard.
+    Returns terrain class, safe landing zone verdict, 3x3 sector matrix, and evasion direction.
+    """
+    global vision_guard, tinylandingnet_model
+    try:
+        raw_b64 = req.image_base64
+        if "," in raw_b64:
+            raw_b64 = raw_b64.split(",", 1)[1]
+        img_bytes = base64.b64decode(raw_b64)
+        pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        frame_rgb = np.array(pil_img)
+    except Exception as dec_err:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 image data: {dec_err}")
+
+    # 1. Out-of-Distribution Guard Evaluation
+    if req.run_ood_guard and vision_guard is not None:
+        guard_res = vision_guard.validate_frame(frame_rgb)
+        if not guard_res["is_aerial"]:
+            return {
+                "status": "rejected",
+                "is_aerial": False,
+                "rejection_reason": guard_res["rejection_reason"],
+                "slai_class": "INVALID_AERIAL_SURFACE",
+                "landing_decision": "ABORT_OOD_NON_AERIAL",
+                "confidence": 0.0,
+                "optimal_lz_valid": False,
+                "message": guard_res.get("message", "Non-aerial subject detected; landing zone search suppressed."),
+                "guard_metrics": guard_res
+            }
+
+    # 2. Model Inference
+    import torch
+    from torchvision import transforms
+    from ml.train_tinyml_vision import SLAI_CLASSES
+
+    t0 = time.perf_counter()
+    pred_class_name = "CRITICAL_HAZARD"
+    probabilities = {cls_name: 0.25 for cls_name in SLAI_CLASSES}
+    confidence = 0.5
+    model_name = req.model_tier or "tinylandingnet"
+
+    if tinylandingnet_model is not None:
+        preprocess = transforms.Compose([
+            transforms.Resize((64, 64)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        input_tensor = preprocess(pil_img).unsqueeze(0)
+        with torch.no_grad():
+            logits = tinylandingnet_model(input_tensor)
+            probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
+
+        probabilities = {SLAI_CLASSES[i]: float(probs[i]) for i in range(len(SLAI_CLASSES))}
+        top_idx = int(np.argmax(probs))
+        pred_class_name = SLAI_CLASSES[top_idx]
+        confidence = float(probs[top_idx])
+    else:
+        # Heuristic colorimetric calculation if torch weights are absent
+        r_mean, g_mean, b_mean = float(np.mean(frame_rgb[:, :, 0])), float(np.mean(frame_rgb[:, :, 1])), float(np.mean(frame_rgb[:, :, 2]))
+        denom = g_mean + r_mean - b_mean
+        vari = (g_mean - r_mean) / (denom if abs(denom) > 1e-4 else 1.0)
+        if b_mean > r_mean * 1.08 and b_mean > g_mean:
+            pred_class_name = "WATER_HAZARD"
+        elif vari > 0.06:
+            pred_class_name = "SAFE_LZ"
+        elif vari >= -0.02:
+            pred_class_name = "OBSTACLE_CANOPY"
+        else:
+            pred_class_name = "CRITICAL_HAZARD"
+        confidence = 0.82
+
+    inf_time_ms = (time.perf_counter() - t0) * 1000.0
+
+    # 3. 3x3 Sector Grid Analysis
+    h, w, _ = frame_rgb.shape
+    cw = max(1, w // 3)
+    ch = max(1, h // 3)
+    sector_matrix = []
+    best_sector = [1, 1]
+    best_score = -999.0
+
+    for r in range(3):
+        row_scores = []
+        for c in range(3):
+            tile = frame_rgb[r * ch:(r + 1) * ch, c * cw:(c + 1) * cw]
+            t_r = float(np.mean(tile[:, :, 0]))
+            t_g = float(np.mean(tile[:, :, 1]))
+            t_b = float(np.mean(tile[:, :, 2]))
+            t_denom = t_g + t_r - t_b
+            t_vari = (t_g - t_r) / (t_denom if abs(t_denom) > 1e-4 else 1.0)
+            if t_b > (t_r + t_g) * 0.65 and t_b > 80:
+                score = -1.0
+            elif t_vari > 0.08 and t_g > t_r * 1.05:
+                score = 1.0 + t_vari
+            elif t_vari >= -0.02 and t_g > t_r:
+                score = 0.2 + t_vari
+            else:
+                score = -0.6
+            row_scores.append(round(score, 2))
+            if score > best_score:
+                best_score = score
+                best_sector = [r, c]
+        sector_matrix.append(row_scores)
+
+    # 4. Evasion Angle
+    dx = best_sector[1] - 1
+    dy = -(best_sector[0] - 1)
+    evasion_deg = None
+    if (dx != 0 or dy != 0) and pred_class_name != "SAFE_LZ":
+        evasion_deg = int((math.atan2(dx, dy) * 180.0 / math.pi + 360.0) % 360.0)
+
+    # 5. Tactical Verdict
+    if pred_class_name == "SAFE_LZ" and confidence >= 0.60:
+        decision = "SAFE_TOUCHDOWN_AUTHORIZED"
+    elif pred_class_name == "OBSTACLE_CANOPY":
+        decision = f"ADVISORY_EVASION_{evasion_deg}DEG" if evasion_deg is not None else "ADVISORY_LATERAL_EVADE"
+    else:
+        decision = f"CRITICAL_EVASION_{evasion_deg}DEG" if evasion_deg is not None else "CRITICAL_HAZARD_ABORT"
+
+    return {
+        "status": "success",
+        "is_aerial": True,
+        "slai_class": pred_class_name,
+        "confidence": round(confidence, 3),
+        "landing_decision": decision,
+        "optimal_lz_valid": (pred_class_name == "SAFE_LZ" or best_score > 0.5),
+        "probabilities": {k: round(v, 4) for k, v in probabilities.items()},
+        "grid_analysis": {
+            "sector_matrix": sector_matrix,
+            "best_sector": best_sector,
+            "evasion_vector_deg": evasion_deg
+        },
+        "model_info": {
+            "tier": model_name,
+            "inference_time_ms": round(inf_time_ms, 2),
+            "device": "cpu"
+        }
+    }
 
 
 if __name__ == "__main__":

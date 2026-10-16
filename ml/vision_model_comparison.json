@@ -1,0 +1,289 @@
+{
+  "timestamp": "2026-10-16T18:54:47Z",
+  "hardware_environment": {
+    "cpu_device": "Intel/AMD Multi-core Host",
+    "pytorch_version": "2.14.0+cpu",
+    "cuda_available": false
+  },
+  "models": {
+    "tinylandingnet": {
+      "tier_name": "Tier 1: Microcontroller Edge (TinyLandingNet)",
+      "target_hardware": "ESP32-S3 / ESP32-CAM / RP2040",
+      "parameters": 6996,
+      "trainable_parameters": 6996,
+      "model_size": {
+        "fp32_mb": 0.027,
+        "fp16_mb": 0.013,
+        "int8_mb": 0.007,
+        "int8_kb": 6.8
+      },
+      "macs_estimate": "~4.2M MACCs",
+      "operational_role": "Airborne real-time flight computer descent hazard gate",
+      "latency_cpu": {
+        "mean_latency_ms": 3.47,
+        "min_latency_ms": 1.69,
+        "max_latency_ms": 7.36,
+        "cpu_fps": 287.8
+      }
+    },
+    "mobilenet_v3_small": {
+      "tier_name": "Tier 2: High-Speed Edge Companion (MobileNetV3-Small)",
+      "target_hardware": "Raspberry Pi 4 / CM4 / Jetson Orin Nano",
+      "parameters": 1521956,
+      "trainable_parameters": 1521956,
+      "model_size": {
+        "fp32_mb": 5.806,
+        "fp16_mb": 2.903,
+        "int8_mb": 1.451,
+        "int8_kb": 1486.3
+      },
+      "macs_estimate": "~56M MACCs",
+      "operational_role": "Secondary payload companion computer for high-res telemetry",
+      "latency_cpu": {
+        "mean_latency_ms": 23.39,
+        "min_latency_ms": 17.72,
+        "max_latency_ms": 30.07,
+        "cpu_fps": 42.8
+      }
+    },
+    "resnet18": {
+      "tier_name": "Tier 3: Heavy-Duty Ground Station (ResNet-18)",
+      "target_hardware": "Ground Station Cockpit Workstation / Cloud Lakehouse",
+      "parameters": 11178564,
+      "trainable_parameters": 11178564,
+      "model_size": {
+        "fp32_mb": 42.643,
+        "fp16_mb": 21.321,
+        "int8_mb": 10.661,
+        "int8_kb": 10916.6
+      },
+      "macs_estimate": "~1.8G MACCs",
+      "operational_role": "Deep multispectral verification and post-flight reconstruction",
+      "latency_cpu": {
+        "mean_latency_ms": 128.37,
+        "min_latency_ms": 85.82,
+        "max_latency_ms": 427.82,
+        "cpu_fps": 7.8
+      }
+    }
+  },
+  "ood_guard_eval": {
+    "all_passed": true,
+    "test_cases": [
+      {
+        "test_case": "Human Face / Skin Chromaticity",
+        "expected_rejection": true,
+        "actual_rejection": true,
+        "rejection_reason": "HUMAN_SUBJECT_DETECTED",
+        "skin_ratio": 1.0,
+        "passed": true
+      },
+      {
+        "test_case": "Flat Indoor White Drywall / Ceiling",
+        "expected_rejection": true,
+        "actual_rejection": true,
+        "rejection_reason": "FLAT_INDOOR_WALL_OR_CEILING",
+        "skin_ratio": 0.0,
+        "passed": true
+      },
+      {
+        "test_case": "Aerial Pasture / Vegetative Canopy",
+        "expected_rejection": false,
+        "actual_rejection": false,
+        "rejection_reason": null,
+        "skin_ratio": 0.0,
+        "passed": true
+      }
+    ]
+  },
+  "flight_video_eval": [
+    {
+      "video_name": "aerial_hemp_field_descent.webm",
+      "category": "01_farmland_and_pasture",
+      "expected_context": "SAFE_LZ_PASTURE",
+      "resolution": "1920x1080",
+      "sample_evaluations": [
+        {
+          "frame_index": 208,
+          "timestamp_s": 8.32,
+          "is_aerial": false,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.942,
+          "probabilities": {
+            "SAFE_LZ": 0.058,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.942,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 417,
+          "timestamp_s": 16.68,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.949,
+          "probabilities": {
+            "SAFE_LZ": 0.051,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.949,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 626,
+          "timestamp_s": 25.04,
+          "is_aerial": false,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.995,
+          "probabilities": {
+            "SAFE_LZ": 0.005,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.995,
+            "WATER_HAZARD": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "video_name": "aerial_village_roads_and_rooftops.webm",
+      "category": "02_urban_roads_and_buildings",
+      "expected_context": "CRITICAL_HAZARD_URBAN",
+      "resolution": "1920x1080",
+      "sample_evaluations": [
+        {
+          "frame_index": 154,
+          "timestamp_s": 6.16,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 1.0,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 1.0,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 309,
+          "timestamp_s": 12.36,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 1.0,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 1.0,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 464,
+          "timestamp_s": 18.56,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 1.0,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 1.0,
+            "WATER_HAZARD": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "video_name": "aerial_beaverhead_river_canopy.webm",
+      "category": "03_water_hazards_and_canopy",
+      "expected_context": "WATER_HAZARD_RIVER",
+      "resolution": "1280x720",
+      "sample_evaluations": [
+        {
+          "frame_index": 60,
+          "timestamp_s": 2.5,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 1.0,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 1.0,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 120,
+          "timestamp_s": 5.0,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 1.0,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 1.0,
+            "WATER_HAZARD": 0.0
+          }
+        },
+        {
+          "frame_index": 180,
+          "timestamp_s": 7.51,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.997,
+          "probabilities": {
+            "SAFE_LZ": 0.0,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.997,
+            "WATER_HAZARD": 0.003
+          }
+        }
+      ]
+    },
+    {
+      "video_name": "aerial_rocky_coastline_waves.mp4",
+      "category": "03_water_hazards_and_canopy",
+      "expected_context": "WATER_HAZARD_COAST",
+      "resolution": "640x360",
+      "sample_evaluations": [
+        {
+          "frame_index": 132,
+          "timestamp_s": 5.28,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.838,
+          "probabilities": {
+            "SAFE_LZ": 0.032,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.838,
+            "WATER_HAZARD": 0.13
+          }
+        },
+        {
+          "frame_index": 264,
+          "timestamp_s": 10.56,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.891,
+          "probabilities": {
+            "SAFE_LZ": 0.051,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.891,
+            "WATER_HAZARD": 0.059
+          }
+        },
+        {
+          "frame_index": 396,
+          "timestamp_s": 15.84,
+          "is_aerial": true,
+          "tinylandingnet_class": "CRITICAL_HAZARD",
+          "confidence": 0.645,
+          "probabilities": {
+            "SAFE_LZ": 0.034,
+            "OBSTACLE_CANOPY": 0.0,
+            "CRITICAL_HAZARD": 0.645,
+            "WATER_HAZARD": 0.321
+          }
+        }
+      ]
+    }
+  ]
+}

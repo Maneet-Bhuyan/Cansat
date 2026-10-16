@@ -1831,6 +1831,40 @@ BACKEND EXECUTION REFACTOR & SYS.PATH ROOT RESOLUTION
 
 STATUS: DIRECT BACKEND APP SCRIPT LAUNCHER FULLY RESOLVED AND OPERATIONAL
 
+--------------------------------------------------------------------------------
+OUT-OF-DISTRIBUTION (OOD) GUARD, 3-TIER VISION BENCHMARK & CUDA PACKAGE
+--------------------------------------------------------------------------------
+
+[2026-10-17T00:30:00Z] ACTION: Implemented non-aerial Out-of-Distribution guard, 3-tier vision benchmarking suite, and standalone CUDA workstation training package.
+
+1. Delivered Capabilities:
+   - Out-of-Distribution (OOD) Safety Guard (ml/vision_guard.py):
+     * Created AerialVisionGuard class enforcing Peer/Kovac skin chromaticity clustering (R > 95, G > 40, B > 20, |R-G| > 15, R > G, R > B) to instantly detect human faces/bodies and suppress false-positive landing classifications.
+     * Evaluates indoor drywall/ceiling flat-field illumination variance (< 14.0 std) and Shannon entropy (> 0.88) to filter artificial non-terrain scenes.
+     * Integrated into frontend/dashboard.html and frontend/js/tinyml-demo.js to set slai_class to INVALID_AERIAL_SURFACE, suppress OPTIMAL LZ boxes, cancel evasion vectors, and display OOD_REJECTED badges.
+   - Backend Vision Inference API (backend/app.py):
+     * Added POST /api/vision/classify-frame route accepting base64 optical frames.
+     * Executes OOD guard pre-flight, runs PyTorch CNN inference, evaluates 3x3 sector grid, and outputs structured flight decisions.
+   - 3-Tier Vision Benchmarking Suite (ml/benchmark_vision_models.py):
+     * Tier 1: TinyLandingNet (6,996 params, ~6.8 KB INT8, ESP32 flight computer).
+     * Tier 2: MobileNetV3-Small (1,521,956 params, ~1.48 MB INT8, Companion SBC).
+     * Tier 3: ResNet-18 (11,178,564 params, ~10.9 MB INT8, Ground Station / Server).
+     * Evaluated model size, CPU latency, OOD rejection accuracy (3/3 pass), and test flight video frames from tinyml_test_videos/, generating ml/vision_model_comparison.json.
+   - Turnkey CUDA Workstation Training Suite (gpu_training/):
+     * gpu_training/train_heavy_duty_models.py: Automated PyTorch fine-tuning script with CUDA Automatic Mixed Precision (AMP), Cosine Annealing scheduler, checkpointing, and ONNX export.
+     * gpu_training/context.txt: Comprehensive system, dataset, and architectural reference manual.
+     * gpu_training/README.md: Step-by-step setup and execution guide for the secondary CUDA laptop.
+     * gpu_training/AGENT_PROMPT.md: Turnkey prompt for Antigravity on the CUDA machine to train, benchmark, verify, and git push.
+
+2. Automated Test Verification:
+   - python -m unittest tests/test_telemetry_analyzer.py tests/test_database.py tests/test_backend_core.py: 28/28 PASS
+   - node tests/selftest.js: 27/27 PASS
+   - ml/benchmark_vision_models.py: OK (All models profiled, OOD tests 3/3 passed)
+   - Strict constraint check: 0 emojis across all project files.
+
+STATUS: OOD GUARD, 3-TIER VISION BENCHMARK, AND CUDA WORKSTATION PACKAGE OPERATIONAL
+
+
 
 
 

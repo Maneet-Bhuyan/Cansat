@@ -483,6 +483,21 @@
     const imgData = offscreenReplayCtx.getImageData(0, 0, 32, 24);
     const pixels = imgData.data;
 
+    // Out-Of-Distribution (OOD) Human Skin & Non-Aerial Guard
+    let skinCount = 0;
+    const pxLen = pixels.length;
+    for (let i = 0; i < pxLen; i += 4) {
+      const pr = pixels[i], pg = pixels[i + 1], pb = pixels[i + 2];
+      const pmax = Math.max(pr, pg, pb);
+      const pmin = Math.min(pr, pg, pb);
+      if (pr > 95 && pg > 40 && pb > 20 && (pmax - pmin) > 15 && Math.abs(pr - pg) > 15 && pr > pg && pr > pb) {
+        skinCount++;
+      }
+    }
+    const totalPx = pxLen / 4;
+    const skinRatio = skinCount / totalPx;
+    const isHumanOOD = skinRatio > 0.14;
+
     const cellW = w / 3;
     const cellH = h / 3;
     const cw = Math.floor(32 / 3);
@@ -491,7 +506,7 @@
     const sectorGrid = [];
     let bestCell = [1, 1];
     let maxScore = -999;
-    let centerLabel = 'CRITICAL_HAZARD';
+    let centerLabel = isHumanOOD ? 'INVALID_AERIAL_SURFACE' : 'CRITICAL_HAZARD';
     let centerVari = 0;
 
     for (let r = 0; r < 3; r++) {
@@ -520,7 +535,12 @@
         let sColor = 'rgba(239, 68, 68, 0.20)';
         let sBorder = 'rgba(239, 68, 68, 0.55)';
 
-        if (avgB > avgR * 1.08 && avgB > avgG * 0.95 && avgB > 80) {
+        if (isHumanOOD) {
+          sLabel = 'INVALID_AERIAL_SURFACE';
+          sScore = -2.0;
+          sColor = 'rgba(148, 163, 184, 0.15)';
+          sBorder = 'rgba(148, 163, 184, 0.40)';
+        } else if (avgB > avgR * 1.08 && avgB > avgG * 0.95 && avgB > 80) {
           sLabel = 'WATER_HAZARD';
           sScore = -1.0;
           sColor = 'rgba(6, 182, 212, 0.22)';
@@ -590,15 +610,21 @@
     }
 
     // 3. Highlight Optimal LZ Sector
-    const bx = bestCell[1] * cellW;
-    const by = bestCell[0] * cellH;
-    ctx.strokeStyle = '#10B981';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(bx + 2, by + 2, cellW - 4, cellH - 4);
+    if (!isHumanOOD && maxScore > 0) {
+      const bx = bestCell[1] * cellW;
+      const by = bestCell[0] * cellH;
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bx + 2, by + 2, cellW - 4, cellH - 4);
 
-    ctx.fillStyle = '#10B981';
-    ctx.font = 'bold 9px "JetBrains Mono", monospace';
-    ctx.fillText('OPTIMAL LZ', bx + 6, by + 28);
+      ctx.fillStyle = '#10B981';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText('OPTIMAL LZ', bx + 6, by + 28);
+    } else if (isHumanOOD) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.fillText('OOD REJECTED (NON-AERIAL SCENE)', 10, 44);
+    }
 
     // 4. Center Crosshairs Reticle
     const cx = w / 2;
@@ -617,7 +643,11 @@
     let evadeAngle = 0;
     let evadeText = 'ON TARGET (SAFE LZ)';
 
-    if (needsEvade) {
+    if (isHumanOOD) {
+      evadeText = 'TARGET UNACQUIRED (OOD)';
+    } else if (needsEvade && maxScore > 0) {
+      const bx = bestCell[1] * cellW;
+      const by = bestCell[0] * cellH;
       const tx = bx + cellW / 2;
       const ty = by + cellH / 2;
       ctx.strokeStyle = '#10B981';
@@ -646,21 +676,22 @@
     ctx.fillStyle = 'rgba(7, 10, 19, 0.85)';
     ctx.fillRect(0, 0, w, 26);
 
-    ctx.fillStyle = centerLabel === 'SAFE_LZ' ? '#34d399' : (centerLabel === 'OBSTACLE_CANOPY' ? '#fbbf24' : '#f87171');
+    ctx.fillStyle = isHumanOOD ? '#f87171' : (centerLabel === 'SAFE_LZ' ? '#34d399' : (centerLabel === 'OBSTACLE_CANOPY' ? '#fbbf24' : '#f87171'));
     ctx.font = '10px "JetBrains Mono", monospace';
-    const variStr = `VARI ${centerVari >= 0 ? '+' : ''}${centerVari.toFixed(2)}`;
-    ctx.fillText(`SLAI: ${centerLabel} | ${variStr} | NADIR: [1,1] | ${evadeText} | RATE: ${playbackFps} FPS`, 10, 17);
+    const variStr = isHumanOOD ? 'VARI N/A' : `VARI ${centerVari >= 0 ? '+' : ''}${centerVari.toFixed(2)}`;
+    const nadirStr = isHumanOOD ? 'REJECTED' : '[1,1]';
+    ctx.fillText(`SLAI: ${centerLabel} | ${variStr} | NADIR: ${nadirStr} | ${evadeText} | RATE: ${playbackFps} FPS`, 10, 17);
 
     // 7. Update External UI Badges
     const slaiBadge = document.getElementById('replay-slai-badge');
     const evadeBadge = document.getElementById('replay-evade-badge');
     if (slaiBadge) {
-      slaiBadge.textContent = centerLabel.replace('_', ' ');
-      slaiBadge.style.color = centerLabel === 'SAFE_LZ' ? 'var(--accent-green)' : (centerLabel === 'OBSTACLE_CANOPY' ? 'var(--accent-yellow)' : 'var(--accent-red)');
+      slaiBadge.textContent = isHumanOOD ? 'OOD REJECTED' : centerLabel.replace('_', ' ');
+      slaiBadge.style.color = isHumanOOD ? 'var(--accent-red)' : (centerLabel === 'SAFE_LZ' ? 'var(--accent-green)' : (centerLabel === 'OBSTACLE_CANOPY' ? 'var(--accent-yellow)' : 'var(--accent-red)'));
     }
     if (evadeBadge) {
-      evadeBadge.textContent = evadeText;
-      evadeBadge.style.color = needsEvade ? '#ffffff' : 'var(--accent-green)';
+      evadeBadge.textContent = isHumanOOD ? 'NON-AERIAL SCENE' : evadeText;
+      evadeBadge.style.color = (isHumanOOD || needsEvade) ? 'var(--accent-red)' : 'var(--accent-green)';
     }
   }
 
