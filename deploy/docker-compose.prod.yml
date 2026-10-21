@@ -1,0 +1,27 @@
+# ==============================================================================
+# Cognitive CanSat - Production Docker Compose Deployment
+# ==============================================================================
+# Run: docker compose -f deploy/docker-compose.prod.yml up -d --build
+# ==============================================================================
+
+services:
+  cansat-web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: cansat_ground_station
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../data:/home/user/app/data
+      - ../ml/saved_models:/home/user/app/ml/saved_models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

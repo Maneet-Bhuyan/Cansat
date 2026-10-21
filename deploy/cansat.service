@@ -1,0 +1,19 @@
+[Unit]
+Description=Cognitive CanSat FastAPI Telemetry Server & Ground Station
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/cansat
+Environment="PATH=/var/www/cansat/.venv/bin"
+Environment="PORT=8000"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/cansat/.venv/bin/uvicorn backend.app:app --host 127.0.0.1 --port 8000 --workers 2 --ws websockets
+Restart=always
+RestartSec=5s
+StandardOutput=append:/var/log/cansat_access.log
+StandardError=append:/var/log/cansat_error.log
+
+[Install]
+WantedBy=multi-user.target

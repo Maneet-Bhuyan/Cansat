@@ -498,9 +498,33 @@ body::before {
     height: 420px;
   }
   .resend-navbar {
-    padding: 0 1.25rem;
+    padding: 0.6rem 1rem;
+    height: auto;
+    min-height: var(--nav-height);
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   .nav-links {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.25rem;
+    gap: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-link {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+  }
+  .nav-actions {
     display: none;
   }
   .content-container {
