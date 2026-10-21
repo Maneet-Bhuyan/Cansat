@@ -1,0 +1,268 @@
+{
+  "timestamp": "2026-10-21T18:16:54Z",
+  "device": "cuda:0",
+  "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "dataset_samples": 27000,
+  "architectures": {
+    "mobilenet_v3_small": {
+      "model_name": "mobilenet_v3_small",
+      "best_val_acc_pct": 99.68,
+      "total_training_time_s": 1158.3,
+      "epochs": 15,
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.1381,
+          "train_acc": 94.98,
+          "val_loss": 0.04,
+          "val_acc": 98.84,
+          "duration_s": 74.49
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.0404,
+          "train_acc": 98.58,
+          "val_loss": 0.0541,
+          "val_acc": 98.22,
+          "duration_s": 65.7
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.031,
+          "train_acc": 98.98,
+          "val_loss": 0.0793,
+          "val_acc": 97.95,
+          "duration_s": 122.28
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.028,
+          "train_acc": 99.07,
+          "val_loss": 0.0337,
+          "val_acc": 98.91,
+          "duration_s": 159.75
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.0219,
+          "train_acc": 99.21,
+          "val_loss": 0.0351,
+          "val_acc": 99.09,
+          "duration_s": 65.79
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.0154,
+          "train_acc": 99.46,
+          "val_loss": 0.0208,
+          "val_acc": 99.38,
+          "duration_s": 67.68
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.0144,
+          "train_acc": 99.51,
+          "val_loss": 0.0213,
+          "val_acc": 99.31,
+          "duration_s": 67.1
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.0104,
+          "train_acc": 99.67,
+          "val_loss": 0.0208,
+          "val_acc": 99.38,
+          "duration_s": 66.96
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.0084,
+          "train_acc": 99.7,
+          "val_loss": 0.0164,
+          "val_acc": 99.56,
+          "duration_s": 69.86
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.006,
+          "train_acc": 99.8,
+          "val_loss": 0.0135,
+          "val_acc": 99.51,
+          "duration_s": 64.33
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.0043,
+          "train_acc": 99.86,
+          "val_loss": 0.011,
+          "val_acc": 99.68,
+          "duration_s": 65.97
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.0038,
+          "train_acc": 99.9,
+          "val_loss": 0.0108,
+          "val_acc": 99.56,
+          "duration_s": 65.86
+        },
+        {
+          "epoch": 13,
+          "train_loss": 0.0036,
+          "train_acc": 99.88,
+          "val_loss": 0.0127,
+          "val_acc": 99.6,
+          "duration_s": 66.8
+        },
+        {
+          "epoch": 14,
+          "train_loss": 0.0028,
+          "train_acc": 99.93,
+          "val_loss": 0.0108,
+          "val_acc": 99.63,
+          "duration_s": 67.49
+        },
+        {
+          "epoch": 15,
+          "train_loss": 0.0032,
+          "train_acc": 99.92,
+          "val_loss": 0.0106,
+          "val_acc": 99.63,
+          "duration_s": 67.97
+        }
+      ],
+      "weights_path": "E:\\Cansat\\Cansat-main\\ml\\saved_models\\mobilenet_v3_small_best.pth",
+      "onnx_path": "E:\\Cansat\\Cansat-main\\ml\\saved_models\\mobilenet_v3_small.onnx"
+    },
+    "resnet18": {
+      "model_name": "resnet18",
+      "best_val_acc_pct": 99.73,
+      "total_training_time_s": 1060.3,
+      "epochs": 15,
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.1188,
+          "train_acc": 95.87,
+          "val_loss": 0.0699,
+          "val_acc": 97.68,
+          "duration_s": 149.96
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.0584,
+          "train_acc": 98.01,
+          "val_loss": 0.0334,
+          "val_acc": 98.74,
+          "duration_s": 61.78
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.0473,
+          "train_acc": 98.39,
+          "val_loss": 0.0418,
+          "val_acc": 98.84,
+          "duration_s": 62.17
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.0345,
+          "train_acc": 98.78,
+          "val_loss": 0.0421,
+          "val_acc": 98.89,
+          "duration_s": 61.38
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.0337,
+          "train_acc": 98.86,
+          "val_loss": 0.0405,
+          "val_acc": 98.89,
+          "duration_s": 61.95
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.0259,
+          "train_acc": 99.13,
+          "val_loss": 0.0258,
+          "val_acc": 99.01,
+          "duration_s": 77.74
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.0211,
+          "train_acc": 99.25,
+          "val_loss": 0.0236,
+          "val_acc": 99.38,
+          "duration_s": 65.3
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.0173,
+          "train_acc": 99.42,
+          "val_loss": 0.021,
+          "val_acc": 99.46,
+          "duration_s": 64.02
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.0137,
+          "train_acc": 99.5,
+          "val_loss": 0.0227,
+          "val_acc": 99.43,
+          "duration_s": 63.34
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.0109,
+          "train_acc": 99.64,
+          "val_loss": 0.0154,
+          "val_acc": 99.51,
+          "duration_s": 64.57
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.0084,
+          "train_acc": 99.73,
+          "val_loss": 0.0178,
+          "val_acc": 99.43,
+          "duration_s": 65.52
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.0059,
+          "train_acc": 99.81,
+          "val_loss": 0.0173,
+          "val_acc": 99.56,
+          "duration_s": 65.36
+        },
+        {
+          "epoch": 13,
+          "train_loss": 0.0045,
+          "train_acc": 99.86,
+          "val_loss": 0.0131,
+          "val_acc": 99.63,
+          "duration_s": 65.58
+        },
+        {
+          "epoch": 14,
+          "train_loss": 0.003,
+          "train_acc": 99.94,
+          "val_loss": 0.015,
+          "val_acc": 99.6,
+          "duration_s": 65.27
+        },
+        {
+          "epoch": 15,
+          "train_loss": 0.003,
+          "train_acc": 99.92,
+          "val_loss": 0.0134,
+          "val_acc": 99.73,
+          "duration_s": 65.82
+        }
+      ],
+      "weights_path": "E:\\Cansat\\Cansat-main\\ml\\saved_models\\resnet18_best.pth",
+      "onnx_path": "E:\\Cansat\\Cansat-main\\ml\\saved_models\\resnet18.onnx"
+    }
+  }
+}

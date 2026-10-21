@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-10-16T18:54:47Z",
+  "timestamp": "2026-10-21T18:53:56Z",
   "hardware_environment": {
     "cpu_device": "Intel/AMD Multi-core Host",
-    "pytorch_version": "2.14.0+cpu",
-    "cuda_available": false
+    "pytorch_version": "2.5.1+cu121",
+    "cuda_available": true
   },
   "models": {
     "tinylandingnet": {
@@ -20,10 +20,10 @@
       "macs_estimate": "~4.2M MACCs",
       "operational_role": "Airborne real-time flight computer descent hazard gate",
       "latency_cpu": {
-        "mean_latency_ms": 3.47,
-        "min_latency_ms": 1.69,
-        "max_latency_ms": 7.36,
-        "cpu_fps": 287.8
+        "mean_latency_ms": 2.55,
+        "min_latency_ms": 2.26,
+        "max_latency_ms": 2.95,
+        "cpu_fps": 392.4
       }
     },
     "mobilenet_v3_small": {
@@ -40,10 +40,10 @@
       "macs_estimate": "~56M MACCs",
       "operational_role": "Secondary payload companion computer for high-res telemetry",
       "latency_cpu": {
-        "mean_latency_ms": 23.39,
-        "min_latency_ms": 17.72,
-        "max_latency_ms": 30.07,
-        "cpu_fps": 42.8
+        "mean_latency_ms": 25.09,
+        "min_latency_ms": 22.45,
+        "max_latency_ms": 29.39,
+        "cpu_fps": 39.9
       }
     },
     "resnet18": {
@@ -60,10 +60,10 @@
       "macs_estimate": "~1.8G MACCs",
       "operational_role": "Deep multispectral verification and post-flight reconstruction",
       "latency_cpu": {
-        "mean_latency_ms": 128.37,
-        "min_latency_ms": 85.82,
-        "max_latency_ms": 427.82,
-        "cpu_fps": 7.8
+        "mean_latency_ms": 31.86,
+        "min_latency_ms": 29.45,
+        "max_latency_ms": 34.36,
+        "cpu_fps": 31.4
       }
     }
   },

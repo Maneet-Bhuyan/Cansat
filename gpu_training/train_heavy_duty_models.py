@@ -111,6 +111,23 @@ class EuroSATDataset(Dataset):
         return img, label
 
 
+class TransformSubset(Dataset):
+    """Applies a custom transform to a PyTorch Subset dataset."""
+    def __init__(self, subset, transform):
+        self.subset = subset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.subset)
+
+    def __getitem__(self, idx):
+        path, label = self.subset.dataset.samples[self.subset.indices[idx]]
+        img = Image.open(path).convert("RGB")
+        if self.transform:
+            img = self.transform(img)
+        return img, label
+
+
 def create_dataloaders(batch_size: int = 64, img_size: int = 224, num_workers: int = 4):
     train_transform = transforms.Compose([
         transforms.Resize((img_size, img_size)),
@@ -135,22 +152,6 @@ def create_dataloaders(batch_size: int = 64, img_size: int = 224, num_workers: i
 
     torch.manual_seed(42)
     train_set, val_set = random_split(full_ds, [train_len, val_len])
-
-    # Assign val_transform to validation set
-    class TransformSubset(Dataset):
-        def __init__(self, subset, transform):
-            self.subset = subset
-            self.transform = transform
-
-        def __len__(self):
-            return len(self.subset)
-
-        def __getitem__(self, idx):
-            path, label = self.subset.dataset.samples[self.subset.indices[idx]]
-            img = Image.open(path).convert("RGB")
-            if self.transform:
-                img = self.transform(img)
-            return img, label
 
     val_set = TransformSubset(val_set, val_transform)
 
