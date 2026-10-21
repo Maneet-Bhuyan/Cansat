@@ -1992,9 +1992,27 @@
   let currentAnomalyScore = 0;
 
   // --- API BASE & SERVER RESOLUTION ---
+  function getCustomBackend() {
+    try {
+      const param = (new URLSearchParams(window.location.search)).get('backend');
+      if (param) {
+        localStorage.setItem('cansat_backend_url', param.replace(/\/$/, ''));
+        return param.replace(/\/$/, '');
+      }
+      const stored = localStorage.getItem('cansat_backend_url');
+      if (stored) return stored.replace(/\/$/, '');
+      if (window.CANSAT_BACKEND_URL) return window.CANSAT_BACKEND_URL.replace(/\/$/, '');
+    } catch (e) {}
+    return null;
+  }
+
   function getApiUrl(path) {
     if (!path) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const custom = getCustomBackend();
+    if (custom) {
+      return custom + (path.startsWith('/') ? path : '/' + path);
+    }
     const isLocalFile = window.location.protocol === 'file:';
     const isOtherPort = window.location.port && window.location.port !== '8000';
     const base = (isLocalFile || isOtherPort) ? 'http://127.0.0.1:8000' : '';
@@ -3933,8 +3951,15 @@
 
     setConnectionState(true, 'CONNECTING BRIDGE...');
     try {
-      const host = location.host || '127.0.0.1:8000';
-      const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + '/ws/serial';
+      const custom = (typeof getCustomBackend === 'function') ? getCustomBackend() : null;
+      let wsUrl = '';
+      if (custom) {
+        const clean = custom.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+        wsUrl = (custom.startsWith('http://') ? 'ws://' : 'wss://') + clean + '/ws/serial';
+      } else {
+        const host = location.host || '127.0.0.1:8000';
+        wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + '/ws/serial';
+      }
       bridgeSocket = new WebSocket(wsUrl);
       bridgeSocket.onopen = function () {
         setConnectionState(true, 'ONLINE (DUAL BRIDGE: COM4 LoRa + COM5 Cam)');
