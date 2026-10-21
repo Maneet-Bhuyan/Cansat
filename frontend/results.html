@@ -313,20 +313,22 @@
             <span class="card-badge">N = 2,400 Frames</span>
           </div>
 
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th>True \ Predicted</th>
-                <th>Concrete</th>
-                <th>Vegetation</th>
-                <th>Safe Grass</th>
-                <th>Water</th>
-              </tr>
-            </thead>
-            <tbody id="cm-table-body">
-              <!-- Dynamically populated by results-charts.js -->
-            </tbody>
-          </table>
+          <div class="table-scroll-wrap">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th>True \ Predicted</th>
+                  <th>Concrete</th>
+                  <th>Vegetation</th>
+                  <th>Safe Grass</th>
+                  <th>Water</th>
+                </tr>
+              </thead>
+              <tbody id="cm-table-body">
+                <!-- Dynamically populated by results-charts.js -->
+              </tbody>
+            </table>
+          </div>
 
           <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
             <span>Green = True Positive</span>
@@ -404,7 +406,7 @@
         </p>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="responsive-2col-grid">
         <!-- Limitations -->
         <div class="resend-card">
           <div class="card-header">

@@ -498,6 +498,20 @@
         color: #0369a1 !important;
       }
     }
+
+    @media (max-width: 640px) {
+      .panel-header {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        padding: 0.5rem 0.65rem;
+      }
+      .btn-action-primary,
+      .btn-action-light,
+      .btn-action-outline {
+        padding: 0.45rem 0.65rem;
+        font-size: 0.7rem;
+      }
+    }
   </style>
   <link rel="stylesheet" href="css/resend-theme.css">
 </head>
@@ -534,23 +548,29 @@
     <!-- ============================================================== -->
     <!-- LEFT SIDEBAR: MISSION BRANDING, ACTION CONTROLS & BATTERY      -->
     <!-- ============================================================== -->
-    <aside class="w-full xl:w-[240px] flex-shrink-0 bg-[#000000] border-b xl:border-b-0 xl:border-r border-[#1f1f1f] p-3.5 flex flex-col justify-between space-y-4">
+    <aside class="w-full xl:w-[240px] flex-shrink-0 bg-[#000000] border-b xl:border-b-0 xl:border-r border-[#1f1f1f] p-3.5 flex flex-col justify-between space-y-3.5">
       
-      <div class="space-y-3.5">
-        <!-- Brand Insignia & Title -->
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-[#171717] border border-[#2e2e2e] flex items-center justify-center text-white shadow-[0_0_12px_rgba(255,255,255,0.05)]">
-            <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-serif text-[17px] text-white tracking-tight">Cognitive CanSat</span>
+      <div class="space-y-3">
+        <!-- Brand Insignia, Connection Status & Mobile Drawer Toggle -->
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#171717] border border-[#2e2e2e] flex items-center justify-center text-white shadow-[0_0_12px_rgba(255,255,255,0.05)]">
+              <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-            <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-mono">
-              <span>Mission Control</span>
-              <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-zinc-300 uppercase font-semibold">OPS</span>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-serif text-[17px] text-white tracking-tight">Cognitive CanSat</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-mono">
+                <span>Mission Control</span>
+                <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-zinc-300 uppercase font-semibold">OPS</span>
+              </div>
             </div>
           </div>
+
+          <button type="button" id="mobile-ops-toggle-btn" onclick="const p=document.getElementById('sidebar-collapsible-body'); if(p){p.classList.toggle('hidden'); this.textContent=p.classList.contains('hidden')?'SHOW OPS':'HIDE OPS';}" class="xl:hidden px-2.5 py-1 rounded-full bg-[#171717] border border-[#2e2e2e] text-[10px] font-mono text-zinc-300 hover:text-white">
+            HIDE OPS
+          </button>
         </div>
 
         <!-- Connection Status Indicator -->
@@ -559,107 +579,110 @@
           <span id="conn-text" class="text-xs font-mono font-medium tracking-wider text-zinc-300 uppercase">DISCONNECTED</span>
         </div>
 
-        <!-- Action Control Buttons -->
-        <div class="space-y-2 pt-1">
-          <button type="button" onclick="downloadCSV()" class="btn-action-primary flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            <span>DOWNLOAD DATA</span>
-          </button>
-
-          <button type="button" onclick="openModal('rawFeedModal')" class="btn-action-outline flex items-center justify-center gap-1">
-            <span>RAW FEED</span>
-            <span id="feed-counter" class="font-mono text-white font-semibold">(0)</span>
-          </button>
-
-          <div class="space-y-1.5">
-            <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center">
-              <span>CONNECT</span>
+        <div id="sidebar-collapsible-body" class="space-y-3">
+          <!-- Action Control Buttons (2-col on mobile, 3-col on tablet, 1-col on desktop xl) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-1 gap-2 pt-1">
+            <button type="button" onclick="downloadCSV()" class="btn-action-primary flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>DOWNLOAD DATA</span>
             </button>
-            <select id="baud-select" class="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-xs rounded-full px-3 py-2 font-sans font-medium focus:outline-none focus:border-white cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
-              <option value="bridge" selected>DUAL BRIDGE (COM4 + COM5)</option>
-              <option value="9600">DIRECT USB (COM4 @ 9600)</option>
-              <option value="115200">DIRECT USB (115200 Baud)</option>
-              <option value="57600">DIRECT USB (57600 Baud)</option>
-            </select>
-          </div>
 
-          <div class="space-y-1.5">
-            <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light w-full flex items-center justify-center">
-              <span>DEMO DATA</span>
+            <button type="button" onclick="openModal('rawFeedModal')" class="btn-action-outline flex items-center justify-center gap-1">
+              <span>RAW FEED</span>
+              <span id="feed-counter" class="font-mono text-white font-semibold">(0)</span>
             </button>
-            <select id="demo-scenario-select" onchange="onSidebarScenarioChange()" class="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-[11px] rounded-full px-3 py-1.5 font-mono focus:outline-none focus:border-white cursor-pointer truncate" title="Select Live Demo or Stochastic Test Case Scenario">
-              <option value="procedural" selected>SIM: PROCEDURAL (800m)</option>
-              <option value="test_cases/01_nominal_sounding_flight.csv">01: NOMINAL FLIGHT (800m)</option>
-              <option value="test_cases/02_high_altitude_burst_1200m.csv">02: 1200m BURST &amp; RF FADE</option>
-              <option value="test_cases/03_severe_wind_shear_drift.csv">03: SEVERE WIND SHEAR</option>
-              <option value="test_cases/04_apogee_ejection_shock_tumble.csv">04: 5.2G SHOCK &amp; TUMBLE</option>
-              <option value="test_cases/05_parachute_pendulum_resonance.csv">05: PENDULUM RESONANCE</option>
-              <option value="test_cases/06_delayed_chute_deployment.csv">06: DELAYED CHUTE FREEFALL</option>
-              <option value="test_cases/07_thermal_inversion_sounding.csv">07: THERMAL INVERSION</option>
-              <option value="test_cases/08_sensor_glitch_gps_recovery.csv">08: GPS LOSS &amp; RECOVERY</option>
-              <option value="test_cases/09_low_battery_voltage_sag.csv">09: LOW BATTERY SAG (&lt;3.4V)</option>
-              <option value="test_cases/10_ground_pad_static_test.csv">10: STATIC PAD BASELINE</option>
-            </select>
+
+            <div class="space-y-1.5 col-span-2 sm:col-span-1 xl:col-span-1">
+              <button type="button" id="connect-btn" onclick="toggleConnect()" class="btn-action-outline w-full flex items-center justify-center">
+                <span>CONNECT</span>
+              </button>
+              <select id="baud-select" class="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-xs rounded-full px-3 py-2 font-sans font-medium focus:outline-none focus:border-white cursor-pointer truncate" title="Serial Connection Mode (Dual Bridge or Web Serial)">
+                <option value="bridge" selected>DUAL BRIDGE (COM4 + COM5)</option>
+                <option value="9600">DIRECT USB (COM4 @ 9600)</option>
+                <option value="115200">DIRECT USB (115200 Baud)</option>
+                <option value="57600">DIRECT USB (57600 Baud)</option>
+              </select>
+            </div>
+
+            <div class="space-y-1.5 col-span-2 sm:col-span-2 xl:col-span-1">
+              <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light w-full flex items-center justify-center">
+                <span>DEMO DATA</span>
+              </button>
+              <select id="demo-scenario-select" onchange="onSidebarScenarioChange()" class="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-[11px] rounded-full px-3 py-1.5 font-mono focus:outline-none focus:border-white cursor-pointer truncate" title="Select Live Demo or Stochastic Test Case Scenario">
+                <option value="procedural" selected>SIM: PROCEDURAL (800m)</option>
+                <option value="test_cases/01_nominal_sounding_flight.csv">01: NOMINAL FLIGHT (800m)</option>
+                <option value="test_cases/02_high_altitude_burst_1200m.csv">02: 1200m BURST &amp; RF FADE</option>
+                <option value="test_cases/03_severe_wind_shear_drift.csv">03: SEVERE WIND SHEAR</option>
+                <option value="test_cases/04_apogee_ejection_shock_tumble.csv">04: 5.2G SHOCK &amp; TUMBLE</option>
+                <option value="test_cases/05_parachute_pendulum_resonance.csv">05: PENDULUM RESONANCE</option>
+                <option value="test_cases/06_delayed_chute_deployment.csv">06: DELAYED CHUTE FREEFALL</option>
+                <option value="test_cases/07_thermal_inversion_sounding.csv">07: THERMAL INVERSION</option>
+                <option value="test_cases/08_sensor_glitch_gps_recovery.csv">08: GPS LOSS &amp; RECOVERY</option>
+                <option value="test_cases/09_low_battery_voltage_sag.csv">09: LOW BATTERY SAG (&lt;3.4V)</option>
+                <option value="test_cases/10_ground_pad_static_test.csv">10: STATIC PAD BASELINE</option>
+              </select>
+            </div>
+
+            <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center text-amber-300 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424] hover:border-amber-500/40 transition-all" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
+              <span id="tare-btn-text">TARE / CALIBRATE</span>
+            </button>
+
+            <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center" title="Toggle Flight Test & Replay Suite">
+              <span>REPLAY SUITE</span>
+            </button>
+
+            <button type="button" onclick="openModal('helpModal')" class="btn-action-outline flex items-center justify-center">
+              <span>HELP</span>
+            </button>
+
+            <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center text-cyan-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]">
+              <span>COGNITIVE AI</span>
+            </button>
+
+            <button type="button" onclick="openModal('pfrModal')" class="btn-action-outline flex items-center justify-center text-zinc-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]" title="Generate Post-Flight Review (PFR) Audit & Compliance Report">
+              <span>MISSION REPORT</span>
+            </button>
+
+            <button type="button" onclick="openDatabaseManager()" class="btn-action-outline flex items-center justify-center text-cyan-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]" title="Open SQLite Flight Database Explorer & Records Manager">
+              <span>DATABASE MANAGER</span>
+            </button>
+
+            <button type="button" onclick="resetNewFlight()" class="btn-action-outline col-span-2 sm:col-span-1 xl:col-span-1 flex items-center justify-center gap-1.5 text-rose-300 border-[#2e2e2e] hover:bg-[#242424] hover:border-rose-700/60 transition-all" title="Reset all buffers and re-arm for a new flight">
+              <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>NEW FLIGHT RESET</span>
+            </button>
           </div>
 
-          <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center text-amber-300 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424] hover:border-amber-500/40 transition-all" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
-            <span id="tare-btn-text">TARE / CALIBRATE</span>
-          </button>
+          <!-- Battery Monitor & Bottom Axis Legend (Side-by-side on mobile/tablet, stacked on desktop) -->
+          <div class="grid grid-cols-2 xl:grid-cols-1 gap-3 items-center pt-1">
+            <div class="battery-box">
+              <div class="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold mb-1.5">BATTERY</div>
+              <div class="battery-housing">
+                <div id="bat-fill" class="battery-level" style="width: 0%;"></div>
+                <div id="bat-nipple" class="hidden"></div>
+              </div>
+              <div id="bat-percent" class="text-sm font-bold font-mono text-zinc-200">0%</div>
+              <div id="bat-volts" class="text-xs font-mono text-zinc-500 mt-0.5">-- V</div>
+            </div>
 
-          <button type="button" id="replay-toggle-btn" onclick="toggleReplayDrawer()" class="btn-action-outline flex items-center justify-center" title="Toggle Flight Test & Replay Suite">
-            <span>REPLAY SUITE</span>
-          </button>
-
-          <button type="button" onclick="openModal('helpModal')" class="btn-action-outline flex items-center justify-center">
-            <span>HELP</span>
-          </button>
-
-          <button type="button" onclick="openModal('aiModal')" class="btn-action-outline flex items-center justify-center text-cyan-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]">
-            <span>COGNITIVE AI</span>
-          </button>
-
-          <button type="button" onclick="openModal('pfrModal')" class="btn-action-outline flex items-center justify-center text-zinc-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]" title="Generate Post-Flight Review (PFR) Audit & Compliance Report">
-            <span>MISSION REPORT</span>
-          </button>
-
-          <button type="button" onclick="openDatabaseManager()" class="btn-action-outline flex items-center justify-center text-cyan-200 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424]" title="Open SQLite Flight Database Explorer & Records Manager">
-            <span>DATABASE MANAGER</span>
-          </button>
-
-          <button type="button" onclick="resetNewFlight()" class="btn-action-outline flex items-center justify-center gap-1.5 text-rose-300 border-[#2e2e2e] hover:bg-[#242424] hover:border-rose-700/60 transition-all" title="Reset all buffers and re-arm for a new flight">
-            <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            <span>NEW FLIGHT RESET</span>
-          </button>
-        </div>
-
-        <!-- Battery Monitor Widget -->
-        <div class="battery-box mt-3">
-          <div class="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold mb-1.5">BATTERY</div>
-          <div class="battery-housing">
-            <div id="bat-fill" class="battery-level" style="width: 0%;"></div>
-            <div id="bat-nipple" class="hidden"></div>
+            <div class="pt-1 xl:pt-3 xl:border-t border-[#1f1f1f] space-y-1.5">
+              <div class="legend-item">
+                <div class="legend-swatch bg-[#EF4444]"></div>
+                <span class="font-mono text-xs">X-Axis Data</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch bg-[#EAB308]"></div>
+                <span class="font-mono text-xs">Y-Axis Data</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch bg-[#06B6D4]"></div>
+                <span class="font-mono text-xs">Z-Axis Data</span>
+              </div>
+              <div class="pt-1.5 text-[11px] text-zinc-500 font-mono text-center">
+                <span id="sample-count-top" class="text-zinc-300 font-bold">0</span> PACKETS
+              </div>
+            </div>
           </div>
-          <div id="bat-percent" class="text-sm font-bold font-mono text-zinc-200">0%</div>
-          <div id="bat-volts" class="text-xs font-mono text-zinc-500 mt-0.5">-- V</div>
-        </div>
-      </div>
-
-      <!-- Bottom Axis Legend -->
-      <div class="pt-3 border-t border-[#1f1f1f] space-y-1.5">
-        <div class="legend-item">
-          <div class="legend-swatch bg-[#EF4444]"></div>
-          <span class="font-mono text-xs">X-Axis Data</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch bg-[#EAB308]"></div>
-          <span class="font-mono text-xs">Y-Axis Data</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-swatch bg-[#06B6D4]"></div>
-          <span class="font-mono text-xs">Z-Axis Data</span>
-        </div>
-        <div class="pt-2 text-[11px] text-zinc-500 font-mono text-center">
-          <span id="sample-count-top" class="text-zinc-300 font-bold">0</span> PACKETS
         </div>
       </div>
     </aside>

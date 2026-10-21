@@ -184,9 +184,11 @@
     container.addEventListener('click', onClick);
     window.addEventListener('resize', onWindowResize);
 
-    // Smooth Orbit Drag
+    // Smooth Orbit Drag (Mouse + Mobile Touch)
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
+    let touchStartPos = { x: 0, y: 0 };
+    let initialPinchDist = null;
 
     container.addEventListener('mousedown', (e) => {
       isDragging = true;
@@ -210,6 +212,61 @@
       }
     });
 
+    // Mobile Touch Orbit, Pinch-to-Zoom, and Tap-to-Inspect
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        autoRotate = false;
+        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        initialPinchDist = Math.hypot(dx, dy);
+      }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && isDragging) {
+        const dx = e.touches[0].clientX - prevMouse.x;
+        const dy = e.touches[0].clientY - prevMouse.y;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+          e.preventDefault();
+        }
+        cansatGroup.rotation.y += dx * 0.009;
+        cansatGroup.rotation.x += dy * 0.009;
+        targetRotationY = cansatGroup.rotation.y;
+        targetRotationX = cansatGroup.rotation.x;
+        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2 && initialPinchDist) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0) {
+          const factor = initialPinchDist / dist;
+          zoomCamera(Math.max(0.92, Math.min(1.08, factor)));
+          initialPinchDist = dist;
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length === 1 && initialPinchDist === null) {
+        const dx = e.changedTouches[0].clientX - touchStartPos.x;
+        const dy = e.changedTouches[0].clientY - touchStartPos.y;
+        if (Math.hypot(dx, dy) < 10) {
+          const rect = container.getBoundingClientRect();
+          mouse.x = ((e.changedTouches[0].clientX - rect.left) / rect.width) * 2 - 1;
+          mouse.y = -((e.changedTouches[0].clientY - rect.top) / rect.height) * 2 + 1;
+          checkRaycast(true);
+        }
+      }
+      isDragging = false;
+      if (e.touches.length < 2) initialPinchDist = null;
+    }, { passive: true });
+
     // Spherical Line-of-Sight Zoom
     container.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -222,9 +279,19 @@
       resetCameraView();
     });
 
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0]) isViewerVisible = entries[0].isIntersecting;
+      }, { threshold: 0.05 });
+      observer.observe(container);
+    }
+
     setupControls();
     animate();
   }
+
+  let isViewerVisible = true;
+  let raycastScheduled = false;
 
   // True Spherical Line-of-Sight Zoom
   function zoomCamera(factor) {
@@ -656,7 +723,13 @@
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-    checkRaycast();
+    if (!raycastScheduled) {
+      raycastScheduled = true;
+      requestAnimationFrame(() => {
+        raycastScheduled = false;
+        checkRaycast(false);
+      });
+    }
   }
 
   function onClick() {
@@ -931,6 +1004,8 @@
 
   function animate() {
     requestAnimationFrame(animate);
+
+    if (document.hidden || !isViewerVisible) return;
 
     if (autoRotate) {
       targetRotationY += 0.005;

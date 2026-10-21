@@ -11,7 +11,7 @@
   <style>
     .model-card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
       gap: 1.75rem;
       margin-top: 2rem;
     }
@@ -85,6 +85,16 @@
       margin-top: 2rem;
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 640px) {
+      .model-spec-list {
+        grid-template-columns: 1fr;
+      }
+      .model-card-grid {
+        gap: 1.25rem;
+      }
     }
   </style>
 </head>

@@ -148,6 +148,19 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (max-width: 640px) {
+      #replay-hud-canvas {
+        height: 240px;
+      }
+      .canvas-box canvas {
+        height: 190px;
+      }
+      .toggle-btn {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -366,7 +379,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="responsive-2col-grid">
         <!-- Memory Allocation -->
         <div class="resend-card">
           <div class="card-title" style="margin-bottom: 1.5rem;">Memory Allocation (ESP32)</div>
@@ -482,7 +495,7 @@
             <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Hazard Risk Level</div>
             <div id="visualizer-risk" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-red); font-family: var(--font-mono); margin-top: 0.2rem;">0.94 (Extreme Risk)</div>
           </div>
-          <div style="grid-column: span 2;">
+          <div class="span-2-desktop">
             <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Landing Safety Assessment</div>
             <div id="visualizer-decision" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-red); font-family: var(--font-mono); margin-top: 0.2rem;">
               CRITICAL HAZARD - ADVISORY EVADE 090 DEG TOWARD OPEN SECTOR

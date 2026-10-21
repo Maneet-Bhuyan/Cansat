@@ -99,6 +99,14 @@
           td.style.outline = 'none';
         });
 
+        td.addEventListener('click', () => {
+          tableBody.querySelectorAll('td').forEach((cell) => {
+            cell.style.outline = 'none';
+          });
+          td.style.outline = '2px solid var(--accent-cyan)';
+          updateMatrixInspection(rIdx, cIdx, count, pct, isDiagonal);
+        });
+
         tr.appendChild(td);
       });
 
@@ -151,12 +159,30 @@
 
     renderRocPlot(0.5); // Default threshold 0.5
 
-    rocCanvas.addEventListener('mousemove', (e) => {
+    const updateFromClientX = (clientX) => {
       const rect = rocCanvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+      const scaleX = rocCanvas.width / Math.max(1, rect.width);
+      const x = (clientX - rect.left) * scaleX;
       const normalizedX = Math.max(0, Math.min(1, (x - 40) / (rocCanvas.width - 60)));
       renderRocPlot(normalizedX);
+    };
+
+    rocCanvas.addEventListener('mousemove', (e) => {
+      updateFromClientX(e.clientX);
     });
+
+    rocCanvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        updateFromClientX(e.touches[0].clientX);
+      }
+    }, { passive: true });
+
+    rocCanvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        e.preventDefault();
+        updateFromClientX(e.touches[0].clientX);
+      }
+    }, { passive: false });
   }
 
   function renderRocPlot(activeFpr) {

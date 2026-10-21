@@ -391,9 +391,19 @@
       });
     }
 
+    // Pause pixel readback loop when canvas is scrolled out of view
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        if (entries[0]) isReplayVisible = entries[0].isIntersecting;
+      }, { threshold: 0.05 });
+      obs.observe(videoCanvas);
+    }
+
     // Initial render placeholder
     renderReplayHudFrame();
   }
+
+  let isReplayVisible = true;
 
   function loadVideoSource(url) {
     if (!videoElement) {
@@ -427,20 +437,22 @@
   function playLoop(timestamp) {
     if (!isPlaying) return;
 
-    const frameInterval = 1000 / playbackFps;
-    const elapsed = timestamp - lastFrameTime;
+    if (!document.hidden && isReplayVisible) {
+      const frameInterval = 1000 / playbackFps;
+      const elapsed = timestamp - lastFrameTime;
 
-    if (elapsed >= frameInterval) {
-      lastFrameTime = timestamp - (elapsed % frameInterval);
+      if (elapsed >= frameInterval) {
+        lastFrameTime = timestamp - (elapsed % frameInterval);
 
-      if (videoElement && !videoElement.paused && videoElement.readyState >= 2) {
-        // Extract real video frame
-        videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
-        analyzeAndDrawHud(videoCtx, videoCanvas.width, videoCanvas.height);
-      } else if (!videoElement || videoElement.paused) {
-        // Procedural descent simulation
-        proceduralTime += 0.05;
-        renderProceduralFrame(proceduralTime);
+        if (videoElement && !videoElement.paused && videoElement.readyState >= 2) {
+          // Extract real video frame
+          videoCtx.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
+          analyzeAndDrawHud(videoCtx, videoCanvas.width, videoCanvas.height);
+        } else if (!videoElement || videoElement.paused) {
+          // Procedural descent simulation
+          proceduralTime += 0.05;
+          renderProceduralFrame(proceduralTime);
+        }
       }
     }
 
@@ -812,23 +824,17 @@
     ];
 
     try {
-      const promises = tiers.map((t) =>
-        fetch('/api/vision/classify-frame', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            image_base64: imageBase64,
-            model_tier: t.model_tier,
-            bypass_ood_guard: false
-          })
-        }).then((r) => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
+      const resp = await fetch('/api/vision/classify-frame', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_base64: imageBase64,
+          model_tier: 'all',
+          bypass_ood_guard: false
         })
-      );
-
-      const results = await Promise.all(promises);
-      const first = results[0];
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const first = await resp.json();
 
       if (first.status === 'rejected' || !first.is_aerial) {
         if (guardBadge) {
@@ -850,12 +856,16 @@
         guardBadge.style.color = 'var(--accent-green)';
       }
 
-      results.forEach((res, idx) => {
-        const t = tiers[idx];
-        const latStr = (res.model_info && res.model_info.inference_time_ms)
-          ? (res.model_info.inference_time_ms.toFixed(1) + ' ms CPU')
-          : t.defaultLat;
-        updateTierCard(t.id, res.slai_class, res.confidence * 100.0, res.landing_decision, latStr, false);
+      const allTiers = first.all_tiers || {};
+      const results = tiers.map((t) => {
+        const entry = allTiers[t.model_tier] || first;
+        const latStr = (entry.inference_time_ms !== undefined)
+          ? (entry.inference_time_ms.toFixed(1) + ' ms CPU')
+          : ((entry.model_info && entry.model_info.inference_time_ms)
+            ? (entry.model_info.inference_time_ms.toFixed(1) + ' ms CPU')
+            : t.defaultLat);
+        updateTierCard(t.id, entry.slai_class, entry.confidence * 100.0, entry.landing_decision, latStr, false);
+        return entry;
       });
 
       if (summaryNote) {

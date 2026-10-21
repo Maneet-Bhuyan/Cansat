@@ -482,16 +482,31 @@ def download_reports_zip():
         headers={"Content-Disposition": "attachment; filename=Cognitive_CanSat_Flight_Reports.zip"}
     )
 
+_CACHE_ABLATION: Optional[Dict[str, Any]] = None
+_CACHE_SCENARIO_TELEMETRY: Dict[str, Dict[str, Any]] = {}
+_CACHE_SCENARIO_QUALITY: Dict[str, Dict[str, Any]] = {}
+_CACHE_VISION_COMPARISON: Optional[Dict[str, Any]] = None
+
+def _load_ablation_cached() -> Optional[Dict[str, Any]]:
+    global _CACHE_ABLATION
+    if _CACHE_ABLATION is not None:
+        return _CACHE_ABLATION
+    ablation_file = os.path.join(BASE_DIR, "ml", "ablation_benchmarks.json")
+    if os.path.exists(ablation_file):
+        with open(ablation_file, "r", encoding="utf-8") as f:
+            _CACHE_ABLATION = json.load(f)
+        return _CACHE_ABLATION
+    return None
+
 @app.get("/api/analysis/ablation-data")
 def get_ablation_benchmarks():
     """Return precomputed sensor suite ablation benchmarks for training and testing data."""
-    ablation_file = os.path.join(BASE_DIR, "ml", "ablation_benchmarks.json")
-    if os.path.exists(ablation_file):
-        try:
-            with open(ablation_file, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    try:
+        data = _load_ablation_cached()
+        if data is not None:
+            return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     raise HTTPException(status_code=404, detail="Ablation data not found")
 
 @app.get("/api/analysis/scenarios")
@@ -510,6 +525,9 @@ def list_flight_scenarios():
 def get_scenario_telemetry(scenario_name: str):
     """Return time-series telemetry and calculated kinematics for interactive graphing."""
     clean_name = scenario_name.replace(".csv", "")
+    if clean_name in _CACHE_SCENARIO_TELEMETRY:
+        return _CACHE_SCENARIO_TELEMETRY[clean_name]
+
     csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
     if not os.path.exists(csv_path):
         raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
@@ -542,7 +560,7 @@ def get_scenario_telemetry(scenario_name: str):
         if (n - 1) not in indices:
             indices.append(n - 1)
 
-        return {
+        result = {
             "status": "success",
             "scenario": clean_name,
             "total_samples": n,
@@ -563,16 +581,16 @@ def get_scenario_telemetry(scenario_name: str):
                 "touchdown_impact_g": round(float(accel_mag[-1]), 2)
             }
         }
+        _CACHE_SCENARIO_TELEMETRY[clean_name] = result
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analysis/run-ablation")
 def run_live_ablation(req: AblationRunRequest):
     """Simulates live model ablation / sensor dropout on selected scenario testing data."""
-    ablation_file = os.path.join(BASE_DIR, "ml", "ablation_benchmarks.json")
-    if os.path.exists(ablation_file):
-        with open(ablation_file, "r") as f:
-            data = json.load(f)
+    data = _load_ablation_cached()
+    if data is not None:
         mode = req.dataset_mode if req.dataset_mode in ["training", "testing"] else "testing"
         records = [r for r in data[mode] if r["scenario"] == req.scenario.replace(".csv", "")]
         selected = next((r for r in records if r["feature_set"] == req.feature_set), None)
@@ -599,6 +617,10 @@ class TelemetryQualityRequest(BaseModel):
 def get_scenario_quality(scenario_name: str, nominal_dt: float = 0.8, gap_threshold: float = 2.0):
     """Analyze telemetry data quality, packet completeness, and temporal reliability for a scenario."""
     clean_name = scenario_name.replace(".csv", "")
+    cache_key = f"{clean_name}:{nominal_dt}:{gap_threshold}"
+    if cache_key in _CACHE_SCENARIO_QUALITY:
+        return _CACHE_SCENARIO_QUALITY[cache_key]
+
     csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
     if not os.path.exists(csv_path):
         raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
@@ -606,6 +628,7 @@ def get_scenario_quality(scenario_name: str, nominal_dt: float = 0.8, gap_thresh
     report = analyzer.analyze_file(csv_path)
     data = report.to_dict()
     data["scenario"] = clean_name
+    _CACHE_SCENARIO_QUALITY[cache_key] = data
     return data
 
 @app.post("/api/analysis/quality/analyze-csv")
@@ -1226,18 +1249,31 @@ def get_timescale_summary(limit: int = 20):
 # -----------------------------------------------------------------------------
 # TinyML & Safe Landing AI (SLAI) Aerial Vision Inference API
 # -----------------------------------------------------------------------------
+_VISION_PREPROCESS_64 = None
+_VISION_PREPROCESS_224 = None
+
+def _get_vision_preprocessors():
+    global _VISION_PREPROCESS_64, _VISION_PREPROCESS_224
+    if _VISION_PREPROCESS_64 is None or _VISION_PREPROCESS_224 is None:
+        from torchvision import transforms
+        norm = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        _VISION_PREPROCESS_64 = transforms.Compose([transforms.Resize((64, 64)), transforms.ToTensor(), norm])
+        _VISION_PREPROCESS_224 = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(), norm])
+    return _VISION_PREPROCESS_64, _VISION_PREPROCESS_224
+
 class VisionFrameRequest(BaseModel):
     image_base64: str = Field(..., description="Base64 encoded JPEG/PNG frame or data URL")
-    model_tier: Optional[str] = Field("tinylandingnet", description="Model architecture: tinylandingnet, mobilenet_v3_small, or resnet18")
+    model_tier: Optional[str] = Field("tinylandingnet", description="Model architecture: tinylandingnet, mobilenet_v3_small, resnet18, or all")
     run_ood_guard: Optional[bool] = Field(True, description="Enable Out-of-Distribution guard against human faces/indoor scenes")
+    bypass_ood_guard: Optional[bool] = Field(False, description="Optional override to bypass OOD guard")
 
 @app.post("/api/vision/classify-frame")
 def classify_vision_frame(req: VisionFrameRequest):
     """
     Classify downlinked optical CanSat camera frame with Out-of-Distribution safety guard.
-    Returns terrain class, safe landing zone verdict, 3x3 sector matrix, and evasion direction.
+    Supports single tier ('tinylandingnet', 'mobilenet_v3_small', 'resnet18') or 'all' for 3-tier comparison.
     """
-    global vision_guard, tinylandingnet_model
+    global vision_guard, tinylandingnet_model, mobilenet_v3_small_model, resnet18_model
     try:
         raw_b64 = req.image_base64
         if "," in raw_b64:
@@ -1249,7 +1285,8 @@ def classify_vision_frame(req: VisionFrameRequest):
         raise HTTPException(status_code=400, detail=f"Invalid base64 image data: {dec_err}")
 
     # 1. Out-of-Distribution Guard Evaluation
-    if req.run_ood_guard and vision_guard is not None:
+    should_guard = (req.run_ood_guard is not False) and (not req.bypass_ood_guard)
+    if should_guard and vision_guard is not None:
         guard_res = vision_guard.validate_frame(frame_rgb)
         if not guard_res["is_aerial"]:
             return {
@@ -1264,63 +1301,7 @@ def classify_vision_frame(req: VisionFrameRequest):
                 "guard_metrics": guard_res
             }
 
-    # 2. Model Inference
-    import torch
-    from torchvision import transforms
-    from ml.train_tinyml_vision import SLAI_CLASSES
-
-    t0 = time.perf_counter()
-    pred_class_name = "CRITICAL_HAZARD"
-    probabilities = {cls_name: 0.25 for cls_name in SLAI_CLASSES}
-    confidence = 0.5
-    model_name = (req.model_tier or "tinylandingnet").lower()
-
-    active_torch_model = tinylandingnet_model
-    target_res = (64, 64)
-    if model_name in ("mobilenet_v3_small", "mobilenet") and mobilenet_v3_small_model is not None:
-        active_torch_model = mobilenet_v3_small_model
-        target_res = (224, 224)
-        model_name = "mobilenet_v3_small"
-    elif model_name in ("resnet18", "resnet") and resnet18_model is not None:
-        active_torch_model = resnet18_model
-        target_res = (224, 224)
-        model_name = "resnet18"
-    else:
-        model_name = "tinylandingnet"
-
-    if active_torch_model is not None:
-        preprocess = transforms.Compose([
-            transforms.Resize(target_res),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        input_tensor = preprocess(pil_img).unsqueeze(0)
-        with torch.no_grad():
-            logits = active_torch_model(input_tensor)
-            probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
-
-        probabilities = {SLAI_CLASSES[i]: float(probs[i]) for i in range(len(SLAI_CLASSES))}
-        top_idx = int(np.argmax(probs))
-        pred_class_name = SLAI_CLASSES[top_idx]
-        confidence = float(probs[top_idx])
-    else:
-        # Heuristic colorimetric calculation if torch weights are absent
-        r_mean, g_mean, b_mean = float(np.mean(frame_rgb[:, :, 0])), float(np.mean(frame_rgb[:, :, 1])), float(np.mean(frame_rgb[:, :, 2]))
-        denom = g_mean + r_mean - b_mean
-        vari = (g_mean - r_mean) / (denom if abs(denom) > 1e-4 else 1.0)
-        if b_mean > r_mean * 1.08 and b_mean > g_mean:
-            pred_class_name = "WATER_HAZARD"
-        elif vari > 0.06:
-            pred_class_name = "SAFE_LZ"
-        elif vari >= -0.02:
-            pred_class_name = "OBSTACLE_CANOPY"
-        else:
-            pred_class_name = "CRITICAL_HAZARD"
-        confidence = 0.82
-
-    inf_time_ms = (time.perf_counter() - t0) * 1000.0
-
-    # 3. 3x3 Sector Grid Analysis
+    # 2. 3x3 Sector Grid Analysis (computed once per frame)
     h, w, _ = frame_rgb.shape
     cw = max(1, w // 3)
     ch = max(1, h // 3)
@@ -1351,37 +1332,116 @@ def classify_vision_frame(req: VisionFrameRequest):
                 best_sector = [r, c]
         sector_matrix.append(row_scores)
 
-    # 4. Evasion Angle
     dx = best_sector[1] - 1
     dy = -(best_sector[0] - 1)
-    evasion_deg = None
-    if (dx != 0 or dy != 0) and pred_class_name != "SAFE_LZ":
-        evasion_deg = int((math.atan2(dx, dy) * 180.0 / math.pi + 360.0) % 360.0)
+    base_evasion_deg = int((math.atan2(dx, dy) * 180.0 / math.pi + 360.0) % 360.0) if (dx != 0 or dy != 0) else None
 
-    # 5. Tactical Verdict
-    if pred_class_name == "SAFE_LZ" and confidence >= 0.60:
-        decision = "SAFE_TOUCHDOWN_AUTHORIZED"
-    elif pred_class_name == "OBSTACLE_CANOPY":
-        decision = f"ADVISORY_EVASION_{evasion_deg}DEG" if evasion_deg is not None else "ADVISORY_LATERAL_EVADE"
+    # 3. Model Inference
+    import torch
+    from ml.train_tinyml_vision import SLAI_CLASSES
+    prep64, prep224 = _get_vision_preprocessors()
+
+    def _derive_decision(cls_name: str, conf: float):
+        ev_deg = base_evasion_deg if cls_name != "SAFE_LZ" else None
+        if cls_name == "SAFE_LZ" and conf >= 0.60:
+            return "SAFE_TOUCHDOWN_AUTHORIZED", ev_deg
+        elif cls_name == "OBSTACLE_CANOPY":
+            return (f"ADVISORY_EVASION_{ev_deg}DEG" if ev_deg is not None else "ADVISORY_LATERAL_EVADE"), ev_deg
+        else:
+            return (f"CRITICAL_EVASION_{ev_deg}DEG" if ev_deg is not None else "CRITICAL_HAZARD_ABORT"), ev_deg
+
+    def _eval_single_model(m_obj, tensor_in, tier_key: str):
+        t_start = time.perf_counter()
+        if m_obj is not None:
+            with torch.inference_mode():
+                logits = m_obj(tensor_in)
+                probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
+            prob_map = {SLAI_CLASSES[i]: round(float(probs[i]), 4) for i in range(len(SLAI_CLASSES))}
+            top_i = int(np.argmax(probs))
+            c_name = SLAI_CLASSES[top_i]
+            conf_val = float(probs[top_i])
+        else:
+            r_m, g_m, b_m = float(np.mean(frame_rgb[:, :, 0])), float(np.mean(frame_rgb[:, :, 1])), float(np.mean(frame_rgb[:, :, 2]))
+            denom = g_m + r_m - b_m
+            vari = (g_m - r_m) / (denom if abs(denom) > 1e-4 else 1.0)
+            if b_m > r_m * 1.08 and b_m > g_m:
+                c_name = "WATER_HAZARD"
+            elif vari > 0.06:
+                c_name = "SAFE_LZ"
+            elif vari >= -0.02:
+                c_name = "OBSTACLE_CANOPY"
+            else:
+                c_name = "CRITICAL_HAZARD"
+            conf_val = 0.82
+            prob_map = {cls_n: (0.82 if cls_n == c_name else 0.06) for cls_n in SLAI_CLASSES}
+        dt_ms = (time.perf_counter() - t_start) * 1000.0
+        dec_str, ev_deg = _derive_decision(c_name, conf_val)
+        return {
+            "tier": tier_key,
+            "slai_class": c_name,
+            "confidence": round(conf_val, 3),
+            "landing_decision": dec_str,
+            "evasion_vector_deg": ev_deg,
+            "probabilities": prob_map,
+            "inference_time_ms": round(dt_ms, 2)
+        }
+
+    req_tier = (req.model_tier or "tinylandingnet").lower()
+
+    if req_tier == "all":
+        t64 = prep64(pil_img).unsqueeze(0)
+        t224 = prep224(pil_img).unsqueeze(0)
+        r_t1 = _eval_single_model(tinylandingnet_model, t64, "tinylandingnet")
+        r_t2 = _eval_single_model(mobilenet_v3_small_model, t224, "mobilenet_v3_small")
+        r_t3 = _eval_single_model(resnet18_model, t224, "resnet18")
+        return {
+            "status": "success",
+            "is_aerial": True,
+            "slai_class": r_t1["slai_class"],
+            "confidence": r_t1["confidence"],
+            "landing_decision": r_t1["landing_decision"],
+            "optimal_lz_valid": (r_t1["slai_class"] == "SAFE_LZ" or best_score > 0.5),
+            "probabilities": r_t1["probabilities"],
+            "grid_analysis": {
+                "sector_matrix": sector_matrix,
+                "best_sector": best_sector,
+                "evasion_vector_deg": r_t1["evasion_vector_deg"]
+            },
+            "model_info": {
+                "tier": "tinylandingnet",
+                "inference_time_ms": r_t1["inference_time_ms"],
+                "device": "cpu"
+            },
+            "all_tiers": {
+                "tinylandingnet": r_t1,
+                "mobilenet_v3_small": r_t2,
+                "resnet18": r_t3
+            }
+        }
+
+    if req_tier in ("mobilenet_v3_small", "mobilenet") and mobilenet_v3_small_model is not None:
+        res = _eval_single_model(mobilenet_v3_small_model, prep224(pil_img).unsqueeze(0), "mobilenet_v3_small")
+    elif req_tier in ("resnet18", "resnet") and resnet18_model is not None:
+        res = _eval_single_model(resnet18_model, prep224(pil_img).unsqueeze(0), "resnet18")
     else:
-        decision = f"CRITICAL_EVASION_{evasion_deg}DEG" if evasion_deg is not None else "CRITICAL_HAZARD_ABORT"
+        res = _eval_single_model(tinylandingnet_model, prep64(pil_img).unsqueeze(0), "tinylandingnet")
 
     return {
         "status": "success",
         "is_aerial": True,
-        "slai_class": pred_class_name,
-        "confidence": round(confidence, 3),
-        "landing_decision": decision,
-        "optimal_lz_valid": (pred_class_name == "SAFE_LZ" or best_score > 0.5),
-        "probabilities": {k: round(v, 4) for k, v in probabilities.items()},
+        "slai_class": res["slai_class"],
+        "confidence": res["confidence"],
+        "landing_decision": res["landing_decision"],
+        "optimal_lz_valid": (res["slai_class"] == "SAFE_LZ" or best_score > 0.5),
+        "probabilities": res["probabilities"],
         "grid_analysis": {
             "sector_matrix": sector_matrix,
             "best_sector": best_sector,
-            "evasion_vector_deg": evasion_deg
+            "evasion_vector_deg": res["evasion_vector_deg"]
         },
         "model_info": {
-            "tier": model_name,
-            "inference_time_ms": round(inf_time_ms, 2),
+            "tier": res["tier"],
+            "inference_time_ms": res["inference_time_ms"],
             "device": "cpu"
         }
     }
@@ -1390,6 +1450,9 @@ def classify_vision_frame(req: VisionFrameRequest):
 @app.get("/api/vision/models-comparison")
 def get_vision_models_comparison():
     """Returns 3-tier vision model comparison and RTX 4060 GPU training benchmarks."""
+    global _CACHE_VISION_COMPARISON
+    if _CACHE_VISION_COMPARISON is not None:
+        return _CACHE_VISION_COMPARISON
     comp_path = os.path.join(BASE_DIR, "ml", "vision_model_comparison.json")
     gpu_path = os.path.join(BASE_DIR, "ml", "gpu_training_summary.json")
     payload = {"status": "ok", "comparison": {}, "gpu_training_summary": {}}
@@ -1399,6 +1462,7 @@ def get_vision_models_comparison():
     if os.path.exists(gpu_path):
         with open(gpu_path, "r", encoding="utf-8") as f:
             payload["gpu_training_summary"] = json.load(f)
+    _CACHE_VISION_COMPARISON = payload
     return payload
 
 

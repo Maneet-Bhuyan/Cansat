@@ -118,8 +118,10 @@
       position: absolute;
       top: 1rem;
       left: 1rem;
+      right: 1rem;
       display: flex;
-      gap: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.45rem;
       z-index: 10;
     }
 
@@ -291,6 +293,29 @@
       }
       #cansat-3d-canvas-container {
         height: 380px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      #cansat-3d-canvas-container {
+        height: 330px;
+      }
+      .canvas-pill-btn {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.68rem;
+      }
+      .phase-btn-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      #scrubber-camera-canvas {
+        height: 200px;
+      }
+      .mass-budget-table {
+        font-size: 0.78rem;
+      }
+      .mass-budget-table th,
+      .mass-budget-table td {
+        padding: 0.5rem 0.5rem;
       }
     }
   </style>
@@ -644,7 +669,7 @@
           </div>
 
           <div>
-            <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.35rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
               <span>01 ASCENT (0s)</span>
               <span>02 APOGEE (45s)</span>
               <span>05 TINYML (120s)</span>
