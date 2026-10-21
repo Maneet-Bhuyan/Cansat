@@ -1,0 +1,288 @@
+{
+  "ensemble_configuration": {
+    "num_simulated_flights": 100,
+    "random_seed": 20261022,
+    "apogee_range_m": [
+      450.0,
+      1250.0
+    ],
+    "ascent_velocity_range_mps": [
+      3.8,
+      5.4
+    ],
+    "canopy_cd_range": [
+      0.68,
+      1.32
+    ],
+    "wind_speed_range_mps": [
+      1.2,
+      17.5
+    ],
+    "rf_packet_loss_range_pct": [
+      0.5,
+      6.5
+    ],
+    "mean_packet_completeness_pct": 96.73
+  },
+  "hardware_bench_calibration": {
+    "total_real_hardware_packets": 362,
+    "sessions_count": 3,
+    "sessions": [
+      {
+        "mission_id": "MSN-20260920-192811-A2F9",
+        "mission_name": " Testing Sensors(Maneet) - 12:57:50 AM",
+        "packets": 106,
+        "regime": "Stationary Bench Baseline",
+        "altitude_mean_m": 867.53,
+        "altitude_std_m": 0.504,
+        "pressure_mean_hpa": 913.0,
+        "pressure_std_hpa": 0.0,
+        "temp_mean_c": 27.83,
+        "temp_std_c": 0.184,
+        "humidity_mean_pct": 67.34,
+        "humidity_std_pct": 1.524,
+        "ax_std_g": 0.0324,
+        "ay_std_g": 0.0194,
+        "az_std_g": 0.0164,
+        "gx_std_dps": 1.751,
+        "gy_std_dps": 2.516,
+        "gz_std_dps": 5.547,
+        "battery_mean_v": 5.537,
+        "battery_std_v": 0.0222
+      },
+      {
+        "mission_id": "MSN-20260920-194606-2DD8",
+        "mission_name": "Auto Flight 2026-09-20_011606",
+        "packets": 135,
+        "regime": "Stationary Bench Baseline",
+        "altitude_mean_m": 869.9,
+        "altitude_std_m": 0.342,
+        "pressure_mean_hpa": 912.91,
+        "pressure_std_hpa": 0.286,
+        "temp_mean_c": 28.82,
+        "temp_std_c": 0.146,
+        "humidity_mean_pct": 67.79,
+        "humidity_std_pct": 1.513,
+        "ax_std_g": 0.0,
+        "ay_std_g": 0.0,
+        "az_std_g": 0.0,
+        "gx_std_dps": 0.076,
+        "gy_std_dps": 0.114,
+        "gz_std_dps": 0.095,
+        "battery_mean_v": 5.534,
+        "battery_std_v": 0.0359
+      },
+      {
+        "mission_id": "MSN-20260921-092203-74EE",
+        "mission_name": "Auto Flight 2026-09-21_145203",
+        "packets": 121,
+        "regime": "Dynamic Bench Handling & Tilt Excitation",
+        "altitude_mean_m": 883.19,
+        "altitude_std_m": 9.447,
+        "pressure_mean_hpa": 911.02,
+        "pressure_std_hpa": 1.294,
+        "temp_mean_c": 30.77,
+        "temp_std_c": 0.717,
+        "humidity_mean_pct": 67.55,
+        "humidity_std_pct": 1.439,
+        "ax_std_g": 0.2911,
+        "ay_std_g": 0.205,
+        "az_std_g": 0.1506,
+        "gx_std_dps": 15.0,
+        "gy_std_dps": 23.008,
+        "gz_std_dps": 17.802,
+        "battery_mean_v": 5.549,
+        "battery_std_v": 0.0329
+      }
+    ],
+    "calibrated_stationary_noise_floor": {
+      "baro_altitude_sigma_m": 0.423,
+      "baro_pressure_sigma_hpa": 0.143,
+      "temperature_sigma_c": 0.165,
+      "humidity_sigma_pct": 1.518,
+      "accel_sigma_g": 0.0114,
+      "gyro_sigma_dps": 1.114
+    }
+  },
+  "state_estimation_comparison": {
+    "raw_barometric_altimetry": {
+      "altitude_rmse_m": {
+        "mean": 1.8095,
+        "std": 0.3398,
+        "median": 1.7316,
+        "iqr": 0.3048,
+        "min": 1.3319,
+        "max": 2.7309,
+        "ci95": [
+          1.7429,
+          1.8761
+        ]
+      },
+      "velocity_rmse_mps": {
+        "mean": 0.8853,
+        "std": 0.0878,
+        "median": 0.8515,
+        "iqr": 0.0655,
+        "min": 0.6911,
+        "max": 1.1058,
+        "ci95": [
+          0.8681,
+          0.9025
+        ]
+      }
+    },
+    "savitzky_golay_filter": {
+      "altitude_rmse_m": {
+        "mean": 1.6893,
+        "std": 0.3674,
+        "median": 1.6363,
+        "iqr": 0.3478,
+        "min": 1.1904,
+        "max": 2.6451,
+        "ci95": [
+          1.6173,
+          1.7613
+        ]
+      },
+      "velocity_rmse_mps": {
+        "mean": 0.5239,
+        "std": 0.1539,
+        "median": 0.4778,
+        "iqr": 0.1909,
+        "min": 0.2984,
+        "max": 0.94,
+        "ci95": [
+          0.4937,
+          0.554
+        ]
+      }
+    },
+    "adaptive_1d_kalman_filter": {
+      "altitude_rmse_m": {
+        "mean": 1.8007,
+        "std": 0.5031,
+        "median": 1.6518,
+        "iqr": 0.3335,
+        "min": 1.2443,
+        "max": 3.203,
+        "ci95": [
+          1.7021,
+          1.8993
+        ]
+      },
+      "velocity_rmse_mps": {
+        "mean": 0.8483,
+        "std": 0.4337,
+        "median": 0.6693,
+        "iqr": 0.1994,
+        "min": 0.5108,
+        "max": 2.0353,
+        "ci95": [
+          0.7633,
+          0.9333
+        ]
+      }
+    },
+    "hybrid_kalman_extratrees_calibrator": {
+      "altitude_rmse_m": {
+        "mean": 1.0784,
+        "std": 0.4646,
+        "median": 0.7926,
+        "iqr": 0.784,
+        "min": 0.5889,
+        "max": 2.3459,
+        "ci95": [
+          0.9873,
+          1.1695
+        ]
+      },
+      "velocity_rmse_mps": {
+        "mean": 0.7515,
+        "std": 0.3772,
+        "median": 0.6094,
+        "iqr": 0.1361,
+        "min": 0.4089,
+        "max": 1.7592,
+        "ci95": [
+          0.6776,
+          0.8254
+        ]
+      }
+    }
+  },
+  "ml_pipeline_ensemble_metrics": {
+    "flight_phase_classifier_accuracy_pct": {
+      "mean": 93.0023,
+      "std": 3.321,
+      "median": 94.3718,
+      "iqr": 4.9825,
+      "min": 84.4037,
+      "max": 96.8847,
+      "ci95": [
+        92.3514,
+        93.6532
+      ]
+    },
+    "flight_phase_classifier_macro_f1_pct": {
+      "mean": 65.7086,
+      "std": 7.8255,
+      "median": 67.7815,
+      "iqr": 8.689,
+      "min": 48.0509,
+      "max": 76.6041,
+      "ci95": [
+        64.1748,
+        67.2424
+      ]
+    },
+    "isolation_forest_anomaly_roc_auc": 0.8616,
+    "apogee_regressor_rmse_m": {
+      "mean": 254.3552,
+      "std": 91.9428,
+      "median": 247.5543,
+      "iqr": 174.0929,
+      "min": 131.1936,
+      "max": 436.8596,
+      "ci95": [
+        236.3344,
+        272.376
+      ]
+    },
+    "apogee_regressor_mae_m": {
+      "mean": 222.4924,
+      "std": 94.9797,
+      "median": 207.7191,
+      "iqr": 184.9395,
+      "min": 94.7706,
+      "max": 408.6327,
+      "ci95": [
+        203.8763,
+        241.1084
+      ]
+    },
+    "touchdown_ttd_rmse_s": {
+      "mean": 18.0055,
+      "std": 8.3127,
+      "median": 16.2248,
+      "iqr": 9.6389,
+      "min": 6.703,
+      "max": 41.0263,
+      "ci95": [
+        16.3762,
+        19.6347
+      ]
+    },
+    "touchdown_80pct_interval_coverage_pct": {
+      "mean": 64.7799,
+      "std": 26.1903,
+      "median": 66.4824,
+      "iqr": 43.4639,
+      "min": 17.3333,
+      "max": 100.0,
+      "ci95": [
+        59.6466,
+        69.9132
+      ]
+    }
+  }
+}

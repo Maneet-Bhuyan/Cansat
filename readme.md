@@ -28,7 +28,15 @@ This project combines a browser-based mission control dashboard with a real-time
 - Live anomaly scoring and safety alerts for abnormal flight behavior
 - Flight-phase detection across PAD_IDLE, BALLOON_ASCENT, APOGEE_BURST, PARACHUTE_DESCENT, and TOUCHDOWN_RECOVERY
 - 3D CanSat attitude visualization using Three.js with true spherical radial zoom (`+`, `−`, `RESET`), distance clamping, and complementary sensor fusion, positioned directly alongside the XYZ Gyroscope
-- Cognitive AI Intelligence Hub with 4 transparent model attributions (Random Forest phase classifier, PyOD Isolation Forest anomaly guard, Gradient Boosting Balloon Ascent & Drop Forecast, TinyLandingNet CNN) and plain-English mission summaries
+- Cognitive AI Intelligence Hub with transparent model attributions (Random Forest phase classifier: 97.96% holdout accuracy, PyOD Isolation Forest anomaly guard: 0.8616 ROC-AUC, Gradient Boosting Touchdown Prognostics: 2.33s RMSE / 94.8% error reduction, and 3-Tier Aerial Vision) and plain-English mission summaries
+- Three-Tier Aerial Computer Vision & Out-of-Distribution (OOD) Guard (`ml/vision_guard.py`, `ml/train_tinyml_vision.py`, `ml/train_heavy_vision.py`, `ml/benchmark_vision_models.py`):
+  - **Tier 1 Airborne Edge (`TinyLandingNet` INT8)**: 6,996 FP32 / 7,320 INT8 parameters, 7.15 KB Flash ROM, 93.04% EuroSAT 4-class test accuracy (93.80% validation), 0.055 ms ONNX / 16.3 ms ESP32-CAM latency
+  - **Tier 2 Companion / Ground Light (`MobileNetV3-Small`)**: 1,521,956 parameters, **99.68% validation accuracy** (trained on NVIDIA GeForce RTX 4060 CUDA), 5.81 MB FP32 / 1,486.3 KB INT8
+  - **Tier 3 Ground Workstation Teacher (`ResNet-18`)**: 11,178,564 parameters, **99.73% validation accuracy** (trained on NVIDIA GeForce RTX 4060 CUDA), 42.64 MB FP32 / 10,916.6 KB INT8
+  - **5-Stage OOD Aerial Vision Guard (`AerialVisionGuard`)**: Exposure/Occlusion, YCbCr Portrait Skin-Tone Ratio, Laplacian Micro-Texture, Helmholtz Free Energy / Shannon Entropy, and VARI Spectral Consistency achieving **100% rejection** of non-aerial inputs (human faces, indoor walls, lens occlusions)
+- Three-Pillar Research Validation & 100-Flight Monte Carlo Benchmark (`ml/generate_monte_carlo_ensemble.py`, `ml/seed_judge_database.py`, `docs/research_paper_draft.md`):
+  - Preserves 3 real physical CanSat hardware bench-top sessions (`MSN-20260920-192811-A2F9`, `MSN-20260920-194606-2DD8`, `MSN-20260921-092203-74EE`, $N=362$ packets) in `data/cansat_missions.db` alongside all 10 stochastic flight scenarios (`MSN-BENCH-01-NOMINAL` through `MSN-BENCH-10-STATICPAD`)
+  - Proves **40.4% altitude RMSE reduction** ($1.078 \pm 0.046\,\text{m}$ Hybrid Kalman + ExtraTrees vs. $1.810 \pm 0.085\,\text{m}$ raw barometer) across 100 randomized 6-DOF flights
 - Persistent SQLite Flight Database (WAL mode) at `data/cansat_missions.db`: real-time micro-batch telemetry streaming (10 pkts/2.5s), mission recording HUD, retroactive flight archiving, and Post-Flight Review (PFR) regulatory audit persistence
 - Ground Station Database Explorer & Mission Manager (`#dbManagerModal`): inspect database disk footprint and stored packet counts, browse flight sessions, view raw SQLite telemetry in tabular format, execute single or batch mission deletions, export 25-column flight CSVs, and download the raw `.db` file
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
@@ -37,7 +45,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - Interactive Post-Flight Analysis & Sensor Ablation Web Suite (`analysis.html`) featuring interactive telemetry graphs, 4-sensor ablation bar charts, live sensor dropout simulator, and 1-click batch ZIP report downloads (`/api/analysis/reports-zip`)
 - Telemetry Data Quality & Flight Reliability Analyzer (`backend/core/telemetry_analyzer.py` & `analysis.html`): automated packet loss audits, sampling interval jitter analysis (min/median/max/std dt), sensor completeness tracking, out-of-bounds physical threshold validation, and automated dropout detection (GNSS fix loss, LiPo battery voltage sag)
 - Tactical GIS tracking and recovery tools with Leaflet mapping and direct navigation links
-- CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes
+- CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes (selectable live in `dashboard.html` via `#demo-scenario-select`)
 - Direct hardware USB serial streaming via the native browser Web Serial API
 - Python ML inference service with FastAPI and WebSocket telemetry streaming
 - Smart zero-touch bootstrap launcher with zero-dependency standalone native Windows support

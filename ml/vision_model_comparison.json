@@ -1,9 +1,10 @@
 {
-  "timestamp": "2026-10-21T18:53:56Z",
+  "timestamp": "2026-10-21T19:50:36Z",
   "hardware_environment": {
     "cpu_device": "Intel/AMD Multi-core Host",
-    "pytorch_version": "2.5.1+cu121",
-    "cuda_available": true
+    "pytorch_version": "2.14.0+cpu",
+    "cuda_available": false,
+    "trained_gpu": "NVIDIA GeForce RTX 4060 Laptop GPU"
   },
   "models": {
     "tinylandingnet": {
@@ -11,6 +12,9 @@
       "target_hardware": "ESP32-S3 / ESP32-CAM / RP2040",
       "parameters": 6996,
       "trainable_parameters": 6996,
+      "test_accuracy_pct": 93.04,
+      "val_accuracy_pct": 93.8,
+      "macro_f1_pct": 93.21,
       "model_size": {
         "fp32_mb": 0.027,
         "fp16_mb": 0.013,
@@ -20,10 +24,10 @@
       "macs_estimate": "~4.2M MACCs",
       "operational_role": "Airborne real-time flight computer descent hazard gate",
       "latency_cpu": {
-        "mean_latency_ms": 2.55,
-        "min_latency_ms": 2.26,
-        "max_latency_ms": 2.95,
-        "cpu_fps": 392.4
+        "mean_latency_ms": 2.1,
+        "min_latency_ms": 1.38,
+        "max_latency_ms": 2.7,
+        "cpu_fps": 477.0
       }
     },
     "mobilenet_v3_small": {
@@ -31,6 +35,9 @@
       "target_hardware": "Raspberry Pi 4 / CM4 / Jetson Orin Nano",
       "parameters": 1521956,
       "trainable_parameters": 1521956,
+      "test_accuracy_pct": 99.68,
+      "val_accuracy_pct": 99.68,
+      "macro_f1_pct": 99.66,
       "model_size": {
         "fp32_mb": 5.806,
         "fp16_mb": 2.903,
@@ -40,10 +47,10 @@
       "macs_estimate": "~56M MACCs",
       "operational_role": "Secondary payload companion computer for high-res telemetry",
       "latency_cpu": {
-        "mean_latency_ms": 25.09,
-        "min_latency_ms": 22.45,
-        "max_latency_ms": 29.39,
-        "cpu_fps": 39.9
+        "mean_latency_ms": 17.6,
+        "min_latency_ms": 15.77,
+        "max_latency_ms": 23.74,
+        "cpu_fps": 56.8
       }
     },
     "resnet18": {
@@ -51,6 +58,9 @@
       "target_hardware": "Ground Station Cockpit Workstation / Cloud Lakehouse",
       "parameters": 11178564,
       "trainable_parameters": 11178564,
+      "test_accuracy_pct": 99.73,
+      "val_accuracy_pct": 99.73,
+      "macro_f1_pct": 99.71,
       "model_size": {
         "fp32_mb": 42.643,
         "fp16_mb": 21.321,
@@ -60,10 +70,10 @@
       "macs_estimate": "~1.8G MACCs",
       "operational_role": "Deep multispectral verification and post-flight reconstruction",
       "latency_cpu": {
-        "mean_latency_ms": 31.86,
-        "min_latency_ms": 29.45,
-        "max_latency_ms": 34.36,
-        "cpu_fps": 31.4
+        "mean_latency_ms": 100.8,
+        "min_latency_ms": 73.29,
+        "max_latency_ms": 269.09,
+        "cpu_fps": 9.9
       }
     }
   },
@@ -114,7 +124,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.942,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "SAFE_LZ",
+          "mobilenet_v3_small_confidence": 0.712,
+          "resnet18_class": "OBSTACLE_CANOPY",
+          "resnet18_confidence": 0.669
         },
         {
           "frame_index": 417,
@@ -127,7 +141,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.949,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.995,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.986
         },
         {
           "frame_index": 626,
@@ -140,7 +158,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.995,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 1.0,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.999
         }
       ]
     },
@@ -161,7 +183,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 1.0,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 1.0,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.999
         },
         {
           "frame_index": 309,
@@ -174,7 +200,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 1.0,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 1.0,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.999
         },
         {
           "frame_index": 464,
@@ -187,7 +217,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 1.0,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.97,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.967
         }
       ]
     },
@@ -208,7 +242,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 1.0,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.939,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.856
         },
         {
           "frame_index": 120,
@@ -221,7 +259,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 1.0,
             "WATER_HAZARD": 0.0
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.907,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.698
         },
         {
           "frame_index": 180,
@@ -234,7 +276,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.997,
             "WATER_HAZARD": 0.003
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.972,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.883
         }
       ]
     },
@@ -255,7 +301,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.838,
             "WATER_HAZARD": 0.13
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.997,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.993
         },
         {
           "frame_index": 264,
@@ -268,7 +318,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.891,
             "WATER_HAZARD": 0.059
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.982,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.999
         },
         {
           "frame_index": 396,
@@ -281,7 +335,11 @@
             "OBSTACLE_CANOPY": 0.0,
             "CRITICAL_HAZARD": 0.645,
             "WATER_HAZARD": 0.321
-          }
+          },
+          "mobilenet_v3_small_class": "CRITICAL_HAZARD",
+          "mobilenet_v3_small_confidence": 0.992,
+          "resnet18_class": "CRITICAL_HAZARD",
+          "resnet18_confidence": 0.974
         }
       ]
     }

@@ -583,9 +583,24 @@
             </select>
           </div>
 
-          <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light flex items-center justify-center">
-            <span>DEMO DATA</span>
-          </button>
+          <div class="space-y-1.5">
+            <button type="button" id="demo-btn" onclick="toggleDemo()" class="btn-action-light w-full flex items-center justify-center">
+              <span>DEMO DATA</span>
+            </button>
+            <select id="demo-scenario-select" onchange="onSidebarScenarioChange()" class="w-full bg-[#171717] border border-[#2e2e2e] text-zinc-200 text-[11px] rounded-full px-3 py-1.5 font-mono focus:outline-none focus:border-white cursor-pointer truncate" title="Select Live Demo or Stochastic Test Case Scenario">
+              <option value="procedural" selected>SIM: PROCEDURAL (800m)</option>
+              <option value="test_cases/01_nominal_sounding_flight.csv">01: NOMINAL FLIGHT (800m)</option>
+              <option value="test_cases/02_high_altitude_burst_1200m.csv">02: 1200m BURST &amp; RF FADE</option>
+              <option value="test_cases/03_severe_wind_shear_drift.csv">03: SEVERE WIND SHEAR</option>
+              <option value="test_cases/04_apogee_ejection_shock_tumble.csv">04: 5.2G SHOCK &amp; TUMBLE</option>
+              <option value="test_cases/05_parachute_pendulum_resonance.csv">05: PENDULUM RESONANCE</option>
+              <option value="test_cases/06_delayed_chute_deployment.csv">06: DELAYED CHUTE FREEFALL</option>
+              <option value="test_cases/07_thermal_inversion_sounding.csv">07: THERMAL INVERSION</option>
+              <option value="test_cases/08_sensor_glitch_gps_recovery.csv">08: GPS LOSS &amp; RECOVERY</option>
+              <option value="test_cases/09_low_battery_voltage_sag.csv">09: LOW BATTERY SAG (&lt;3.4V)</option>
+              <option value="test_cases/10_ground_pad_static_test.csv">10: STATIC PAD BASELINE</option>
+            </select>
+          </div>
 
           <button type="button" id="tare-calibrate-btn" onclick="triggerStationaryTare()" class="btn-action-outline flex items-center justify-center text-amber-300 border-[#2e2e2e] bg-[#171717] hover:bg-[#242424] hover:border-amber-500/40 transition-all" title="Stationary Tare & Sensor Calibration: Place CanSat on desk/pad, null out gyro drift and baro reference">
             <span id="tare-btn-text">TARE / CALIBRATE</span>
@@ -4186,7 +4201,19 @@
       return;
     }
 
-    if (replayPlaying) toggleReplayPlay();
+    if (replayPlaying) {
+      toggleReplayPlay();
+      if (btn) {
+        btn.innerHTML = '<span>DEMO DATA</span>';
+        btn.className = 'btn-action-light w-full flex items-center justify-center';
+      }
+      return;
+    }
+    const scenarioSel = document.getElementById('demo-scenario-select');
+    if (scenarioSel && scenarioSel.value && scenarioSel.value !== 'procedural') {
+      onSidebarScenarioChange(true);
+      return;
+    }
     if (demoInterval) {
       clearInterval(demoInterval);
       demoInterval = null;
@@ -4240,7 +4267,7 @@
     isDemo = true;
     if (btn) {
       btn.innerHTML = '<span>STOP DEMO</span>';
-      btn.className = 'btn-action-primary flex items-center justify-center';
+      btn.className = 'btn-action-primary w-full flex items-center justify-center';
     }
     setConnectionState(true, 'SIMULATION (800MS)');
 
@@ -4257,7 +4284,7 @@
         isDemo = false;
         if (btn) {
           btn.innerHTML = '<span>DEMO DATA</span>';
-          btn.className = 'btn-action-light flex items-center justify-center';
+          btn.className = 'btn-action-light w-full flex items-center justify-center';
         }
         setConnectionState(true, 'TOUCHDOWN (COMPLETE)');
         return;
@@ -4273,14 +4300,62 @@
     drawer.classList.toggle('hidden');
   }
 
+  async function fetchTestCaseText(path) {
+    const candidates = [
+      path,
+      '../' + path.replace(/^\/+/, ''),
+      typeof getApiUrl === 'function' ? getApiUrl('/' + path.replace(/^\/+/, '')) : path
+    ];
+    let lastErr = null;
+    for (let i = 0; i < candidates.length; i++) {
+      try {
+        const resp = await fetch(candidates[i]);
+        if (resp.ok) {
+          return await resp.text();
+        }
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error('Could not fetch ' + path);
+  }
+
+  async function onSidebarScenarioChange(autoStart) {
+    const sideSel = document.getElementById('demo-scenario-select');
+    if (!sideSel) return;
+    const val = sideSel.value;
+    if (val === 'procedural') {
+      if (replayPlaying) toggleReplayPlay();
+      if (!isDemo) toggleDemo();
+      return;
+    }
+    if (isDemo) toggleDemo();
+    if (replayPlaying) toggleReplayPlay();
+    const drawerSel = document.getElementById('test-case-select');
+    if (drawerSel) drawerSel.value = val;
+    const drawer = document.getElementById('replay-drawer');
+    if (drawer && drawer.classList.contains('hidden')) {
+      drawer.classList.remove('hidden');
+    }
+    try {
+      const text = await fetchTestCaseText(val);
+      loadCsvIntoReplay(text, val.split('/').pop());
+      if (autoStart !== false && !replayPlaying) {
+        toggleReplayPlay();
+      }
+    } catch (e) {
+      console.warn('Could not load scenario from sidebar:', val, e);
+    }
+  }
+
   async function loadSelectedTestCase() {
     const select = document.getElementById('test-case-select');
     const path = select.value;
     if (!path) return;
+    const sideSel = document.getElementById('demo-scenario-select');
+    if (sideSel) sideSel.value = path;
     try {
-      const resp = await fetch(path);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const text = await resp.text();
+      const text = await fetchTestCaseText(path);
       loadCsvIntoReplay(text, path.split('/').pop());
     } catch (e) {
       console.warn('Fetch fallback triggered for test case:', path, e);

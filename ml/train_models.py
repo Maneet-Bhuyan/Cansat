@@ -1,4 +1,4 @@
-﻿"""
+"""
 Machine Learning Training Pipeline for Cognitive CanSat Telemetry
 Trains:
 1. Flight Phase Classifier: Random Forest Classifier (Multi-Class)
@@ -32,6 +32,10 @@ def label_flight_profile(df, filename):
     based on ground truth flight dynamics and physics boundaries.
     """
     df = df.copy()
+    for col in ['temp', 'pressure', 'altitude', 'gx', 'gy', 'gz', 'ax', 'ay', 'az', 'lat', 'lon', 'humidity', 'batteryVoltage', 'pitch', 'roll', 'accelMag']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    df = df.bfill().ffill()
     n = len(df)
     
     # Calculate numerical vertical speed vz
@@ -273,8 +277,16 @@ def main():
     }
 
     metrics_path = os.path.join(BASE_DIR, "ml", "model_metrics.json")
+    existing_metrics = {}
+    if os.path.exists(metrics_path):
+        try:
+            with open(metrics_path, "r") as f:
+                existing_metrics = json.load(f)
+        except Exception:
+            existing_metrics = {}
+    existing_metrics.update(metrics)
     with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
+        json.dump(existing_metrics, f, indent=2)
     print(f"\nSaved Model Evaluation Metrics JSON to: {metrics_path}")
 
     print("\n" + "=" * 70)

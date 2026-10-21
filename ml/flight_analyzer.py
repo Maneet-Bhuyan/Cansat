@@ -73,7 +73,10 @@ class FlightAnalyzer:
         else:
             self.df['time'] = np.arange(len(self.df)) * 0.8
 
-        # 2. Forward/Back Fill Sensor Dropouts
+        # 2. Forward/Back Fill Sensor Dropouts & Coerce Numeric Columns
+        for col in self.df.columns:
+            if col not in ('timestamp',):
+                self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
         self.df = self.df.bfill().ffill()
 
         # 3. Canonical Column Normalization

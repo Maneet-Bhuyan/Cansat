@@ -505,20 +505,36 @@
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 600; color: #ffffff;">TinyLandingNet</td>
-              <td><span style="color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.75rem;">ESP32-CAM</span></td>
-              <td>Depthwise CNN (INT8)</td>
-              <td>CanSat's eyes and landing reflexes</td>
-              <td>Safe vs hazardous ground sectors &amp; escape angle</td>
-              <td>93.04% Acc &middot; 38 ms</td>
+              <td style="font-weight: 600; color: #ffffff;">TinyLandingNet + OOD Guard</td>
+              <td><span style="color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.75rem;">ESP32-CAM Edge</span></td>
+              <td>Depthwise CNN (INT8) + 5-Stage Guard</td>
+              <td>CanSat's airborne eyes, OOD face rejection &amp; landing reflexes</td>
+              <td>Safe vs hazardous ground sectors, OOD rejection &amp; escape angle</td>
+              <td>93.04% Acc &middot; 7.15 KB Flash &middot; 16.3 ms</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">MobileNetV3-Small (Tier 2)</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Companion / Ground</span></td>
+              <td>Inverted Residual CNN (CUDA)</td>
+              <td>High-speed ground verification of downlinked aerial frames</td>
+              <td>4-class SLAI probability distribution (224x224 RGB)</td>
+              <td>99.68% Acc &middot; 1.52M Params &middot; 17.6 ms</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: #ffffff;">ResNet-18 Teacher (Tier 3)</td>
+              <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Workstation</span></td>
+              <td>Deep Residual Network (CUDA)</td>
+              <td>Heavy-duty post-flight benchmark &amp; distillation teacher</td>
+              <td>High-precision 4-class SLAI reference verification</td>
+              <td>99.73% Acc &middot; 11.18M Params &middot; 31.9 ms</td>
             </tr>
             <tr>
               <td style="font-weight: 600; color: #ffffff;">Flight Phase Classifier</td>
               <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
-              <td>Random Forest</td>
+              <td>Random Forest (120 trees)</td>
               <td>Automated flight director &amp; stage detector</td>
               <td>5 flight stages (Pad, Ascent, Apogee, Chute, Landed)</td>
-              <td>98.56% Accuracy</td>
+              <td>97.96% Holdout &middot; 93.00% MC-100</td>
             </tr>
             <tr>
               <td style="font-weight: 600; color: #ffffff;">Touchdown Prognostics</td>
@@ -526,15 +542,15 @@
               <td>Multi-Quantile GBDT</td>
               <td>Intelligent landing countdown clock</td>
               <td>Time-to-Touchdown with P10/P50/P90 confidence bounds</td>
-              <td>Sub-second precision</td>
+              <td>R² = 0.9963 &middot; 2.33s RMSE (-94.8%)</td>
             </tr>
             <tr>
-              <td style="font-weight: 600; color: #ffffff;">Physics Calibrator</td>
+              <td style="font-weight: 600; color: #ffffff;">Physics Sensor Calibrator</td>
               <td><span style="color: var(--accent-purple-light); font-family: var(--font-mono); font-size: 0.75rem;">Ground Station</span></td>
-              <td>Multi-Output ExtraTrees</td>
-              <td>Wind-rush and temperature distortion filter</td>
+              <td>Adaptive Kalman + ExtraTrees</td>
+              <td>Wind-rush (Bernoulli) and temperature distortion filter</td>
               <td>True geometric altitude and true vertical speed</td>
-              <td>R² = 1.0 (0.49m error)</td>
+              <td>1.08m MC-100 RMSE (-40.4% vs Raw)</td>
             </tr>
             <tr>
               <td style="font-weight: 600; color: #ffffff;">Apogee Peak Regressor</td>
@@ -542,7 +558,7 @@
               <td>Gradient Boosting</td>
               <td>Peak apogee forecaster during early ascent</td>
               <td>Maximum altitude in meters &amp; time to apogee</td>
-              <td>R² = 0.9951 (24.1m RMSE)</td>
+              <td>R² = 0.9753 (Stochastic) / 0.9951</td>
             </tr>
             <tr>
               <td style="font-weight: 600; color: #ffffff;">Anomaly Detector</td>
@@ -550,7 +566,7 @@
               <td>Isolation Forest (PyOD)</td>
               <td>Onboard health doctor &amp; glitch watchdog</td>
               <td>Continuous Health Score (0.0 to 1.0)</td>
-              <td>6% Contamination threshold</td>
+              <td>ROC-AUC = 0.8616 (MC-100)</td>
             </tr>
           </tbody>
         </table>

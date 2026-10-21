@@ -106,14 +106,19 @@ load_models()
 # Global vision model state
 vision_guard = None
 tinylandingnet_model = None
+mobilenet_v3_small_model = None
+resnet18_model = None
 
 def load_vision_models():
-    global vision_guard, tinylandingnet_model
+    global vision_guard, tinylandingnet_model, mobilenet_v3_small_model, resnet18_model
     try:
         from ml.vision_guard import AerialVisionGuard
         from ml.train_tinyml_vision import TinyLandingNet
         import torch
+        import torch.nn as nn
+        from torchvision import models
         vision_guard = AerialVisionGuard()
+
         pth_path = os.path.join(MODELS_DIR, "tinylandingnet_best.pth")
         if os.path.exists(pth_path):
             net = TinyLandingNet(num_classes=4)
@@ -123,6 +128,24 @@ def load_vision_models():
             print("[ML Server] TinyLandingNet vision model successfully loaded.")
         else:
             print("[ML Server] Notice: tinylandingnet_best.pth not found; vision inference in fallback mode.")
+
+        mb_pth = os.path.join(MODELS_DIR, "mobilenet_v3_small_best.pth")
+        if os.path.exists(mb_pth):
+            mb = models.mobilenet_v3_small(weights=None)
+            mb.classifier[3] = nn.Linear(mb.classifier[3].in_features, 4)
+            mb.load_state_dict(torch.load(mb_pth, map_location="cpu"))
+            mb.eval()
+            mobilenet_v3_small_model = mb
+            print("[ML Server] MobileNetV3-Small vision model successfully loaded.")
+
+        res_pth = os.path.join(MODELS_DIR, "resnet18_best.pth")
+        if os.path.exists(res_pth):
+            res18 = models.resnet18(weights=None)
+            res18.fc = nn.Linear(res18.fc.in_features, 4)
+            res18.load_state_dict(torch.load(res_pth, map_location="cpu"))
+            res18.eval()
+            resnet18_model = res18
+            print("[ML Server] ResNet-18 vision model successfully loaded.")
     except Exception as e:
         print(f"[ML Server] Warning: Could not initialize vision models: {e}")
 
@@ -1250,17 +1273,30 @@ def classify_vision_frame(req: VisionFrameRequest):
     pred_class_name = "CRITICAL_HAZARD"
     probabilities = {cls_name: 0.25 for cls_name in SLAI_CLASSES}
     confidence = 0.5
-    model_name = req.model_tier or "tinylandingnet"
+    model_name = (req.model_tier or "tinylandingnet").lower()
 
-    if tinylandingnet_model is not None:
+    active_torch_model = tinylandingnet_model
+    target_res = (64, 64)
+    if model_name in ("mobilenet_v3_small", "mobilenet") and mobilenet_v3_small_model is not None:
+        active_torch_model = mobilenet_v3_small_model
+        target_res = (224, 224)
+        model_name = "mobilenet_v3_small"
+    elif model_name in ("resnet18", "resnet") and resnet18_model is not None:
+        active_torch_model = resnet18_model
+        target_res = (224, 224)
+        model_name = "resnet18"
+    else:
+        model_name = "tinylandingnet"
+
+    if active_torch_model is not None:
         preprocess = transforms.Compose([
-            transforms.Resize((64, 64)),
+            transforms.Resize(target_res),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         input_tensor = preprocess(pil_img).unsqueeze(0)
         with torch.no_grad():
-            logits = tinylandingnet_model(input_tensor)
+            logits = active_torch_model(input_tensor)
             probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
 
         probabilities = {SLAI_CLASSES[i]: float(probs[i]) for i in range(len(SLAI_CLASSES))}
@@ -1349,6 +1385,21 @@ def classify_vision_frame(req: VisionFrameRequest):
             "device": "cpu"
         }
     }
+
+
+@app.get("/api/vision/models-comparison")
+def get_vision_models_comparison():
+    """Returns 3-tier vision model comparison and RTX 4060 GPU training benchmarks."""
+    comp_path = os.path.join(BASE_DIR, "ml", "vision_model_comparison.json")
+    gpu_path = os.path.join(BASE_DIR, "ml", "gpu_training_summary.json")
+    payload = {"status": "ok", "comparison": {}, "gpu_training_summary": {}}
+    if os.path.exists(comp_path):
+        with open(comp_path, "r", encoding="utf-8") as f:
+            payload["comparison"] = json.load(f)
+    if os.path.exists(gpu_path):
+        with open(gpu_path, "r", encoding="utf-8") as f:
+            payload["gpu_training_summary"] = json.load(f)
+    return payload
 
 
 if __name__ == "__main__":

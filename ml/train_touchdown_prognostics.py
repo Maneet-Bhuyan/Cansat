@@ -75,6 +75,11 @@ def process_flight_profile(filepath):
     if n < 10 or '10_ground_pad' in filename:
         return None
 
+    for col in ['temp', 'pressure', 'altitude', 'gx', 'gy', 'gz', 'ax', 'ay', 'az', 'lat', 'lon', 'humidity', 'batteryVoltage', 'pitch', 'roll', 'accelMag']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    df = df.bfill().ffill()
+
     # Numerical differentiation for vertical velocity (vSpd) and vertical acceleration (vAcc)
     vz = np.gradient(df['altitude'].values, dt)
     df['vSpd'] = vz

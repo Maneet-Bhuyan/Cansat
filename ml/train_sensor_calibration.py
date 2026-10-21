@@ -54,6 +54,10 @@ def load_and_augment_dataset():
 
         # Standardize column names
         df = df.copy()
+        for col in ['temp', 'pressure', 'altitude', 'gx', 'gy', 'gz', 'ax', 'ay', 'az', 'humidity']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        df = df.bfill().ffill()
         if 'altitude' in df.columns:
             true_alt = df['altitude'].values.astype(float)
         else:

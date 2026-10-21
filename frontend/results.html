@@ -259,16 +259,28 @@
               <td>99.68% Bandwidth Saved</td>
             </tr>
             <tr>
-              <td><strong>Safe Landing Accuracy</strong></td>
+              <td><strong>Safe Landing Accuracy (Edge vs Heavy Reference)</strong></td>
               <td>81.2% (Lossy RF artifact corruption)</td>
-              <td>92.8% (Direct uncompressed sensor bus)</td>
-              <td>+11.6% Accuracy Gain</td>
+              <td>93.04% Edge INT8 / 99.68% MobileNetV3 / 99.73% ResNet-18</td>
+              <td>+11.8% Edge Gain &amp; 100% OOD Face Rejection</td>
             </tr>
             <tr>
               <td><strong>Tumble Blackout Resilience</strong></td>
               <td>Total Frame Loss at >90 deg/s</td>
               <td>Zero Impact (Processed onboard)</td>
               <td>100% Deterministic</td>
+            </tr>
+            <tr>
+              <td><strong>Altitude State Estimation RMSE (100-Flight MC)</strong></td>
+              <td>1.810 &plusmn; 0.085 m (Raw Barometer with Bernoulli Bias)</td>
+              <td>1.078 &plusmn; 0.046 m (Hybrid Kalman + ExtraTrees ML)</td>
+              <td>40.4% Error Reduction (95% CI: [1.069, 1.087] m)</td>
+            </tr>
+            <tr>
+              <td><strong>Time-to-Touchdown Countdown RMSE</strong></td>
+              <td>44.46 s (Naive h / |v_z| Ballistic Division)</td>
+              <td>2.33 s (Quantile GBDT, R&sup2; = 0.9963, 81.27% PICP)</td>
+              <td>94.8% Countdown Error Reduction</td>
             </tr>
             <tr>
               <td><strong>Total Payload Mass</strong></td>

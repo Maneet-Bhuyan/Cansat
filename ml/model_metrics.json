@@ -1,51 +1,51 @@
 {
-  "dataset_total_samples": 3602,
+  "dataset_total_samples": 3536,
   "flight_phase_classifier": {
     "algorithm": "RandomForestClassifier",
-    "test_accuracy": 0.9855715871254163,
+    "test_accuracy": 0.9796380090497737,
     "classification_report": {
       "APOGEE_BURST": {
-        "precision": 0.6,
+        "precision": 0.75,
         "recall": 0.5,
-        "f1-score": 0.5454545454545454,
+        "f1-score": 0.6,
         "support": 12.0
       },
       "BALLOON_ASCENT": {
-        "precision": 0.9917127071823204,
-        "recall": 0.9972222222222222,
-        "f1-score": 0.9944598337950139,
-        "support": 360.0
+        "precision": 0.9922879177377892,
+        "recall": 0.9974160206718347,
+        "f1-score": 0.9948453608247423,
+        "support": 387.0
       },
       "PAD_IDLE": {
-        "precision": 0.9900990099009901,
-        "recall": 1.0,
-        "f1-score": 0.9950248756218906,
+        "precision": 0.96875,
+        "recall": 0.93,
+        "f1-score": 0.9489795918367347,
         "support": 100.0
       },
       "PARACHUTE_DESCENT": {
-        "precision": 0.9905956112852664,
-        "recall": 0.9813664596273292,
-        "f1-score": 0.9859594383775351,
-        "support": 322.0
+        "precision": 0.9899328859060402,
+        "recall": 0.9966216216216216,
+        "f1-score": 0.9932659932659933,
+        "support": 296.0
       },
       "TOUCHDOWN_RECOVERY": {
-        "precision": 0.981651376146789,
-        "recall": 1.0,
-        "f1-score": 0.9907407407407407,
-        "support": 107.0
+        "precision": 0.9247311827956989,
+        "recall": 0.9662921348314607,
+        "f1-score": 0.945054945054945,
+        "support": 89.0
       },
-      "accuracy": 0.9855715871254163,
+      "accuracy": 0.9796380090497737,
       "macro avg": {
-        "precision": 0.9108117409030732,
-        "recall": 0.8957177363699103,
-        "f1-score": 0.9023278867979452,
-        "support": 901.0
+        "precision": 0.9251403972879055,
+        "recall": 0.8780659554249833,
+        "f1-score": 0.8964291781964832,
+        "support": 884.0
       },
       "weighted avg": {
-        "precision": 0.9847224857461672,
-        "recall": 0.9855715871254163,
-        "f1-score": 0.9850629086466971,
-        "support": 901.0
+        "precision": 0.9787461919248072,
+        "recall": 0.9796380090497737,
+        "f1-score": 0.9787553596600372,
+        "support": 884.0
       }
     },
     "classes": [
@@ -56,36 +56,36 @@
       "TOUCHDOWN_RECOVERY"
     ],
     "feature_importances": {
-      "altitude": 0.1206488099663156,
-      "vSpd": 0.1839799027512269,
-      "pressure": 0.09783973875031156,
-      "temp": 0.04873647803375593,
-      "humidity": 0.026995212403414955,
-      "ax": 0.008219107024720094,
-      "ay": 0.006964971443114643,
-      "az": 0.033762860344598036,
-      "accelMag": 0.018254324963656376,
-      "gx": 0.007509606811311139,
-      "gy": 0.009124893121922635,
-      "gz": 0.00623137242367369,
-      "gyroMag": 0.03799172239279354,
-      "batteryVoltage": 0.11703869005304261,
-      "dAlt_pad": 0.16210775995238083,
-      "dTemp_pad": 0.04054520599003308,
-      "dPress_pad": 0.07404934357372843
+      "altitude": 0.13914400889004516,
+      "vSpd": 0.1937272043009629,
+      "pressure": 0.07764892546244866,
+      "temp": 0.08938571699115365,
+      "humidity": 0.05388678144447223,
+      "ax": 0.015705425517451035,
+      "ay": 0.01163890456983264,
+      "az": 0.028954853407098066,
+      "accelMag": 0.024623746925088844,
+      "gx": 0.012225078435750074,
+      "gy": 0.014839328562451634,
+      "gz": 0.009099179942243305,
+      "gyroMag": 0.028878410173033536,
+      "batteryVoltage": 0.09209048007161859,
+      "dAlt_pad": 0.08990161252577435,
+      "dTemp_pad": 0.04155008663640262,
+      "dPress_pad": 0.07670025614417271
     }
   },
   "anomaly_detector": {
     "algorithm": "PyOD.IForest",
-    "nominal_samples_trained": 1927,
+    "nominal_samples_trained": 1883,
     "contamination_threshold": 0.06,
-    "raw_score_min": -0.1657824546602102,
-    "raw_score_max": 0.2680505910396772
+    "raw_score_min": -0.14014798259874656,
+    "raw_score_max": 0.24587190643652468
   },
   "apogee_regressor": {
     "algorithm": "GradientBoostingRegressor",
-    "r2_score": 0.9951052761940025,
-    "rmse_meters": 24.167643268856494
+    "r2_score": 0.9753143080325758,
+    "rmse_meters": 52.529637143666875
   },
   "sensor_calibrator": {
     "model_type": "ExtraTreesRegressor",
@@ -109,11 +109,11 @@
       "calibrated_vspd"
     ],
     "altitude_r2": 1.0,
-    "altitude_rmse_m": 0.804,
-    "altitude_mae_m": 0.499,
-    "vspd_r2": 0.9516,
-    "vspd_rmse_mps": 1.109,
-    "vspd_mae_mps": 0.513
+    "altitude_rmse_m": 0.959,
+    "altitude_mae_m": 0.605,
+    "vspd_r2": 0.9407,
+    "vspd_rmse_mps": 1.204,
+    "vspd_mae_mps": 0.61
   },
   "tinyml_landing_safety_model": {
     "architecture": "TinyLandingNet (Depthwise Separable CNN)",
@@ -237,5 +237,61 @@
       "target_satisfied": true
     },
     "timestamp": "2026-09-18T18:20:45Z"
+  },
+  "touchdown_prognostics": {
+    "algorithm": "GradientBoostingRegressor (Quantile Loss) + RandomForestClassifier",
+    "dataset_descent_samples": 1577,
+    "r2_score": 0.9963,
+    "rmse_seconds": 2.33,
+    "mae_seconds": 1.17,
+    "naive_physics_baseline_rmse": 44.46,
+    "error_reduction_pct": 94.8,
+    "uncertainty_80pct_coverage_picp": 81.27,
+    "regime_classification_accuracy": 99.75,
+    "features_count": 21,
+    "figures_generated": [
+      "analysis/figures/01_correlation_matrix.png",
+      "analysis/figures/02_aerodynamic_drag_profile.png",
+      "analysis/figures/03_model_benchmark_ttd.png",
+      "analysis/figures/04_feature_importance.png",
+      "analysis/figures/05_descent_regime_confusion_matrix.png"
+    ]
+  },
+  "vision_hierarchy_benchmarks": {
+    "gpu_device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "dataset_samples": 27000,
+    "epochs_per_model": 15,
+    "tinylandingnet": {
+      "parameters": 6996,
+      "int8_parameters": 7320,
+      "flash_rom_kb": 7.15,
+      "test_accuracy_pct": 93.04,
+      "val_accuracy_pct": 93.80,
+      "macro_f1_pct": 93.21,
+      "cpu_latency_ms": 2.55,
+      "onnx_latency_ms": 0.055,
+      "esp32_latency_ms": 16.3
+    },
+    "mobilenet_v3_small": {
+      "parameters": 1521956,
+      "fp32_mb": 5.806,
+      "int8_kb": 1486.3,
+      "best_val_acc_pct": 99.68,
+      "training_time_s": 1158.3,
+      "cpu_latency_ms": 25.09
+    },
+    "resnet18": {
+      "parameters": 11178564,
+      "fp32_mb": 42.643,
+      "int8_kb": 10916.6,
+      "best_val_acc_pct": 99.73,
+      "training_time_s": 1060.3,
+      "cpu_latency_ms": 31.86
+    },
+    "ood_aerial_vision_guard": {
+      "stages": 5,
+      "non_aerial_rejection_rate_pct": 100.0,
+      "aerial_pass_rate_pct": 100.0
+    }
   }
 }
