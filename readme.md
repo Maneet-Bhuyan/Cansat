@@ -119,13 +119,19 @@ Mission Control Web UI Suite:
 ├── ml/                         # Machine learning training, quantization & benchmarks
 │   ├── download_dataset.py     # EuroSAT aerial dataset downloader
 │   ├── train_tinyml_vision.py  # TinyLandingNet depthwise separable CNN training pipeline
+│   ├── train_heavy_vision.py   # CUDA GPU fine-tuning for MobileNetV3-Small & ResNet-18
+│   ├── vision_guard.py         # 5-stage Out-of-Distribution (AerialVisionGuard) filter
+│   ├── benchmark_vision_models.py # 3-tier vision model & OOD comparative benchmark
 │   ├── export_tinyml_header.py # INT8 post-training quantization & C++ header exporter
 │   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
 │   ├── train_touchdown_prognostics.py # Touchdown prognostics & descent aerodynamics pipeline
+│   ├── generate_monte_carlo_ensemble.py # 100-flight randomized 6-DOF Monte Carlo benchmark
+│   ├── seed_judge_database.py  # Non-destructive SQLite WAL hardware + benchmark seeder
+│   ├── generate_paper_figures.py # 300-DPI publication figure generator (Figures 1-4)
 │   ├── flight_analyzer.py      # Automated post-flight telemetry analyzer & PDF report generator
 │   ├── ablation_benchmarks.json # Pre-computed 4-sensor ablation benchmarks across all 10 missions
 │   ├── train_models.py         # Tabular ML training pipeline
-│   ├── model_metrics.json      # Model performance summary
+│   ├── model_metrics.json      # Master model performance & CUDA benchmark summary
 │   ├── saved_models/           # Trained model artifacts (.joblib, .pth, .onnx, .h)
 │   └── README.md               # ML models and benchmarks documentation
 ├── analysis/                   # Flight dynamics & descent analytics notebooks
@@ -137,7 +143,8 @@ Mission Control Web UI Suite:
 │   ├── captures/               # Wireless video frame captures & test snapshots
 │   ├── ground_cam_viewer.py    # Standalone low-latency OpenCV video HUD
 │   └── README.md               # Firmware flashing and protocol documentation
-├── data/                       # Telemetry datasets and EuroSAT archive
+├── data/                       # Telemetry datasets, SQLite WAL database & EuroSAT archive
+│   ├── cansat_missions.db      # SQLite WAL database (3 physical bench sessions + 10 benchmarks)
 │   ├── EuroSAT_RGB.zip         # [Tracked] EuroSAT 89.9 MB aerial dataset archive
 │   └── README.md               # Dataset documentation
 ├── test_cases/                 # Ten mission profile CSV datasets
@@ -147,18 +154,13 @@ Mission Control Web UI Suite:
 ├── reports/                    # Automated post-flight telemetry reports
 │   ├── all_missions_summary.csv# Master benchmark comparison matrix
 │   ├── pdf/                    # 10 publication-grade vector PDF flight reports
-│   ├── figures/                # High-resolution 300 DPI PNG figures
+│   ├── figures/                # High-resolution 300 DPI PNG figures (missions + paper_fig1..4)
 │   └── README.md               # Reports documentation
-├── docs/                       # Technical architecture, manuals, logs, team task briefings
+├── docs/                       # Research manuscript, technical architecture, manuals & logs
+│   ├── research_paper_draft.md # 16-section research paper on edge TinyML & CanSat avionics
 │   ├── architecture_and_ml.txt # Project architecture & mathematical formulations
-│   ├── project_log.txt         # Chronological development and mission log
-│   ├── whatsapp_messages.txt   # Formatted team task briefings (Maneet, Rishi, Shubham, Ganesh)
-│   ├── GPU_TRAINING_INSTRUCTIONS.md # NVIDIA GPU workstation setup & training guide
-│   ├── python-ml_focused.text  # Python & ML transformation master roadmap
 │   ├── TELEMETRY_QUALITY_ANALYZER.md # Telemetry data quality & flight reliability audit manual
-│   ├── research_paper_draft.md # Publication draft on edge TinyML & multi-sensor CanSat avionics
-│   ├── audit_report.md         # Comprehensive engineering audit report
-│   ├── QA_REPORT.md            # Quality assurance test results & verification matrix
+│   ├── project_log.txt         # Chronological development and mission log
 │   └── README.md               # Documentation index
 ├── scripts/                    # Workstation setup & installation utilities
 │   ├── SETUP_GPU_WORKSTATION.bat # 1-Click autonomous bootstrapper for NVIDIA GPU machines
@@ -189,7 +191,6 @@ Mission Control Web UI Suite:
 ├── START_INTEGRATED_MISSION_CONTROL.bat # 1-Click Integrated CanSat & Telemetry Lakehouse launcher
 ├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
 ├── requirements.txt            # Python dependencies
-├── tasks.txt                   # Master team task tracker
 ├── readme.md                   # Comprehensive project documentation
 ├── .gitattributes              # GitHub Linguist language classifications
 └── .gitignore                  # Git ignore rules

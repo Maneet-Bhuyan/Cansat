@@ -589,6 +589,95 @@
           </div>
         </div>
       </div>
+
+      <!-- ============================================================== -->
+      <!-- SECTION 5: LIVE 3-TIER VISION & OOD GUARD COMPARATOR           -->
+      <!-- ============================================================== -->
+      <div class="resend-card" style="margin-top: 2.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Interactive 3-Tier Vision &amp; OOD Guard Live Comparator</h3>
+            <p style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 0.25rem;">
+              Run live side-by-side PyTorch inference across <strong>Tier 1 (TinyLandingNet INT8)</strong>, <strong>Tier 2 (MobileNetV3-Small)</strong>, and <strong>Tier 3 (ResNet-18 Teacher)</strong> with the 5-stage <code>AerialVisionGuard</code>. Test the active video frame, synthetic Out-of-Distribution (OOD) subjects, or upload any custom image.
+            </p>
+          </div>
+          <span id="multi-tier-guard-badge" class="card-badge" style="color: var(--accent-green); font-family: var(--font-mono);">AERIAL SCENE VALID</span>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; margin-top: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle);">
+          <button type="button" id="btn-compare-active-frame" class="btn-resend-pill" style="font-size: 0.78rem; padding: 0.45rem 1rem;">
+            Evaluate Current Video Frame
+          </button>
+          <button type="button" class="fps-btn" data-ood-preset="aerial_pasture">Test: Aerial Pasture (Nominal LZ)</button>
+          <button type="button" class="fps-btn" data-ood-preset="aerial_urban">Test: Urban Rooftops (Hazard)</button>
+          <button type="button" class="fps-btn" data-ood-preset="ood_human_face">Test OOD: Human Face / Portrait</button>
+          <button type="button" class="fps-btn" data-ood-preset="ood_indoor_wall">Test OOD: Flat Indoor Wall</button>
+          <label style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-secondary); cursor: pointer; background: #141414; border: 1px solid var(--border-subtle); border-radius: 9999px; padding: 0.35rem 0.9rem;">
+            Upload Test Image
+            <input type="file" id="compare-image-upload" accept="image/*" style="display: none;">
+          </label>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 1.5rem;">
+          <!-- Tier 1 Card -->
+          <div style="background: #050505; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); text-transform: uppercase;">Tier 1 // ESP32-CAM Edge</span>
+              <span id="tier1-latency" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">2.1 ms CPU / 16.3 ms MCU</span>
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; color: #ffffff; margin-bottom: 0.25rem;">TinyLandingNet (INT8, 7.15 KB)</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 1rem;">6,996 Params &middot; 93.04% EuroSAT Test Acc</div>
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.85rem;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Predicted SLAI Class</div>
+              <div id="tier1-class" style="font-size: 1.15rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent-green); margin-top: 0.2rem;">SAFE_LZ</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-secondary);">
+                <span>Confidence: <strong id="tier1-conf" style="color: #ffffff;">94.2%</strong></span>
+                <span id="tier1-decision" style="color: var(--accent-green);">SAFE TOUCHDOWN</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tier 2 Card -->
+          <div style="background: #050505; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-purple-light); text-transform: uppercase;">Tier 2 // Companion Light</span>
+              <span id="tier2-latency" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">17.6 ms CPU</span>
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; color: #ffffff; margin-bottom: 0.25rem;">MobileNetV3-Small (5.81 MB)</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 1rem;">1,521,956 Params &middot; 99.68% RTX 4060 Val Acc</div>
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.85rem;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Predicted SLAI Class</div>
+              <div id="tier2-class" style="font-size: 1.15rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent-green); margin-top: 0.2rem;">SAFE_LZ</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-secondary);">
+                <span>Confidence: <strong id="tier2-conf" style="color: #ffffff;">99.5%</strong></span>
+                <span id="tier2-decision" style="color: var(--accent-green);">SAFE TOUCHDOWN</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tier 3 Card -->
+          <div style="background: #050505; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #60a5fa; text-transform: uppercase;">Tier 3 // Ground Teacher</span>
+              <span id="tier3-latency" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">31.9 ms CPU</span>
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; color: #ffffff; margin-bottom: 0.25rem;">ResNet-18 (42.64 MB)</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 1rem;">11,178,564 Params &middot; 99.73% RTX 4060 Val Acc</div>
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.85rem;">
+              <div style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Predicted SLAI Class</div>
+              <div id="tier3-class" style="font-size: 1.15rem; font-weight: 700; font-family: var(--font-mono); color: var(--accent-green); margin-top: 0.2rem;">SAFE_LZ</div>
+              <div style="display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-secondary);">
+                <span>Confidence: <strong id="tier3-conf" style="color: #ffffff;">99.7%</strong></span>
+                <span id="tier3-decision" style="color: var(--accent-green);">SAFE TOUCHDOWN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="multi-tier-summary-note" style="margin-top: 1rem; background: #000000; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem; font-size: 0.82rem; font-family: var(--font-mono); color: var(--text-secondary);">
+          [OOD Guard: PASS] All 3 vision tiers evaluated frame. Click any preset button above or upload a photo to compare TinyLandingNet against MobileNetV3-Small and ResNet-18.
+        </div>
+      </div>
     </section>
 
   </div>

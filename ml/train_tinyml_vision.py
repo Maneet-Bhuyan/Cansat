@@ -267,7 +267,6 @@ def train_model(data_dir: str = None, epochs: int = 30, batch_size: int = 64, le
 
     best_val_acc = 0.0
     best_weights_path = os.path.join(MODELS_DIR, "tinylandingnet_best.pth")
-    legacy_weights_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.pth")
 
     for epoch in range(1, epochs + 1):
         epoch_start = time.time()
@@ -327,7 +326,6 @@ def train_model(data_dir: str = None, epochs: int = 30, batch_size: int = 64, le
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), best_weights_path)
-            torch.save(model.state_dict(), legacy_weights_path)
 
     total_dur = time.time() - start_time
     print(f"\n[OK] Training completed in {total_dur:.1f}s. Best Val Accuracy: {best_val_acc:.2f}%")
@@ -398,11 +396,9 @@ def train_model(data_dir: str = None, epochs: int = 30, batch_size: int = 64, le
     # -----------------------------------------------------------------------
     print(f"\n[5/5] Exporting ONNX graph and updating {METRICS_PATH}...")
     onnx_path = os.path.join(MODELS_DIR, "tinylandingnet.onnx")
-    legacy_onnx_path = os.path.join(MODELS_DIR, "tinyml_landing_safety.onnx")
     dummy_input = torch.randn(1, 3, 64, 64, device=device)
     
     try:
-        import shutil
         torch.onnx.export(
             model, dummy_input, onnx_path,
             export_params=True,
@@ -412,8 +408,7 @@ def train_model(data_dir: str = None, epochs: int = 30, batch_size: int = 64, le
             output_names=['slai_logits'],
             dynamic_axes={'input_image': {0: 'batch_size'}, 'slai_logits': {0: 'batch_size'}}
         )
-        shutil.copyfile(onnx_path, legacy_onnx_path)
-        print(f"[OK] ONNX model saved to: {onnx_path} and {legacy_onnx_path}")
+        print(f"[OK] ONNX model saved to: {onnx_path}")
     except Exception as onnx_err:
         print(f"[!] Note on ONNX export: {onnx_err}")
 
