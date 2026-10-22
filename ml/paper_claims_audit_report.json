@@ -28,7 +28,7 @@
     "ood_skin_portrait_rejected": "100/100",
     "ood_indoor_wall_rejected": "100/100",
     "ood_total_rejection_pct": 100.0,
-    "mean_guard_latency_ms": 1.758
+    "mean_guard_latency_ms": 1.873
   },
   "ieee_latex_compliance": {
     "status": "PASS",
