@@ -34,9 +34,13 @@ This project combines a browser-based mission control dashboard with a real-time
   - **Tier 2 Companion / Ground Light (`MobileNetV3-Small`)**: 1,521,956 parameters, **99.68% validation accuracy** (trained on NVIDIA GeForce RTX 4060 CUDA), 5.81 MB FP32 / 1,486.3 KB INT8
   - **Tier 3 Ground Workstation Teacher (`ResNet-18`)**: 11,178,564 parameters, **99.73% validation accuracy** (trained on NVIDIA GeForce RTX 4060 CUDA), 42.64 MB FP32 / 10,916.6 KB INT8
   - **5-Stage OOD Aerial Vision Guard (`AerialVisionGuard`)**: Exposure/Occlusion, YCbCr Portrait Skin-Tone Ratio, Laplacian Micro-Texture, Helmholtz Free Energy / Shannon Entropy, and VARI Spectral Consistency achieving **100% rejection** of non-aerial inputs (human faces, indoor walls, lens occlusions)
-- Three-Pillar Research Validation & 100-Flight Monte Carlo Benchmark (`ml/generate_monte_carlo_ensemble.py`, `ml/seed_judge_database.py`, `docs/research_paper_draft.md`):
-  - Preserves 3 real physical CanSat hardware bench-top sessions (`MSN-20260920-192811-A2F9`, `MSN-20260920-194606-2DD8`, `MSN-20260921-092203-74EE`, $N=362$ packets) in `data/cansat_missions.db` alongside all 10 stochastic flight scenarios (`MSN-BENCH-01-NOMINAL` through `MSN-BENCH-10-STATICPAD`)
-  - Proves **40.4% altitude RMSE reduction** ($1.078 \pm 0.046\,\text{m}$ Hybrid Kalman + ExtraTrees vs. $1.810 \pm 0.085\,\text{m}$ raw barometer) across 100 randomized 6-DOF flights
+- Three-Pillar Research Validation & 100-Flight Disjoint Monte Carlo Benchmark (`ml/generate_monte_carlo_ensemble.py`, `ml/validate_paper_claims.py`, `paper/ieee_cansat_paper.tex`, `docs/research_paper_draft.md`):
+  - Preserves 3 real physical CanSat hardware bench-top sessions (`MSN-20260920-192811-A2F9`, `MSN-20260920-194606-2DD8`, `MSN-20260921-092203-74EE`, $N=362$ packets) in `data/cansat_missions.db` alongside all 10 stochastic flight scenarios (`3,536` frames; `3,898` total rows)
+  - Proves **49.2% altitude RMSE reduction** ($0.903 \pm 0.130\,\text{m}$ Hybrid EKF + ExtraTrees vs. $1.776 \pm 0.258\,\text{m}$ raw barometer, outperforming $1.281\,\text{m}$ standalone 1D EKF and $0.982\,\text{m}$ standalone ExtraTrees) across 100 held-out 6-DOF flights ($44{,}555$ frames, disjoint seed `20260921` vs. training seed `1001`)
+  - Includes a zero-bias scientific reproducibility auditor (`ml/validate_paper_claims.py`) verifying 100% of paper claims and IEEE LaTeX compliance
+- Executive Pitch Deck & IEEE Conference Paper (`reports/Cognitive_CanSat_Pitch_Deck.pptx`, `frontend/pitch.html`, `paper/ieee_cansat_paper.tex`):
+  - 12-slide widescreen (16:9) PowerPoint presentation and interactive browser slide deck with embedded 300-DPI figures and speaker notes
+  - Production-ready IEEEtran conference LaTeX manuscript (`paper/ieee_cansat_paper.tex`)
 - Persistent SQLite Flight Database (WAL mode) at `data/cansat_missions.db`: real-time micro-batch telemetry streaming (10 pkts/2.5s), mission recording HUD, retroactive flight archiving, and Post-Flight Review (PFR) regulatory audit persistence
 - Ground Station Database Explorer & Mission Manager (`#dbManagerModal`): inspect database disk footprint and stored packet counts, browse flight sessions, view raw SQLite telemetry in tabular format, execute single or batch mission deletions, export 25-column flight CSVs, and download the raw `.db` file
 - Post-Flight Review (PFR) report generator with automated apogee, descent compliance, and PDF export
@@ -47,7 +51,7 @@ This project combines a browser-based mission control dashboard with a real-time
 - Tactical GIS tracking and recovery tools with Leaflet mapping and direct navigation links
 - CSV replay engine and synthetic mission test profiles for 10 distinct flight regimes (selectable live in `dashboard.html` via `#demo-scenario-select`)
 - Direct hardware USB serial streaming via the native browser Web Serial API
-- Python ML inference service with FastAPI and WebSocket telemetry streaming
+- Python ML inference service with FastAPI, HTTP security headers, path-traversal protection, and WebSocket telemetry streaming
 - Smart zero-touch bootstrap launcher with zero-dependency standalone native Windows support
 
 ## Architecture
@@ -84,6 +88,7 @@ Mission Control Web UI Suite:
   - models.html: 6-model machine learning architecture and comparative benchmark analysis
   - analysis.html: Post-flight mission analytics, sensor ablation suite & dropout simulator
   - results.html: Flight testing research data viewer and scenario comparison charts
+  - pitch.html: 12-slide interactive executive pitch deck with PPTX & IEEE LaTeX downloads
 ```
 
 ## Repository structure
@@ -97,16 +102,22 @@ Mission Control Web UI Suite:
 │   ├── models.html             # Machine Learning Architecture & 6-Model Comparative Analysis
 │   ├── analysis.html           # Post-Flight Telemetry Analytics, Multi-Sensor Ablation & Simulator
 │   ├── results.html            # Research & Results Data Viewer with Scenario Charting
+│   ├── pitch.html              # Interactive 12-Slide Executive Pitch Deck (Desktop & Mobile)
 │   ├── css/
+│   │   ├── style.css           # Mission Control desktop telemetry HUD stylesheet
+│   │   ├── mobile.css          # Responsive mobile/tablet layout & touch-friendly HUD styles
 │   │   └── resend-theme.css    # Clean Obsidian dark theme (Inter, Newsreader, JetBrains Mono)
 │   ├── js/
+│   │   ├── app.js              # Core telemetry WebSocket/Web Serial engine, EKF & 3D HUD controller
 │   │   ├── cansat-3d.js        # Three.js 3D PLA CanSat model & component inspector
 │   │   ├── mission-slider.js   # Flight timeline scrubber & nadir camera simulator
 │   │   ├── results-charts.js   # Research results Chart.js data visualizer
 │   │   └── tinyml-demo.js      # Interactive TinyLandingNet inference simulator
 │   └── README.md               # Frontend UI architecture documentation
+├── paper/                      # Compilable IEEE Conference LaTeX Manuscript
+│   └── ieee_cansat_paper.tex   # Complete IEEEtran LaTeX paper (zero-bias verified)
 ├── backend/                    # FastAPI Python server, WebSocket bridges & kinematics
-│   ├── app.py                  # Telemetry streaming, ML inference & HTML routing
+│   ├── app.py                  # Telemetry streaming, ML inference, security middleware & routing
 │   ├── standalone_server.ps1   # Native Windows HTTP server (.NET HttpListener)
 │   ├── core/                   # Signal processing & hardware integration
 │   │   ├── serial_manager.py   # DualSerialManager (LoRa @ 9600 & Video @ 460800)
@@ -123,9 +134,11 @@ Mission Control Web UI Suite:
 │   ├── vision_guard.py         # 5-stage Out-of-Distribution (AerialVisionGuard) filter
 │   ├── benchmark_vision_models.py # 3-tier vision model & OOD comparative benchmark
 │   ├── export_tinyml_header.py # INT8 post-training quantization & C++ header exporter
-│   ├── train_sensor_calibration.py # Multi-Output ExtraTrees sensor calibration training
+│   ├── train_sensor_calibration.py # Disjoint scale-invariant ExtraTrees sensor calibration training
 │   ├── train_touchdown_prognostics.py # Touchdown prognostics & descent aerodynamics pipeline
-│   ├── generate_monte_carlo_ensemble.py # 100-flight randomized 6-DOF Monte Carlo benchmark
+│   ├── generate_monte_carlo_ensemble.py # 100-flight held-out 6-DOF Monte Carlo benchmark
+│   ├── validate_paper_claims.py # Automated zero-leakage reproducibility & IEEE paper claim auditor
+│   ├── generate_pitch_deck.py  # 12-slide 16:9 PowerPoint (.pptx) executive pitch deck generator
 │   ├── seed_judge_database.py  # Non-destructive SQLite WAL hardware + benchmark seeder
 │   ├── generate_paper_figures.py # 300-DPI publication figure generator (Figures 1-4)
 │   ├── flight_analyzer.py      # Automated post-flight telemetry analyzer & PDF report generator
@@ -151,13 +164,15 @@ Mission Control Web UI Suite:
 │   ├── 01_nominal_sounding_flight.csv ... 10_ground_pad_static_test.csv
 │   ├── cansat_eval_ablation.ipynb # Sensor suite ablation study notebook
 │   └── README.md               # Flight scenario documentation
-├── reports/                    # Automated post-flight telemetry reports
+├── reports/                    # Automated post-flight telemetry reports & pitch deck
+│   ├── Cognitive_CanSat_Pitch_Deck.pptx # 12-slide widescreen PowerPoint presentation
 │   ├── all_missions_summary.csv# Master benchmark comparison matrix
 │   ├── pdf/                    # 10 publication-grade vector PDF flight reports
 │   ├── figures/                # High-resolution 300 DPI PNG figures (missions + paper_fig1..4)
 │   └── README.md               # Reports documentation
-├── docs/                       # Research manuscript, technical architecture, manuals & logs
+├── docs/                       # Research manuscript, deployment guide, manuals & logs
 │   ├── research_paper_draft.md # 16-section research paper on edge TinyML & CanSat avionics
+│   ├── DEPLOYMENT_GUIDE.md     # Production deployment, security hardening & verification guide
 │   ├── architecture_and_ml.txt # Project architecture & mathematical formulations
 │   ├── TELEMETRY_QUALITY_ANALYZER.md # Telemetry data quality & flight reliability audit manual
 │   ├── project_log.txt         # Chronological development and mission log
@@ -191,7 +206,7 @@ Mission Control Web UI Suite:
 ├── START_INTEGRATED_MISSION_CONTROL.bat # 1-Click Integrated CanSat & Telemetry Lakehouse launcher
 ├── launch.py                   # System launcher with port manager, auto-reload & browser dispatch
 ├── requirements.txt            # Python dependencies
-├── readme.md                   # Comprehensive project documentation
+├── .env.example                # Environment variable template for production deployment
 ├── .gitattributes              # GitHub Linguist language classifications
 └── .gitignore                  # Git ignore rules
 ```

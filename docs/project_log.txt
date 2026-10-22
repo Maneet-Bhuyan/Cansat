@@ -1938,3 +1938,45 @@ CODEBASE-WIDE PERFORMANCE OPTIMIZATION & MOBILE/DESKTOP VIEWPORT RESPONSIVENESS
 
 STATUS: FULL CODEBASE OPTIMIZED AND MOBILE/DESKTOP VIEWPORTS VERIFIED
 
+
+
+--------------------------------------------------------------------------------
+IEEE CONFERENCE PAPER, ZERO-BIAS SCIENTIFIC REPRODUCIBILITY AUDIT, PRODUCTION
+SECURITY HARDENING & 12-SLIDE EXECUTIVE PITCH DECK
+--------------------------------------------------------------------------------
+
+[2026-10-22T02:45:00Z] ACTION: Authored complete IEEEtran LaTeX conference paper, eliminated all train-test evaluation biases, created automated claim verification suite, hardened FastAPI production security, and generated 12-slide PowerPoint (.pptx) + interactive web pitch deck.
+FILES CREATED / MODIFIED:
+  - paper/ieee_cansat_paper.tex
+  - ml/train_sensor_calibration.py
+  - ml/generate_monte_carlo_ensemble.py
+  - ml/validate_paper_claims.py
+  - ml/paper_claims_audit_report.json
+  - ml/generate_paper_figures.py
+  - ml/generate_pitch_deck.py
+  - reports/Cognitive_CanSat_Pitch_Deck.pptx
+  - frontend/pitch.html
+  - frontend/results.html
+  - frontend/index.html
+  - backend/app.py
+  - .env.example
+  - docs/DEPLOYMENT_GUIDE.md
+  - docs/research_paper_draft.md
+  - README.md
+
+KEY MILESTONES COMPLETED:
+1. Unbiased Scientific Evaluation & Zero-Leakage Audit (ml/validate_paper_claims.py):
+   - Enforced strict seed and trajectory separation between calibration training (seed=1001, 80 independent flights, 35,342 frames) and Monte Carlo test evaluation (seed=20260921, 100 unseen flights, 44,555 frames).
+   - Trained a scale-invariant ExtraTrees aerodynamic residual compensator (residual_pipeline) in ml/train_sensor_calibration.py while retaining pipeline for backward compatibility with backend/core/kinematics.py.
+   - Removed hardcoded analytical bias subtraction (0.5*v^2/g) from the Monte Carlo test loop, replaced non-causal Savitzky-Golay with exact causal FIR coefficients (savgol_coeffs(11, 2, pos=10)), and evaluated [P10, P90] PICP coverage with zero interval padding.
+   - Verified 5-method state estimation ablation across 100 held-out flights: Raw Barometric (1.776 m) -> Causal Savitzky-Golay (1.778 m) -> Standalone 1D EKF (1.281 m, -27.9%) -> Standalone ExtraTrees (0.982 m, -44.7%) -> Hybrid EKF + ExtraTrees (0.903 m, -49.2%).
+   - Verified all 4 scientific validation pillars and IEEE linguistic constraints (0 banned words, 0 em-dashes).
+
+2. Production Security & Deployment Hardening (backend/app.py, .env.example, docs/DEPLOYMENT_GUIDE.md):
+   - Added HTTP security headers middleware (X-Content-Type-Options: nosniff, X-Frame-Options: SAMEORIGIN, Referrer-Policy: strict-origin-when-cross-origin, X-XSS-Protection: 1; mode=block, Permissions-Policy).
+   - Added path-traversal sanitization (_resolve_safe_scenario_csv), Content-Disposition header sanitization, 15 MB Base64 / 16 MP decompression-bomb guards on /api/vision/classify-frame, and 10 MB CSV upload limits.
+   - Added /pitch.html, /api/artifacts/pitch-deck, and /api/artifacts/ieee-paper routes.
+
+3. 12-Slide Executive Pitch Deck (.pptx + Interactive Web Deck):
+   - Generated reports/Cognitive_CanSat_Pitch_Deck.pptx (16:9 widescreen dark aerospace theme with embedded 300-DPI figures and speaker notes).
+   - Created frontend/pitch.html with keyboard navigation, mobile touch-swipe support, speaker notes, and direct downloads for the PPTX and IEEE LaTeX paper.

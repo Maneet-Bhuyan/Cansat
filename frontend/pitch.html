@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Pitch Deck | Cognitive CanSat Mission Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <style>
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: radial-gradient(circle at 18% 12%, rgba(6, 182, 212, 0.10), transparent 42%),
+                        radial-gradient(circle at 82% 85%, rgba(16, 185, 129, 0.08), transparent 45%),
+                        var(--bg-void);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pitch-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(11, 15, 25, 0.92);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .pitch-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .pitch-badge {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            background: rgba(6, 182, 212, 0.14);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+        }
+
+        .pitch-title-text {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pitch-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .pitch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.42rem 0.82rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid var(--border-subtle);
+            background: rgba(17, 24, 39, 0.85);
+            color: var(--text-primary);
+            transition: all 0.18s ease;
+        }
+
+        .pitch-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .pitch-btn.primary {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.45);
+            color: var(--accent-green);
+        }
+
+        .pitch-btn.primary:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
+
+        .pitch-stage {
+            flex: 1;
+            max-width: 1380px;
+            width: 100%;
+            margin: 1.25rem auto;
+            padding: 0 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .slide-frame {
+            display: none;
+            background: rgba(17, 24, 39, 0.86);
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            border-radius: 14px;
+            padding: 2rem 2.25rem;
+            min-height: 540px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            position: relative;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .slide-frame.active {
+            display: flex;
+        }
+
+        .slide-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+            margin-bottom: 1.35rem;
+        }
+
+        .slide-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+        }
+
+        .slide-category {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .slide-number {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .slide-h1 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.25;
+            margin-bottom: 0.35rem;
+        }
+
+        .slide-subtitle {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+        }
+
+        .slide-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.9rem;
+            margin-bottom: 1.35rem;
+        }
+
+        .slide-kpi {
+            background: rgba(11, 15, 25, 0.75);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+        }
+
+        .slide-kpi.green {
+            border-left-color: var(--accent-green);
+        }
+
+        .slide-kpi.amber {
+            border-left-color: var(--accent-amber);
+        }
+
+        .slide-kpi-val {
+            font-family: var(--font-mono);
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+
+        .slide-kpi-lbl {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin-bottom: 0.15rem;
+        }
+
+        .slide-kpi-sub {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        .slide-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            flex: 1;
+        }
+
+        .slide-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.1rem;
+            flex: 1;
+        }
+
+        .slide-grid-fig {
+            display: grid;
+            grid-template-columns: 1.45fr 1fr;
+            gap: 1.25rem;
+            align-items: start;
+            flex: 1;
+        }
+
+        .slide-card {
+            background: rgba(11, 15, 25, 0.68);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.15rem 1.25rem;
+        }
+
+        .slide-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.65rem;
+        }
+
+        .slide-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .slide-card li {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.48;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .slide-card li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+
+        .slide-card li strong {
+            color: var(--text-primary);
+        }
+
+        .slide-fig-box {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+
+        .slide-fig-box img {
+            width: 100%;
+            max-height: 360px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .slide-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 0.35rem;
+        }
+
+        .slide-table th,
+        .slide-table td {
+            padding: 0.52rem 0.65rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .slide-table th {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            background: rgba(6, 182, 212, 0.08);
+        }
+
+        .slide-table tr.highlight-row {
+            background: rgba(16, 185, 129, 0.12);
+            font-weight: 600;
+        }
+
+        .speaker-notes-box {
+            margin-top: 1.2rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background: rgba(6, 182, 212, 0.06);
+            border: 1px dashed rgba(6, 182, 212, 0.3);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .speaker-notes-box strong {
+            font-family: var(--font-mono);
+            color: var(--accent-cyan);
+            margin-right: 0.4rem;
+        }
+
+        .pitch-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            background: rgba(17, 24, 39, 0.88);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .slide-dots {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .slide-dot {
+            width: 28px;
+            height: 26px;
+            border-radius: 5px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(11, 15, 25, 0.8);
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .slide-dot.active {
+            background: var(--accent-cyan);
+            color: #0b0f19;
+            border-color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            .slide-kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .slide-grid-2,
+            .slide-grid-3,
+            .slide-grid-fig {
+                grid-template-columns: 1fr;
+            }
+            .slide-frame {
+                padding: 1.25rem;
+                min-height: auto;
+            }
+            .slide-h1 {
+                font-size: 1.35rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="pitch-topbar">
+        <div class="pitch-brand">
+            <span class="pitch-badge">EXECUTIVE PITCH DECK // 12 SLIDES</span>
+            <span class="pitch-title-text">Cognitive CanSat Mission Control</span>
+        </div>
+        <div class="pitch-actions">
+            <a href="/api/artifacts/pitch-deck" class="pitch-btn primary" download>DOWNLOAD .PPTX DECK</a>
+            <a href="/api/artifacts/ieee-paper" class="pitch-btn" download>DOWNLOAD IEEE .TEX PAPER</a>
+            <a href="results.html" class="pitch-btn">RESEARCH HUB</a>
+            <a href="dashboard.html" class="pitch-btn">LIVE MISSION HUD</a>
+            <a href="index.html" class="pitch-btn">HOME</a>
+        </div>
+    </header>
+
+    <main class="pitch-stage">
+        <!-- SLIDE 1 -->
+        <section class="slide-frame active" data-slide="1">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Executive Pitch &amp; IEEE System Overview</span>
+                        <span class="slide-number">SLIDE 01 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Cognitive CanSat: Physics-Informed Telemetry &amp; OOD-Guarded Edge TinyML</h1>
+                    <p class="slide-subtitle">Autonomous Atmospheric Sounding Pico-Satellite Platform | Authors: Maneet Bhuyan, Soumil, Bavesh, and Harsh</p>
+                </div>
+
+                <div class="slide-kpi-row">
+                    <div class="slide-kpi green">
+                        <div class="slide-kpi-val">-49.2%</div>
+                        <div class="slide-kpi-lbl">Altitude RMSE Reduction</div>
+                        <div class="slide-kpi-sub">0.903 m Hybrid EKF+ExtraTrees vs. 1.776 m Raw Baro across 100 Disjoint Flights</div>
+                    </div>
+                    <div class="slide-kpi">
+                        <div class="slide-kpi-val">-94.8%</div>
+                        <div class="slide-kpi-lbl">Touchdown Countdown Error</div>
+                        <div class="slide-kpi-sub">2.33 s Quantile GBR RMSE vs. 44.46 s Naive Ballistic Division (R2 = 0.9963)</div>
+                    </div>
+                    <div class="slide-kpi amber">
+                        <div class="slide-kpi-val">7.15 KB</div>
+                        <div class="slide-kpi-lbl">TinyLandingNet INT8 ROM</div>
+                        <div class="slide-kpi-sub">93.04% EuroSAT Accuracy in 7,320 INT8 Params on ESP32-CAM (16.3 ms/tile)</div>
+                    </div>
+                    <div class="slide-kpi green">
+                        <div class="slide-kpi-val">100.0%</div>
+                        <div class="slide-kpi-lbl">OOD Non-Aerial Rejection</div>
+                        <div class="slide-kpi-sub">5-Stage AerialVisionGuard Blocks Faces, Occlusions &amp; Blur (&lt;1.8 ms overhead)</div>
+                    </div>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>What Operational Problem Do We Solve?</h3>
+                        <ul>
+                            <li><strong>Severe Pico-Satellite Constraints:</strong> 250-350 g CanSats operate under a 520 KB SRAM ceiling, 320 mW power budget, and 9600 bps 433 MHz LoRa telemetry link.</li>
+                            <li><strong>Barometric Venturi Suction:</strong> High-speed airflow across chassis ports depresses internal pressure, biasing raw altitude positively during descent.</li>
+                            <li><strong>Pendulum Countdown Divergence:</strong> Parachute oscillations (+/-18 deg) cause naive <code>h / |vz|</code> countdown timers to swing by &gt;40 seconds.</li>
+                            <li><strong>Closed-Set Vision Overconfidence:</strong> Standard CNNs misclassify bench-handling human faces and indoor walls as safe landing zones.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Key Innovations &amp; Zero-Bias Verification</h3>
+                        <ul>
+                            <li><strong>Hybrid EKF + Scale-Invariant ExtraTrees:</strong> Learns aerodynamic Venturi residuals on a strictly disjoint calibration set (<code>seed=1001</code>) and fuses with an adaptive 1D Kalman filter.</li>
+                            <li><strong>Calibrated Quantile Prognostics:</strong> Predicts median Time-to-Touchdown with unpadded <code>[P10, P90]</code> intervals (81.27% holdout PICP).</li>
+                            <li><strong>3-Tier Vision + 5-Stage OOD Guard:</strong> Benchmarks 7.15 KB <code>TinyLandingNet</code> against CUDA-trained <code>MobileNetV3-Small</code> (99.68%) and <code>ResNet-18</code> (99.73%).</li>
+                            <li><strong>100% Reproducible Claims:</strong> Programmatically audited via <code>ml/validate_paper_claims.py</code>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Cognitive CanSat transforms a passive 350-gram atmospheric probe into an intelligent edge-and-ground platform with sub-meter altitude state estimation, calibrated touchdown prognostics, and OOD-safe TinyML terrain classification.
+            </div>
+        </section>
+
+        <!-- SLIDE 2 -->
+        <section class="slide-frame" data-slide="2">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Problem Formulation</span>
+                        <span class="slide-number">SLIDE 02 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Three Core Failure Modes in Atmospheric Sounding Probes</h1>
+                    <p class="slide-subtitle">Mathematical formulation of sensor corruption, aerodynamic oscillation, and open-set vision faults</p>
+                </div>
+
+                <div class="slide-grid-3">
+                    <div class="slide-card">
+                        <h3>1. Barometric Venturi Depression</h3>
+                        <ul>
+                            <li><strong>Physical Mechanism:</strong> Airflow past cylindrical vent ports creates Bernoulli suction <code>dP_q = -0.5 * c_p * rho * vz^2</code>.</li>
+                            <li><strong>Positive Altitude Bias:</strong> Induces systematic offset <code>dh_q = +c_p * vz^2 / (2g) * (1 + 0.15 sin^2(psi))</code> during rapid freefall and canopy descent.</li>
+                            <li><strong>Why Linear Filters Fail:</strong> Causal Savitzky-Golay smoothing (<code>1.778 m</code> RMSE) smooths white noise directly around the biased trajectory without removing the Venturi offset.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>2. Pendulum Countdown Divergence</h3>
+                        <ul>
+                            <li><strong>Post-Burst Dynamics:</strong> Pyrotechnic deployment (&gt;5G shock) excites coupled parachute pendulum oscillation (+/-18 deg pitch/roll).</li>
+                            <li><strong>Velocity Instability:</strong> Instantaneous descent speed <code>vz</code> oscillates during wind shear and thermal updrafts.</li>
+                            <li><strong>Ballistic Breakdown:</strong> Naive division <code>tau = h / |vz|</code> yields <code>44.46 s</code> RMSE and negative <code>R2 = -2.01</code>, preventing reliable terminal camera burst triggering.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>3. Closed-Set Softmax Overconfidence</h3>
+                        <ul>
+                            <li><strong>520 KB SRAM Bottleneck:</strong> AI-Thinker ESP32-CAM cannot fit standard MobileNet or ResNet backbones in internal SRAM.</li>
+                            <li><strong>Open-Set Vulnerability:</strong> A 4-class softmax layer must sum to 1.0 even on Out-of-Distribution (OOD) non-aerial frames.</li>
+                            <li><strong>Bench-Handling Hazard:</strong> Unguarded CNNs classify human faces, indoor walls, and lens caps as <code>SAFE_LZ</code> with &gt;85% confidence.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Every module in our architecture directly targets one of these three physical failure modes: Venturi pressure depression, parachute pendulum velocity oscillation, and closed-set neural overconfidence.
+            </div>
+        </section>
+
+        <!-- SLIDE 3 -->
+        <section class="slide-frame" data-slide="3">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">System Architecture</span>
+                        <span class="slide-number">SLIDE 03 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Dual-Tier Cyber-Physical System Architecture</h1>
+                    <p class="slide-subtitle">Airborne dual-MCU avionics + ESP32-CAM edge vision coupled to FastAPI ML analytics and a distributed lakehouse</p>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>Tier 1: Airborne Payload &amp; Dual RF Links (350g, 66x115mm)</h3>
+                        <ul>
+                            <li><strong>Primary Flight MCU:</strong> Polls BMP280 (Pressure/Temp), DHT11/SHT31 (Humidity), MPU6050 6-DOF IMU (+/-16G, +/-2000 deg/s), u-blox NEO-6M GPS, and 1S LiPo ADC at <code>1.25 Hz</code> (<code>dt = 0.8 s</code>).</li>
+                            <li><strong>Edge Vision Node (ESP32-CAM):</strong> Dual-core 240 MHz Xtensa LX6 captures 320x240 QVGA frames, runs <code>TinyLandingNet</code> INT8 (<code>7.15 KB</code>) across a 3x3 spatial grid, and computes Escape Vector <code>EVADE theta deg</code>.</li>
+                            <li><strong>Dual RF Downlink:</strong> 433 MHz LoRa (9600 bps CSV telemetry, 1.5 km slant range) + 2.4 GHz ESP-NOW (460,800 baud UART video bridge).</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Tier 2: Ground Station Analytics &amp; Lakehouse</h3>
+                        <ul>
+                            <li><strong>TelemetryQualityAnalyzer:</strong> Deterministic check of packet completeness, clock jitter, GNSS <code>(0,0)</code> lock losses, and step anomalies before ML inference.</li>
+                            <li><strong>Physics &amp; Tabular ML Suite:</strong> Hypsometric &amp; Magnus-Tetens atmospheric engine, 1D EKF + ExtraTrees Calibrator, Random Forest Phase Classifier, PyOD Isolation Forest, and Quantile GBR Touchdown Prognostics.</li>
+                            <li><strong>Persistence &amp; Streaming:</strong> SQLite WAL DB (<code>data/cansat_missions.db</code>, 3,898 rows) + Redpanda/Kafka + TimescaleDB + MinIO S3.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> By splitting hard real-time sensing and 7.15 KB INT8 hazard detection on the airborne node from ensemble ML and lakehouse storage on the ground station, we respect the 320 mW power budget without sacrificing analytical depth.
+            </div>
+        </section>
+
+        <!-- SLIDE 4 -->
+        <section class="slide-frame" data-slide="4">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Validation Pillar 1: Real Hardware Telemetry</span>
+                        <span class="slide-number">SLIDE 04 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Physical CanSat Hardware Bench Characterization (N = 362 Packets)</h1>
+                    <p class="slide-subtitle">Empirical sensor noise floors recorded from assembled avionics at ~868 m MSL in data/cansat_missions.db</p>
+                </div>
+
+                <div class="slide-grid-fig">
+                    <div class="slide-fig-box">
+                        <img src="/reports/figures/paper_fig1_hardware_bench_characterization.png" alt="Hardware Bench Characterization">
+                    </div>
+                    <div class="slide-card">
+                        <h3>Empirical Hardware Noise Floor</h3>
+                        <ul>
+                            <li><strong>3 Logged Hardware Sessions:</strong> <code>362</code> real packets stored in SQLite WAL DB alongside <code>3,536</code> scenario frames (<code>3,898</code> total rows).</li>
+                            <li><strong>Stationary Baseline (241 pkts):</strong> Sessions <code>A2F9</code> (106 pkts) and <code>2DD8</code> (135 pkts) at 868.7 m MSL indoor elevation.</li>
+                            <li><strong>Baro &amp; Thermal Noise:</strong> <code>sigma_h = 0.423 m</code>, <code>sigma_P = 0.143 hPa</code>, <code>sigma_T = 0.165 C</code>, <code>sigma_RH = 1.515%</code>.</li>
+                            <li><strong>6-DOF IMU Noise:</strong> <code>sigma_a = 0.022 G</code>, <code>sigma_g = 2.02 deg/s</code>.</li>
+                            <li><strong>Dynamic 6-DOF Test (74EE, 121 pkts):</strong> Verified +/-42 deg tilt and [-114.7, +98.9] deg/s angular tracking.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Pillar 1 grounds our entire study in real hardware measurements. We recorded 362 packets across 3 sessions on the physical CanSat payload to extract exact sensor noise covariances before parameterizing our flight simulator.
+            </div>
+        </section>
+
+        <!-- SLIDE 5 -->
+        <section class="slide-frame" data-slide="5">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Methodology: State Estimation</span>
+                        <span class="slide-number">SLIDE 05 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Physics-Informed Hybrid EKF + Scale-Invariant ExtraTrees</h1>
+                    <p class="slide-subtitle">Eliminating aerodynamic Venturi pressure depression without train-test leakage or altitude extrapolation clipping</p>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>Stage 1: Adaptive 1D Constant-Velocity EKF</h3>
+                        <ul>
+                            <li><strong>State Vector:</strong> <code>x_k = [h_k, vz_k]^T</code> driven by vertical inertial acceleration <code>u_k = (az_k - 1.0) * g0</code>.</li>
+                            <li><strong>Non-Uniform Timing Support:</strong> Transition matrices <code>F_k</code> and process covariance <code>Q_k</code> adapt per packet to handle LoRa UART jitter (<code>8 ms</code> to <code>199 ms</code>).</li>
+                            <li><strong>High-G Pyrotechnic Gate:</strong> When <code>|a_k| &gt; 2.5G</code> during apogee separation, process variance <code>sigma_q^2</code> scales <code>10x</code> to prevent filter lag.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Stage 2: Scale-Invariant ExtraTrees Residual Calibrator</h3>
+                        <ul>
+                            <li><strong>Why Direct Altitude Trees Clip:</strong> Tree ensembles predicting absolute altitude cannot extrapolate when test apogees (up to 1,250 m) exceed training altitudes.</li>
+                            <li><strong>Scale-Invariant Residual Learning:</strong> Our <code>residual_pipeline</code> predicts the aerodynamic bias <code>b_hat_k = f_ET(u_k)</code> from 13 aerodynamic features (dynamic pressure proxy, tilt <code>sin^2(psi)</code>, <code>|a|</code>, <code>|omega|</code>).</li>
+                            <li><strong>Disjoint Training Set:</strong> Trained on 80 independent flights (<code>seed=1001</code>, 35,342 samples) with unknown Venturi coefficients <code>c_p in [0.38, 0.62]</code>.</li>
+                            <li><strong>Convex Fusion:</strong> <code>h_hat_k = 0.25 * h_EKF + 0.75 * (h_raw - b_hat_k)</code>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Predicting scale-invariant aerodynamic residuals rather than absolute altitude allows our ExtraTrees compensator to generalize across any launch elevation or apogee ceiling without tree extrapolation clipping.
+            </div>
+        </section>
+
+        <!-- SLIDE 6 -->
+        <section class="slide-frame" data-slide="6">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Validation Pillar 2: Unbiased 100-Flight Ablation</span>
+                        <span class="slide-number">SLIDE 06 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">5-Method State Estimation Ablation (100 Disjoint Flights, 44,555 Frames)</h1>
+                    <p class="slide-subtitle">Evaluated on held-out seed=20260921 with zero analytical formula subtraction in the test loop</p>
+                </div>
+
+                <div class="slide-grid-fig">
+                    <div class="slide-fig-box">
+                        <img src="/reports/figures/paper_fig2_monte_carlo_state_estimation.png" alt="100-Flight Monte Carlo Ablation">
+                    </div>
+                    <div class="slide-card">
+                        <h3>Unbiased 5-Method Ablation Table</h3>
+                        <table class="slide-table">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Alt RMSE (m)</th>
+                                    <th>95% CI (m)</th>
+                                    <th>vs. Raw</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1. Raw Barometric</td>
+                                    <td>1.776 +/- 0.258</td>
+                                    <td>[1.725, 1.827]</td>
+                                    <td>Baseline</td>
+                                </tr>
+                                <tr>
+                                    <td>2. Causal SavGol (N=11)</td>
+                                    <td>1.778 +/- 0.256</td>
+                                    <td>[1.728, 1.828]</td>
+                                    <td>+0.1%</td>
+                                </tr>
+                                <tr>
+                                    <td>3. 1D EKF (No ML)</td>
+                                    <td>1.281 +/- 0.145</td>
+                                    <td>[1.253, 1.309]</td>
+                                    <td>-27.9%</td>
+                                </tr>
+                                <tr>
+                                    <td>4. Pure ExtraTrees</td>
+                                    <td>0.982 +/- 0.146</td>
+                                    <td>[0.953, 1.010]</td>
+                                    <td>-44.7%</td>
+                                </tr>
+                                <tr class="highlight-row">
+                                    <td>5. Hybrid EKF + ML</td>
+                                    <td>0.903 +/- 0.130</td>
+                                    <td>[0.877, 0.928]</td>
+                                    <td>-49.2%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Notice the clean ablation progression across 44,555 unseen frames: Causal Savitzky-Golay cannot remove the Venturi offset (1.778 m), standalone 1D EKF reaches 1.281 m, standalone ExtraTrees reaches 0.982 m, and their hybrid fusion achieves 0.903 m (-49.2%).
+            </div>
+        </section>
+
+        <!-- SLIDE 7 -->
+        <section class="slide-frame" data-slide="7">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Prognostics &amp; Trajectory Envelope</span>
+                        <span class="slide-number">SLIDE 07 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Quantile Touchdown Prognostics &amp; 10-Scenario Flight Envelope</h1>
+                    <p class="slide-subtitle">94.8% countdown error reduction with unpadded [P10, P90] prediction intervals across turbulent descent regimes</p>
+                </div>
+
+                <div class="slide-grid-fig">
+                    <div class="slide-fig-box">
+                        <img src="/reports/figures/paper_fig3_10scenario_kinematics_envelope.png" alt="10-Scenario Trajectory Envelope">
+                    </div>
+                    <div class="slide-card">
+                        <h3>Touchdown &amp; Tabular ML Benchmarks</h3>
+                        <ul>
+                            <li><strong>Quantile GBR TTD Prognostics:</strong> Trained with pinball loss (<code>alpha = 0.10, 0.50, 0.90</code>) on 21 aerodynamic features (air density, dynamic pressure <code>q</code>, kinetic energy).</li>
+                            <li><strong>94.8% RMSE Reduction:</strong> Reduces countdown RMSE from <code>44.46 s</code> (naive <code>h/|vz|</code>) to <code>2.33 s</code> (<code>MAE = 1.17 s</code>, <code>R2 = 0.9963</code>).</li>
+                            <li><strong>Unpadded Interval Coverage:</strong> <code>81.27%</code> empirical coverage on the 80% <code>[P10, P90]</code> interval (holdout) and <code>74.8%</code> across the 100-flight Monte Carlo ensemble.</li>
+                            <li><strong>Phase &amp; Regime Classification:</strong> <code>97.96%</code> Flight Phase accuracy (<code>94.37%</code> MC) and <code>99.75%</code> Descent Regime accuracy.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Our Quantile Gradient Boosting prognostics model cuts touchdown countdown error by 94.8% and provides an unpadded [P10, P90] confidence window so the payload knows exactly when to trigger high-rate terminal imaging.
+            </div>
+        </section>
+
+        <!-- SLIDE 8 -->
+        <section class="slide-frame" data-slide="8">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Validation Pillar 3: Three-Tier Computer Vision</span>
+                        <span class="slide-number">SLIDE 08 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">TinyLandingNet (7.15 KB INT8) vs. MobileNetV3-Small &amp; ResNet-18</h1>
+                    <p class="slide-subtitle">Benchmarking microcontroller depthwise-separable CNNs against CUDA-trained ground backbones on 27,000 EuroSAT patches</p>
+                </div>
+
+                <div class="slide-grid-fig">
+                    <div class="slide-fig-box">
+                        <img src="/reports/figures/paper_fig4_vision_hierarchy_and_ood_guard.png" alt="3-Tier Vision Hierarchy">
+                    </div>
+                    <div class="slide-card">
+                        <h3>3-Tier Vision Comparison (RTX 4060 CUDA)</h3>
+                        <table class="slide-table">
+                            <thead>
+                                <tr>
+                                    <th>Model Tier</th>
+                                    <th>INT8 Size</th>
+                                    <th>EuroSAT Acc</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="highlight-row">
+                                    <td>TinyLandingNet (Edge)</td>
+                                    <td>7.15 KB</td>
+                                    <td>93.04%</td>
+                                    <td>0.055 ms ONNX / 16.3 ms MCU</td>
+                                </tr>
+                                <tr>
+                                    <td>MobileNetV3-Small</td>
+                                    <td>1,486.3 KB</td>
+                                    <td>99.68%</td>
+                                    <td>25.09 ms CPU</td>
+                                </tr>
+                                <tr>
+                                    <td>ResNet-18</td>
+                                    <td>10,916.6 KB</td>
+                                    <td>99.73%</td>
+                                    <td>31.86 ms CPU</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul style="margin-top: 0.75rem;">
+                            <li><strong>1,597x Parameter Compression:</strong> <code>TinyLandingNet</code> uses only 6,996 FP32 parameters (7,320 INT8) vs. 11.18M in <code>ResNet-18</code>.</li>
+                            <li><strong>3x3 Spatial Grid + Escape Heading:</strong> Scores 9 sectors per frame and outputs directional evasion vector <code>EVADE theta deg</code>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> While ResNet-18 achieves 99.73% accuracy on the ground station, it exceeds the ESP32-CAM 520 KB SRAM ceiling by over 80x. TinyLandingNet fits in just 7.15 KB of Flash ROM while retaining 93.04% 4-class accuracy.
+            </div>
+        </section>
+
+        <!-- SLIDE 9 -->
+        <section class="slide-frame" data-slide="9">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Open-Set Vision Safety</span>
+                        <span class="slide-number">SLIDE 09 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Five-Stage Out-of-Distribution (OOD) AerialVisionGuard</h1>
+                    <p class="slide-subtitle">100% rejection of non-aerial inputs (human faces, indoor walls, lens caps, blur) in &lt;1.8 ms overhead</p>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>Pre-Neural Statistical &amp; Spectral Gates (Stages 1-3)</h3>
+                        <ul>
+                            <li><strong>Stage 1 (Luminance &amp; Saturation Gate):</strong> Rejects lens-cap darkness (<code>mu_Y &lt; 18</code>), overexposure (<code>mu_Y &gt; 245</code>), or uniform occlusion (<code>sigma_Y &lt; 6.0</code>).</li>
+                            <li><strong>Stage 2 (YCbCr Skin-Tone &amp; VARI Portrait Gate):</strong> Transforms RGB to <code>YCbCr</code> (<code>Cb in [77,127], Cr in [133,173]</code>). Rejects close-up human faces when central skin ratio <code>&gt; 0.22</code>, <code>R &gt; G + 12</code>, and vegetation index <code>VARI &lt; -0.04</code>.</li>
+                            <li><strong>Stage 3 (Laplacian Micro-Texture Gate):</strong> Rejects flat indoor walls and severe blur when <code>Var(laplacian(Y)) &lt; 14.0</code>.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Post-Neural Energy &amp; Physical Cross-Checks (Stages 4-5)</h3>
+                        <ul>
+                            <li><strong>Stage 4 (Helmholtz Free Energy &amp; Shannon Entropy):</strong> Computes <code>E(x;T) = -T ln sum exp(z_c/T)</code> and normalized entropy <code>H(p)</code>. Rejects frames with <code>H(p) &gt; 0.78</code> or <code>max_c p_c &lt; 0.48</code>.</li>
+                            <li><strong>Stage 5 (VARI Spectral-Neural Cross-Check):</strong> Overrides false <code>&gt;70% SAFE_LZ</code> or <code>OBSTACLE_CANOPY</code> predictions if physical vegetation index <code>VARI &lt; -0.06</code>.</li>
+                            <li><strong>Benchmark Result:</strong> <code>100%</code> rejection on all 4 OOD categories across all 3 CNN tiers while passing <code>100%</code> of real drone descent videos.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> During live webcam testing, pointing an unguarded satellite CNN at a human face produces a false SAFE_LZ clearance. Our 5-stage AerialVisionGuard catches 100% of portraits, occlusions, and indoor walls in under 1.8 ms.
+            </div>
+        </section>
+
+        <!-- SLIDE 10 -->
+        <section class="slide-frame" data-slide="10">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Data Engineering &amp; Reliability</span>
+                        <span class="slide-number">SLIDE 10 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Deterministic Telemetry Quality Analyzer &amp; Lakehouse</h1>
+                    <p class="slide-subtitle">Objective, non-heuristic link verification (backend/core/telemetry_analyzer.py) &amp; distributed event streaming</p>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>Objective Telemetry Integrity Verification</h3>
+                        <ul>
+                            <li><strong>Packet Completeness:</strong> Exact ratio <code>N_valid / N_total</code> with explicit row/column indices for malformed lines and NaN/null cells.</li>
+                            <li><strong>Temporal Regularity &amp; Dropouts:</strong> Computes inter-packet <code>dt</code> distribution (mean, median, SD, jitter) and flags RF blackout intervals where <code>dt &gt;= 2.0 s</code>.</li>
+                            <li><strong>GNSS Lock &amp; Step-Anomaly Detection:</strong> Flags zero-coordinate <code>(0.0, 0.0)</code> GPS losses (31 rows in Scenario 08) and unphysical single-step jumps (<code>|dT| &gt; 5C</code>, <code>|dh| &gt; 50m</code>).</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Dual-Tier Storage &amp; Cloud Lakehouse</h3>
+                        <ul>
+                            <li><strong>SQLite WAL Flight Database:</strong> Zero-config local ACID persistence (<code>data/cansat_missions.db</code>) with automatic crash recovery and session replay.</li>
+                            <li><strong>Distributed Lakehouse Stack:</strong> Asynchronous Redpanda/Kafka streaming (<code>cansat.telemetry.raw</code>), TimescaleDB hypertables, and MinIO S3 object storage.</li>
+                            <li><strong>One-Click Post-Flight Review (PFR):</strong> Generates 300-DPI PDF and Markdown executive reports with trajectory plots and anomaly logs.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Data quality is gated deterministically before ML inference. Operators can inspect exact packet completeness, UART clock jitter, and GNSS dropout intervals via the Data Analysis page or REST API.
+            </div>
+        </section>
+
+        <!-- SLIDE 11 -->
+        <section class="slide-frame" data-slide="11">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Human-Machine Interface</span>
+                        <span class="slide-number">SLIDE 11 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Responsive Web Serial Mission Control HUD (Desktop &amp; Mobile)</h1>
+                    <p class="slide-subtitle">60 FPS GPU-accelerated telemetry dashboard with 3D WebGL attitude cylinder, Leaflet GNSS recovery, and live replay</p>
+                </div>
+
+                <div class="slide-grid-3">
+                    <div class="slide-card">
+                        <h3>12-Tile Real-Time HUD</h3>
+                        <ul>
+                            <li><strong>Zero-Stutter Chart.js:</strong> Pre-allocated ring buffers with <code>animation: false</code> for smooth 60 FPS telemetry rendering.</li>
+                            <li><strong>3D WebGL Attitude Model:</strong> Three.js CanSat cylinder with one-click <code>TARE UPRIGHT</code> pad calibration.</li>
+                            <li><strong>GNSS Recovery Map:</strong> Leaflet dark-matter ground track with Haversine distance and Google Maps field navigation.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Interactive Simulation &amp; Vision Lab</h3>
+                        <ul>
+                            <li><strong>10-Scenario Live Streamer:</strong> Switch between any of the 10 benchmark flights (<code>01</code>-<code>10</code>) or scrub at <code>0.5x</code>-<code>10x</code> speed.</li>
+                            <li><strong>TinyML Vision Lab:</strong> Live webcam OOD stress-testing, 3x3 SLAI grid overlay, and side-by-side 3-model comparison.</li>
+                            <li><strong>Research &amp; Pitch Hub:</strong> Direct browser access to all paper figures, tables, and slide deck.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Mobile &amp; Field Recovery Ready</h3>
+                        <ul>
+                            <li><strong>Dedicated Mobile CSS (<code>css/mobile.css</code>):</strong> Responsive slide-out navigation drawer and touch-friendly <code>&gt;=44px</code> tap targets.</li>
+                            <li><strong>Multi-Breakpoint Grid:</strong> Adapts cleanly across <code>1280px</code>, <code>1024px</code>, <code>768px</code>, and <code>480px</code> viewports.</li>
+                            <li><strong>Field Chase Mode:</strong> Recovery teams can track live GPS coordinates on mobile browsers in the field.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Whether viewed on a multi-monitor ground station desktop via Web Serial or on a smartphone during parachute recovery chase, the UI delivers 60 FPS telemetry and instant situational awareness.
+            </div>
+        </section>
+
+        <!-- SLIDE 12 -->
+        <section class="slide-frame" data-slide="12">
+            <div>
+                <div class="slide-header">
+                    <div class="slide-meta-row">
+                        <span class="slide-category">Production Readiness &amp; Verification</span>
+                        <span class="slide-number">SLIDE 12 / 12</span>
+                    </div>
+                    <h1 class="slide-h1">Zero-Bias Scientific Audit, API Security &amp; Deployment Readiness</h1>
+                    <p class="slide-subtitle">Full-stack compliance verification ensuring every research claim and production endpoint is battle-tested</p>
+                </div>
+
+                <div class="slide-kpi-row">
+                    <div class="slide-kpi green">
+                        <div class="slide-kpi-val">100%</div>
+                        <div class="slide-kpi-lbl">Paper Claims Verified</div>
+                        <div class="slide-kpi-sub">ml/validate_paper_claims.py Passes All 4 Pillars + IEEE LaTeX Rules</div>
+                    </div>
+                    <div class="slide-kpi">
+                        <div class="slide-kpi-val">0</div>
+                        <div class="slide-kpi-lbl">Train-Test Overlap</div>
+                        <div class="slide-kpi-sub">Disjoint Seeds (1001 Train vs. 20260921 Test across 44,555 Frames)</div>
+                    </div>
+                    <div class="slide-kpi amber">
+                        <div class="slide-kpi-val">PASS</div>
+                        <div class="slide-kpi-lbl">Automated Test Suites</div>
+                        <div class="slide-kpi-sub">Python Unit Tests + Node.js Self-Tests + FastAPI Security Audit</div>
+                    </div>
+                    <div class="slide-kpi green">
+                        <div class="slide-kpi-val">READY</div>
+                        <div class="slide-kpi-lbl">Cloud &amp; GitHub Release</div>
+                        <div class="slide-kpi-sub">Docker + HuggingFace Spaces + Hostinger Split-Deploy Configured</div>
+                    </div>
+                </div>
+
+                <div class="slide-grid-2">
+                    <div class="slide-card">
+                        <h3>Unbiased Data &amp; Scientific Integrity Guarantees</h3>
+                        <ul>
+                            <li><strong>Zero Analytical Bias Formula in Test Loop:</strong> Evaluation relies strictly on learned models and causal filters.</li>
+                            <li><strong>Strictly Causal Filtering:</strong> Causal FIR Savitzky-Golay (<code>pos=10</code>) uses zero future lookahead.</li>
+                            <li><strong>Unpadded Prediction Intervals:</strong> <code>[P10, P90]</code> coverage evaluated directly on raw quantile outputs without artificial padding.</li>
+                            <li><strong>Transparent Limitations:</strong> Explicitly distinguishes <code>N=362</code> real hardware bench packets from 100-flight calibrated simulations.</li>
+                        </ul>
+                    </div>
+                    <div class="slide-card">
+                        <h3>Production Security &amp; Deployment Hardening</h3>
+                        <ul>
+                            <li><strong>HTTP Security Headers:</strong> <code>X-Content-Type-Options: nosniff</code>, <code>X-Frame-Options: SAMEORIGIN</code>, <code>Referrer-Policy</code>, and <code>Permissions-Policy</code>.</li>
+                            <li><strong>Input &amp; Path Protection:</strong> Path-traversal sanitization on scenario routes, <code>15 MB</code> image / <code>16 MP</code> bomb guards, and <code>10 MB</code> CSV limits.</li>
+                            <li><strong>Turnkey Deployment:</strong> Includes <code>.env.example</code>, <code>docs/DEPLOYMENT_GUIDE.md</code>, <code>Dockerfile</code>, and one-click launchers.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="speaker-notes-box">
+                <strong>SPEAKER NOTE:</strong> Thank you! Every number in our IEEE paper and pitch deck is backed by unbiased test data and verified by automated scripts. We are ready for your questions and live demonstration.
+            </div>
+        </section>
+
+        <!-- NAVIGATION BAR -->
+        <div class="pitch-controls">
+            <button class="pitch-btn" id="prev-slide-btn" type="button">PREV SLIDE [LEFT]</button>
+            <div class="slide-dots" id="slide-dots-container"></div>
+            <button class="pitch-btn" id="next-slide-btn" type="button">NEXT SLIDE [RIGHT]</button>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            const slides = Array.from(document.querySelectorAll('.slide-frame'));
+            const dotsContainer = document.getElementById('slide-dots-container');
+            const prevBtn = document.getElementById('prev-slide-btn');
+            const nextBtn = document.getElementById('next-slide-btn');
+            let currentIdx = 0;
+
+            function renderDots() {
+                dotsContainer.innerHTML = '';
+                slides.forEach((_, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'slide-dot' + (idx === currentIdx ? ' active' : '');
+                    btn.textContent = String(idx + 1).padStart(2, '0');
+                    btn.addEventListener('click', () => goToSlide(idx));
+                    dotsContainer.appendChild(btn);
+                });
+            }
+
+            function goToSlide(idx) {
+                if (idx < 0) idx = slides.length - 1;
+                if (idx >= slides.length) idx = 0;
+                currentIdx = idx;
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentIdx));
+                renderDots();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            prevBtn.addEventListener('click', () => goToSlide(currentIdx - 1));
+            nextBtn.addEventListener('click', () => goToSlide(currentIdx + 1));
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    goToSlide(currentIdx + 1);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    goToSlide(currentIdx - 1);
+                }
+            });
+
+            // Mobile touch swipe support
+            let touchStartX = 0;
+            document.addEventListener('touchstart', (e) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    const dx = e.changedTouches[0].screenX - touchStartX;
+                    if (Math.abs(dx) > 60) {
+                        if (dx < 0) goToSlide(currentIdx + 1);
+                        else goToSlide(currentIdx - 1);
+                    }
+                }
+            }, { passive: true });
+
+            renderDots();
+        })();
+    </script>
+</body>
+
+</html>

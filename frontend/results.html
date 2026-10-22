@@ -187,6 +187,7 @@
       <li><a href="models.html" class="nav-link">ML Models</a></li>
       <li><a href="analysis.html" class="nav-link">Flight Analysis</a></li>
       <li><a href="results.html" class="nav-link active">Research &amp; Results</a></li>
+      <li><a href="pitch.html" class="nav-link">Pitch Deck</a></li>
     </ul>
     <div class="nav-actions">
       <div class="system-status-badge">
@@ -213,7 +214,8 @@
       </p>
       <div class="hero-cta-group">
         <a href="#benchmark-table-section" class="btn-resend-pill">View benchmarks</a>
-        <a href="#artifact-hub-section" class="btn-resend-link">Artifact hub &rsaquo;</a>
+        <a href="pitch.html" class="btn-resend-pill" style="background: rgba(6, 182, 212, 0.14); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">Launch Pitch Deck</a>
+        <a href="/api/artifacts/pitch-deck" class="btn-resend-link" download>Download .PPTX &rsaquo;</a>
       </div>
     </header>
 
@@ -271,10 +273,10 @@
               <td>100% Deterministic</td>
             </tr>
             <tr>
-              <td><strong>Altitude State Estimation RMSE (100-Flight MC)</strong></td>
-              <td>1.810 &plusmn; 0.085 m (Raw Barometer with Bernoulli Bias)</td>
-              <td>1.078 &plusmn; 0.046 m (Hybrid Kalman + ExtraTrees ML)</td>
-              <td>40.4% Error Reduction (95% CI: [1.069, 1.087] m)</td>
+              <td><strong>Altitude State Estimation RMSE (100-Flight Disjoint MC)</strong></td>
+              <td>1.776 &plusmn; 0.258 m (Raw Barometer with Venturi Bias)</td>
+              <td>0.903 &plusmn; 0.130 m (Hybrid EKF + ExtraTrees ML)</td>
+              <td>49.2% Error Reduction (95% CI: [0.877, 0.928] m)</td>
             </tr>
             <tr>
               <td><strong>Time-to-Touchdown Countdown RMSE</strong></td>
@@ -529,15 +531,34 @@
         <!-- Research Paper -->
         <div class="artifact-card">
           <div>
-            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">Preprint PDF</div>
-            <h3 class="card-title">Research Paper Preprint</h3>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">IEEEtran LaTeX</div>
+            <h3 class="card-title">IEEE Conference Paper</h3>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
-              Complete academic paper with mathematical kinematics derivations, ablation studies, and flight results.
+              Complete compilable IEEEtran LaTeX source with mathematical kinematics derivations, 5-method ablation studies, and OOD proofs.
             </p>
           </div>
-          <a href="https://github.com/Maneet-Bhuyan/Cansat" target="_blank" class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem; background: #ffffff; color: #000000; border-color: #ffffff;">
-            Read Paper PDF
+          <a href="/api/artifacts/ieee-paper" download class="btn-resend-pill" style="justify-content: center; font-size: 0.8rem; background: #ffffff; color: #000000; border-color: #ffffff;">
+            Download IEEE .TEX
           </a>
+        </div>
+
+        <!-- Pitch Deck -->
+        <div class="artifact-card">
+          <div>
+            <div class="card-badge" style="width: fit-content; margin-bottom: 0.75rem;">12-Slide PPTX + Web</div>
+            <h3 class="card-title">Executive Pitch Deck</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.75rem 0 1.25rem 0; line-height: 1.5;">
+              16:9 PowerPoint presentation and interactive browser slide deck with embedded 300-DPI figures and speaker notes.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="pitch.html" class="btn-resend-pill" style="flex: 1; justify-content: center; font-size: 0.78rem;">
+              Web Deck
+            </a>
+            <a href="/api/artifacts/pitch-deck" download class="btn-resend-pill" style="flex: 1; justify-content: center; font-size: 0.78rem; background: #10b981; color: #000000; border-color: #10b981;">
+              .PPTX File
+            </a>
+          </div>
         </div>
       </div>
     </section>

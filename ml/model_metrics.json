@@ -88,7 +88,7 @@
     "rmse_meters": 52.529637143666875
   },
   "sensor_calibrator": {
-    "model_type": "ExtraTreesRegressor",
+    "model_type": "ExtraTreesRegressor (Scale-Invariant Residual f_ET)",
     "features": [
       "raw_altitude",
       "pressure",
@@ -104,16 +104,31 @@
       "gyroMag",
       "vSpd_raw"
     ],
+    "residual_features": [
+      "pressure",
+      "temp",
+      "humidity",
+      "ax",
+      "ay",
+      "az",
+      "accelMag",
+      "gx",
+      "gy",
+      "gz",
+      "gyroMag",
+      "vSpd_raw",
+      "dynamic_pressure_proxy"
+    ],
     "targets": [
       "calibrated_altitude",
       "calibrated_vspd"
     ],
     "altitude_r2": 1.0,
-    "altitude_rmse_m": 0.959,
-    "altitude_mae_m": 0.605,
-    "vspd_r2": 0.9407,
-    "vspd_rmse_mps": 1.204,
-    "vspd_mae_mps": 0.61
+    "altitude_rmse_m": 0.962,
+    "altitude_mae_m": 0.767,
+    "vspd_r2": 0.9915,
+    "vspd_rmse_mps": 0.451,
+    "vspd_mae_mps": 0.352
   },
   "tinyml_landing_safety_model": {
     "architecture": "TinyLandingNet (Depthwise Separable CNN)",
@@ -266,7 +281,7 @@
       "int8_parameters": 7320,
       "flash_rom_kb": 7.15,
       "test_accuracy_pct": 93.04,
-      "val_accuracy_pct": 93.80,
+      "val_accuracy_pct": 93.8,
       "macro_f1_pct": 93.21,
       "cpu_latency_ms": 2.55,
       "onnx_latency_ms": 0.055,

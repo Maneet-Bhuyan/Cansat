@@ -132,15 +132,17 @@ def generate_fig2_monte_carlo() -> str:
 
     se = mc["state_estimation_comparison"]
     methods = [
-        "Raw Barometric\nAltimetry",
-        "Adaptive 1D\nKalman Filter",
-        "Savitzky-Golay\nFilter (N=11)",
-        "Hybrid Kalman +\nExtraTrees ML",
+        "Raw Baro\nAltimetry",
+        "Causal SavGol\n(N=11, p=2)",
+        "1D Adaptive\nEKF (No ML)",
+        "Pure ExtraTrees\nML (No EKF)",
+        "Hybrid EKF +\nExtraTrees ML",
     ]
     keys = [
         "raw_barometric_altimetry",
-        "adaptive_1d_kalman_filter",
         "savitzky_golay_filter",
+        "adaptive_1d_kalman_filter",
+        "pure_extratrees_ml",
         "hybrid_kalman_extratrees_calibrator",
     ]
     alt_means = [se[k]["altitude_rmse_m"]["mean"] for k in keys]
@@ -148,35 +150,35 @@ def generate_fig2_monte_carlo() -> str:
     vz_means = [se[k]["velocity_rmse_mps"]["mean"] for k in keys]
     vz_stds = [se[k]["velocity_rmse_mps"]["std"] for k in keys]
 
-    fig, axs = plt.subplots(1, 2, figsize=(12.5, 5.2), dpi=300)
+    fig, axs = plt.subplots(1, 2, figsize=(13.2, 5.2), dpi=300)
     fig.suptitle(
-        "100-Flight Monte Carlo State Estimation Benchmark (Hardware-Calibrated Noise + Bernoulli Bias)",
-        fontsize=13,
+        "100-Flight Unbiased Monte Carlo State Estimation Ablation (Disjoint Seed=20260921, N=44,555 Frames)",
+        fontsize=12.5,
         fontweight="bold",
         color="#0f2038",
         y=0.98,
     )
 
-    colors = ["#6c757d", "#457b9d", "#2a9d8f", "#1d3557"]
+    colors = ["#6c757d", "#8d99ae", "#457b9d", "#2a9d8f", "#1d3557"]
     x = np.arange(len(methods))
 
     bars1 = axs[0].bar(x, alt_means, yerr=alt_stds, capsize=5, color=colors, width=0.55, edgecolor="#0f2038")
     axs[0].set_xticks(x)
-    axs[0].set_xticklabels(methods, fontweight="bold", fontsize=9)
+    axs[0].set_xticklabels(methods, fontweight="bold", fontsize=8.5)
     axs[0].set_ylabel("Altitude RMSE (m) [Mean +- SD, N=100]")
     axs[0].set_title("A. Vertical Position Estimation Error (m)", fontweight="bold")
     for b, m in zip(bars1, alt_means):
-        axs[0].text(b.get_x() + b.get_width() / 2, b.get_height() + 0.06, f"{m:.2f}m", ha="center", fontweight="bold", fontsize=9)
+        axs[0].text(b.get_x() + b.get_width() / 2, b.get_height() + 0.14, f"{m:.3f}m", ha="center", fontweight="bold", fontsize=8.5)
     axs[0].set_ylim(0, max(alt_means) + max(alt_stds) + 0.45)
 
     bars2 = axs[1].bar(x, vz_means, yerr=vz_stds, capsize=5, color=colors, width=0.55, edgecolor="#0f2038")
     axs[1].set_xticks(x)
-    axs[1].set_xticklabels(methods, fontweight="bold", fontsize=9)
+    axs[1].set_xticklabels(methods, fontweight="bold", fontsize=8.5)
     axs[1].set_ylabel("Vertical Velocity RMSE (m/s) [Mean +- SD, N=100]")
     axs[1].set_title("B. Vertical Velocity Reconstruction Error (m/s)", fontweight="bold")
     for b, m in zip(bars2, vz_means):
-        axs[1].text(b.get_x() + b.get_width() / 2, b.get_height() + 0.08, f"{m:.2f}m/s", ha="center", fontweight="bold", fontsize=9)
-    axs[1].set_ylim(0, max(vz_means) + max(vz_stds) + 0.6)
+        axs[1].text(b.get_x() + b.get_width() / 2, b.get_height() + 0.12, f"{m:.3f}m/s", ha="center", fontweight="bold", fontsize=8.5)
+    axs[1].set_ylim(0, max(vz_means) + max(vz_stds) + 0.55)
 
     plt.tight_layout(rect=[0, 0, 1, 0.93])
     out_path = os.path.join(FIG_DIR, "paper_fig2_monte_carlo_state_estimation.png")

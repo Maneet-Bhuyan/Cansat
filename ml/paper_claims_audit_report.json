@@ -1,0 +1,39 @@
+{
+  "overall_status": "ALL_CLAIMS_VERIFIED_UNBIASED",
+  "pillar_1_hardware_bench": {
+    "status": "PASS",
+    "hardware_sessions_verified": 3,
+    "hardware_packets_verified": 362,
+    "total_sqlite_packets": 3898
+  },
+  "pillar_2_3_monte_carlo_and_tabular_ml": {
+    "status": "PASS",
+    "monte_carlo_flights": 100,
+    "monte_carlo_frames": 44555,
+    "raw_baro_rmse_m": 1.7763,
+    "causal_savgol_rmse_m": 1.7782,
+    "ekf_1d_rmse_m": 1.2813,
+    "pure_extratrees_rmse_m": 0.9818,
+    "hybrid_ekf_ml_rmse_m": 0.9026,
+    "hybrid_rmse_reduction_pct": 49.2,
+    "ttd_benchmark_rmse_s": 2.33,
+    "ttd_unpadded_picp_pct": 81.27,
+    "mc_generalized_unpadded_picp_pct": 92.3766
+  },
+  "pillar_4_vision_hierarchy_and_ood_guard": {
+    "status": "PASS",
+    "tier1_tinylandingnet_params": 6996,
+    "tier2_mobilenetv3_small_params": 1521956,
+    "tier3_resnet18_params": 11178564,
+    "ood_skin_portrait_rejected": "100/100",
+    "ood_indoor_wall_rejected": "100/100",
+    "ood_total_rejection_pct": 100.0,
+    "mean_guard_latency_ms": 1.758
+  },
+  "ieee_latex_compliance": {
+    "status": "PASS",
+    "banned_words_found": 0,
+    "em_dashes_found": 0,
+    "latex_lines": 442
+  }
+}

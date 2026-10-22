@@ -14,7 +14,7 @@ import math
 import json
 import time
 import warnings
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from collections import deque
 import numpy as np
 import pandas as pd
@@ -25,12 +25,13 @@ import zipfile
 import base64
 from PIL import Image
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+import re
 
 from backend.core.telemetry_analyzer import TelemetryQualityAnalyzer
 from backend.core import database
@@ -45,6 +46,22 @@ warnings.filterwarnings("ignore", category=UserWarning)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, "ml", "saved_models")
 METRICS_PATH = os.path.join(BASE_DIR, "ml", "model_metrics.json")
+TEST_CASES_REALPATH = os.path.realpath(os.path.join(BASE_DIR, "test_cases"))
+
+def _resolve_safe_scenario_csv(scenario_name: str) -> Tuple[str, str]:
+    """Sanitize scenario identifier and prevent directory traversal outside test_cases/."""
+    clean_name = os.path.basename(scenario_name.strip()).replace(".csv", "")
+    if not clean_name or not re.match(r"^[A-Za-z0-9_\-]+$", clean_name):
+        raise HTTPException(status_code=400, detail="Invalid scenario name format")
+    csv_path = os.path.realpath(os.path.join(TEST_CASES_REALPATH, f"{clean_name}.csv"))
+    if not csv_path.startswith(TEST_CASES_REALPATH) or not os.path.isfile(csv_path):
+        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
+    return clean_name, csv_path
+
+def _sanitize_filename_token(token: str) -> str:
+    """Strip unsafe header characters from filenames used in Content-Disposition."""
+    cleaned = re.sub(r"[^A-Za-z0-9_\-]", "_", str(token or "mission"))
+    return cleaned[:80] or "mission"
 
 # Initialize persistent SQLite telemetry & mission database
 try:
@@ -59,13 +76,25 @@ app = FastAPI(
     version="2.0.0"
 )
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
+    return response
+
 # Enable GZip compression for high-performance response streaming (HTML/CSS/JS/JSON)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Enable CORS for local file execution and browser dashboard
+allowed_origins_env = os.environ.get("CANSAT_ALLOWED_ORIGINS", "*")
+allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()] if allowed_origins_env != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -387,6 +416,35 @@ def serve_analysis_html():
 def serve_results_html():
     return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
 
+@app.get("/pitch.html")
+@app.get("/pitch")
+def serve_pitch_html():
+    return FileResponse(os.path.join(FRONTEND_DIR, "pitch.html"))
+
+@app.get("/api/artifacts/pitch-deck")
+def download_pitch_deck_pptx():
+    """Download the 12-slide Executive & Judge PowerPoint Pitch Deck (.pptx)."""
+    pptx_path = os.path.join(BASE_DIR, "reports", "Cognitive_CanSat_Pitch_Deck.pptx")
+    if not os.path.exists(pptx_path):
+        raise HTTPException(status_code=404, detail="Pitch deck PPTX not found")
+    return FileResponse(
+        path=pptx_path,
+        filename="Cognitive_CanSat_Pitch_Deck.pptx",
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
+
+@app.get("/api/artifacts/ieee-paper")
+def download_ieee_paper_tex():
+    """Download the complete compilable IEEEtran conference LaTeX manuscript (.tex)."""
+    tex_path = os.path.join(BASE_DIR, "paper", "ieee_cansat_paper.tex")
+    if not os.path.exists(tex_path):
+        raise HTTPException(status_code=404, detail="IEEE LaTeX paper not found")
+    return FileResponse(
+        path=tex_path,
+        filename="ieee_cansat_paper.tex",
+        media_type="application/x-tex"
+    )
+
 
 css_dir = os.path.join(FRONTEND_DIR, "css")
 if os.path.exists(css_dir):
@@ -524,13 +582,9 @@ def list_flight_scenarios():
 @app.get("/api/analysis/scenario/{scenario_name}")
 def get_scenario_telemetry(scenario_name: str):
     """Return time-series telemetry and calculated kinematics for interactive graphing."""
-    clean_name = scenario_name.replace(".csv", "")
+    clean_name, csv_path = _resolve_safe_scenario_csv(scenario_name)
     if clean_name in _CACHE_SCENARIO_TELEMETRY:
         return _CACHE_SCENARIO_TELEMETRY[clean_name]
-
-    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
-    if not os.path.exists(csv_path):
-        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
 
     try:
         df = pd.read_csv(csv_path).bfill().ffill()
@@ -616,14 +670,11 @@ class TelemetryQualityRequest(BaseModel):
 @app.get("/api/analysis/quality/{scenario_name}")
 def get_scenario_quality(scenario_name: str, nominal_dt: float = 0.8, gap_threshold: float = 2.0):
     """Analyze telemetry data quality, packet completeness, and temporal reliability for a scenario."""
-    clean_name = scenario_name.replace(".csv", "")
+    clean_name, csv_path = _resolve_safe_scenario_csv(scenario_name)
     cache_key = f"{clean_name}:{nominal_dt}:{gap_threshold}"
     if cache_key in _CACHE_SCENARIO_QUALITY:
         return _CACHE_SCENARIO_QUALITY[cache_key]
 
-    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
-    if not os.path.exists(csv_path):
-        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
     analyzer = TelemetryQualityAnalyzer(nominal_interval_sec=nominal_dt, gap_threshold_sec=gap_threshold)
     report = analyzer.analyze_file(csv_path)
     data = report.to_dict()
@@ -634,6 +685,8 @@ def get_scenario_quality(scenario_name: str, nominal_dt: float = 0.8, gap_thresh
 @app.post("/api/analysis/quality/analyze-csv")
 def analyze_custom_csv_quality(req: TelemetryQualityRequest):
     """Analyze data quality and integrity on custom uploaded flight CSV content."""
+    if len(req.csv_content) > 10_000_000:
+        raise HTTPException(status_code=413, detail="CSV payload exceeds 10 MB maximum limit")
     analyzer = TelemetryQualityAnalyzer(
         nominal_interval_sec=req.nominal_interval_sec or 0.8,
         gap_threshold_sec=req.gap_threshold_sec or 2.0
@@ -806,11 +859,12 @@ def export_mission_telemetry_csv(mission_id: str):
     csv_content = database.export_mission_csv(mission_id)
     if not csv_content:
         raise HTTPException(status_code=404, detail="No telemetry records found for this mission")
+    safe_id = _sanitize_filename_token(mission_id)
     return Response(
         content=csv_content,
         media_type="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename={mission_id}_telemetry.csv"
+            "Content-Disposition": f"attachment; filename={safe_id}_telemetry.csv"
         }
     )
 
@@ -824,9 +878,15 @@ def get_latest_telemetry():
 
 @app.get("/api/health")
 def get_health():
+    db_ok = os.path.exists(database.DEFAULT_DB_PATH)
+    vision_ok = (tinylandingnet_model is not None and vision_guard is not None)
     return {
         "status": "online" if models_loaded else "degraded",
+        "version": "2.0.0",
         "models_loaded": models_loaded,
+        "vision_models_loaded": vision_ok,
+        "database_ready": db_ok,
+        "security_headers_enabled": True,
         "timestamp": time.time()
     }
 
@@ -1170,10 +1230,7 @@ def trigger_scenario_pipeline_stream(req: ScenarioStreamRequest):
     Stream any of the 10 flight scenario CSVs through the pipeline in real-time.
     Runs asynchronously in a background thread.
     """
-    clean_name = req.scenario.replace(".csv", "")
-    csv_path = os.path.join(BASE_DIR, "test_cases", f"{clean_name}.csv")
-    if not os.path.exists(csv_path):
-        raise HTTPException(status_code=404, detail=f"Scenario {clean_name} not found")
+    clean_name, csv_path = _resolve_safe_scenario_csv(req.scenario)
 
     m_id = req.mission_id or f"SIM_{clean_name.upper()}"
 
@@ -1188,7 +1245,7 @@ def trigger_scenario_pipeline_stream(req: ScenarioStreamRequest):
                 pipeline_bridge.publish_telemetry(row_dict, mission_id=m_id)
                 time.sleep(dt)
         except Exception as e:
-            logger.error(f"Error streaming scenario to pipeline: {e}")
+            print(f"[Pipeline] Error streaming scenario to pipeline: {e}")
 
     th = threading.Thread(target=_worker, name=f"ScenarioStreamer-{clean_name}", daemon=True)
     th.start()
@@ -1274,13 +1331,19 @@ def classify_vision_frame(req: VisionFrameRequest):
     Supports single tier ('tinylandingnet', 'mobilenet_v3_small', 'resnet18') or 'all' for 3-tier comparison.
     """
     global vision_guard, tinylandingnet_model, mobilenet_v3_small_model, resnet18_model
+    if len(req.image_base64) > 15_000_000:
+        raise HTTPException(status_code=413, detail="Base64 image payload exceeds 15 MB limit")
     try:
         raw_b64 = req.image_base64
         if "," in raw_b64:
             raw_b64 = raw_b64.split(",", 1)[1]
         img_bytes = base64.b64decode(raw_b64)
         pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        if pil_img.width * pil_img.height > 16_777_216:
+            pil_img.thumbnail((2048, 2048))
         frame_rgb = np.array(pil_img)
+    except HTTPException:
+        raise
     except Exception as dec_err:
         raise HTTPException(status_code=400, detail=f"Invalid base64 image data: {dec_err}")
 
