@@ -191,7 +191,7 @@ def build_pitch_deck() -> str:
     add_header(
         s1, 1, total, "Executive Pitch & IEEE System Overview",
         "Cognitive CanSat: Physics-Informed Telemetry & OOD-Guarded Edge TinyML",
-        "Autonomous Atmospheric Sounding Pico-Satellite Platform | Authors: Maneet Bhuyan, Gurbashish Sena Nayak, Shubham Sharma, and Ganesh Vallabh M",
+        "Autonomous Atmospheric Sounding Pico-Satellite Platform | Dept. of CSE, MVJ College of Engineering",
     )
     add_metric_box(s1, 0.6, 1.75, 2.85, 1.55, "-49.2%", "Altitude RMSE Reduction", "0.903 m Hybrid EKF+ExtraTrees vs. 1.776 m Raw Baro (N=100 Flights)", GREEN_ACCENT)
     add_metric_box(s1, 3.68, 1.75, 2.85, 1.55, "-94.8%", "Touchdown Countdown Error", "2.33 s Quantile GBR RMSE vs. 44.46 s Naive Ballistic Division", CYAN_ACCENT)

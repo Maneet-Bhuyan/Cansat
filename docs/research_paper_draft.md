@@ -1,6 +1,7 @@
 # Cognitive CanSat Mission Control: Physics-Informed Telemetry Analytics, Quantized Edge TinyML Landing Safety, and Multi-Tier Vision Verification for Sounding Pico-Satellites
 
 **Authors:** Maneet Bhuyan, Gurbashish Sena Nayak, Shubham Sharma, and Ganesh Vallabh M  
+**Affiliation:** Department of Computer Science and Engineering, MVJ College of Engineering, Bangalore, India  
 **Date:** October 2026  
 
 ---
